@@ -1,0 +1,132 @@
+music produced by MMA feels repetitive and robotic, I want to add more variation
+also no concept of sections, intros, or outros. Too complicated for the editor
+but I like the idea of declaratively describing a style
+
+
+
+
+
+@meta {
+	name("Swing")
+	author("Jacob Bloom")
+	description("You know the drill")
+}
+
+@options {
+	time-signature(4 4)
+	swing() // is there a way to reverse boolean functions? swing(false)
+//phrase length(4)
+}
+
+// @import stdlib // we needed to borrow SOME idea from mma
+// what if this could be used both to import beat libraries and fully-functional instruments?
+// would that require that instruments could be extended? let's not go down that rabbithole
+
+// ***** DRUMS *****
+@track "percussion" as drums {
+	@pattern snare-hits {
+		private()
+		"Acoustic Snare" choose(
+			<4>
+			<2.5>
+			<2.5 3.5 4.5>
+		)
+		chance(3/10) // evaluates to 0.3
+		volume(0.1)
+	}
+	// if not it returns nil, if we end up with nil just don't play lol
+	
+	@pattern hi-hat {
+		private()
+		"Open Hi-Hat" <1 2 2.5 3 4 4.5> &
+		"Closed Hi Hat" <2 4> // automatic overlay is stupid, simply throw when we get <> <> outside of args list
+		volume(0.1)
+	}
+	@pattern drums-mixed {
+		snare-hits &
+		hi-hat &
+		{"Bass Drum" <1 2 3 4> volume(0.2)} // scopes are ok a lot of places but can only be named via @pattern
+		// {...snare-hits} & {...hi-hat} & {"Bass Drum" <1 2 3 4> volume 0.2}
+	}
+}
+
+// ok so we need superphrases that reference like piano.phrase1
+// ***** PIANO W/ SCOPING *****
+@track "acoustic_grand_piano" as piano { // "as" required? Or only if you use it somewhere else? Let's require it for also error logging reasons
+	volume(0.6)
+	invertible()
+	octave(4)
+	// strum(down)
+	
+	@pattern maybe3 { // patterns that are ok with or without 3rd beat in measure
+		choose(
+		// make it clear in docs that all notes are relative to the given chord
+		// is there a way to get key? k? k5 for 5th above? k5c?
+		// these are in the scale so for major 2.5 is m3 but if the scale is minor then 2.5=3=m3
+		// [time[s=staccato a=accented] = 1,2,3...]:[k=key n=nextbeat1 s=step a=arpeggiate]1[c=chord][c=1c shorthand)][r=rolled rd=down]:octave
+			<1.5s:1c 2:1c 3.5:1c>
+			{<1:1c 2.5s:1c 3.5:1c> volume(.5)} // deepest scope wins
+			<1:1c 2.5:1c 3.5:1c 4.5:1c>
+		)
+		volume .3
+	}
+	@pattern no3 if(not beat3) <1:1c:4 2.5:1c:4> // pattern that no work with 3rd beat in measure
+	// ok so pattern keyword must consume 1 token whatever it might be
+	// everything evaluates to something
+	// it's calc'd once per measure and persists, so "if pattern1 {...}" works cuz it returns a valid pattern or nil, in which case yeah
+	// okay so order of operations applies to math because whatever
+	// other than that, patterns are eval'd in order and last copy of a volume/keyword at a specificity wins that scope
+	
+	// patterns can be any number of beats but must always return the same number of beat (or nil)
+	// defaults to measure length for obvious reasons
+	@pattern multiMeasurePattern {
+		length(8)
+		<1 2 3 4 | 1 2 3 4> // this one solidifies <> as generic beat containers that could even contain partial measures a la <1 2>+<3 4>
+		// the second interpretation can include the first
+	}
+	
+	@pattern brainstorm if(not true) {
+		private()
+		length(2)
+		// lol boolean values are true and nil xD
+		
+		// also can you choose from a set of pitches?
+		<1:choose(1 k k4):4>
+		
+		// also what if as shorthand you could skip beat for integers (but need colon since it's an edge case)
+		<:1:2 :2:2 :2.5:2 :3:2>
+		// and declare octave (for entire instrument?) (don't need colon)
+		<:1 :2 :2.5 :3> octave 2
+		
+		// how do tuplets work?
+		<1/3:1 2/3:2 1:3 2:3 3:3 4:3>
+	}
+	
+	@pattern myPattern if(chance(1/3) and (3 is t1)) {} // think about this, do we need equality tests?
+	
+}
+
+// ***** BASS *****
+@track "acoustic_bass" as bass {
+	volume(1)
+	octave(2)
+	invertible()
+	
+	// TODO: notation to choose from the notes in a chord? choose[...c]
+	@pattern walk1 if(not progression(1 1)) {
+		choose(
+			<:1 :s :s :n7> // covers (1,2,2.5,3,4) & (1,2,3,4,5) & (1,6.5,6,5,6) but risks things like (1,1,1.5,1.5,2)
+			// how about if there's not room for all the steps or too much space then the whole beatset returns nil?
+			// ok so then in a choose nil is not factored in, as opposed to representing silence
+			// silence only applies on a pattern scale
+			<:1 :s :s :n2>
+			<:1 :3 :5 :n7>
+			<:1 :5 :3 :n7>
+			<:1 :a :a :n7> // tries to arpeggiate in the chord of 1, else the key of 1, toward the final beat (smartly up or down)
+		)
+	}
+	
+	@pattern walk2 if(inscale(1 n)) {
+		<:1 :s :s :n5>
+	}
+}

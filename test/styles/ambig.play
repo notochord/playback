@@ -1,0 +1,18 @@
+@track "percussion" as drums {
+	@pattern drums-mixed {
+		@pattern(a) &
+		@pattern(a) &
+		@pattern(a) &
+		@pattern(a) &
+		@pattern(a)
+		< 1 | 2 | 3 | 4 | 5 | 6 >
+		<1>
+		<1>
+		<1>
+		<1>
+		<1>
+		// comment 1
+		// comment 2
+		// comment 3 -- these should be parsed as 1 ws
+	}
+}

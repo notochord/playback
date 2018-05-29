@@ -1,0 +1,156 @@
+music produced by MMA feels repetitive and robotic, I want to add more variation
+also no concept of sections, intros, or outros. Too complicated for the editor
+but I like the idea of declaratively describing a style
+
+
+
+
+
+meta {
+	name: "Swing"
+	author: "Jacob Bloom"
+	description: "You know the drill"
+}
+
+options {
+	time signature: 4/4
+	swing: true
+//	phrase length: 4
+}
+
+@import stdlib // we needed to borrow /some/ idea from mma
+
+// ***** DRUMS *****
+@track "percussion" as drums {
+	@pattern snare-hits {
+		"Acoustic Snare" choose [
+			<4>
+			<2.5>
+			<2.5 3.5 4.5>
+		]
+		chance 3/10 // evaluates to 0.3
+		volume 0.1
+	}
+	// if not it returns nil, if we end up with |nil| just don't play lol
+	
+	@pattern hi-hat {
+		"Open Hi-Hat" <1 2 2.5 3 4 4.5>
+		"Closed Hi Hat" <2 4>
+		volume 0.1
+	}
+	@phrase default { // that is, run this phrase regardless of what phrase type we're on
+		snare-hits + hi-hat + {"Bass Drum" <1 2 3 4> volume 0.2} | % | % | %
+		// = {...snare-hits} + {...hi-hat} + {"Bass Drum" <1 2 3 4> volume 0.2}
+	}
+}
+
+// ok so we need superphrases that reference like piano.phrase1
+// ***** PIANO W/ SCOPING *****
+@track "acoustic_grand_piano" as piano { // "as" required? Or only if you use it somewhere else? Let's require it for also error logging reasons
+	volume 0.6
+	invertible
+	octave 4
+	// strum [down]
+	
+	@pattern maybe3 { // patterns that are ok with or without 3rd beat in measure
+		choose [
+		// make it clear in docs that all notes are relative to the given chord
+		// is there a way to get tonic? t? t5 for 5th above? t5c?
+		// these are in the scale so for major 2.5 is m3 but if the scale is minor then 2.5=3=m3
+		// [time[s=staccato a=accented] = 1,2,3...]:step | arp | [t=tonic n=next measure beat 1]1[c=chord][c=1c shorthand)][r=rolled rd=down]:octave
+			<1.5s:1c 2:1c 3.5:1c>
+			{<1:1c 2.5s:1c 3.5:1c> volume .5} // deepest scope wins
+			<1:1c 2.5:1c 3.5:1c 4.5:1c>
+		]
+		volume .3
+	}
+	@pattern no3 if (not beat3) <1:1c:4 2.5:1c:4> // pattern that no work with 3rd beat in measure
+	// ok so pattern keyword must consume 1 token whatever it might be
+	// everything evaluates to something
+	// it's calc'd once per measure and persists, so "if (pattern1) {...}" works cuz it returns a valid pattern or nil, in which case yeah
+	// also whether or not a phrase is real persists for the whole phrase
+	// okay so we need a set eval order -- how about tracks<superphrases, keywords(volume...)<ifs<patterns<phrases (here < means before)
+	
+	// can patterns be more than 1 measure?
+	@pattern multiMeasurePattern {
+		<1 2 3 4> | <1 2 3 4> // this one's the prettiest and is what happens in @phrase blocks -- in this world, <> means a measure (which doesn't actually make sense in @phrase world? because you can have multiple beat sets in the same measure i.e. drums)
+		<1 2 3 4 | 1 2 3 4> // this one solidifies <> as generic beat containers that could even contain partial measures a la <1 2>+<3 4>
+		// which makes their purpose more clear IT JUST FEELS SEMANTICALLY RIGHT
+		// the second interpretation can include the first
+		
+		// also can you choose from a set of pitches?
+		<1:choose[1 t t4]:4>
+		
+		// also what if as shorthand you could skip beat for integers (but need colon since it's an edge case)
+		<:1:2 :2:2 :2.5:2 :3:2>
+		// and declare octave (for entire instrument?) (don't need colon)
+		<:1 :2 :2.5 :3> octave 2
+		
+		// how do tuplets work?
+		<1/3:1 2/3:2 1:3 2:3 3:3 4:3>
+	}
+	
+	@phrase default {
+		choose [maybe3 no3] | % | % | %
+	}
+	
+	
+	// wait, @ifs could apply to most patterns and phrases, do they need rethinking?
+	@phrase {} // a phrase option with default priority
+	@phrase if not progression(1 6 | 2 5) {} // they don't really need names do they
+	@pattern myPattern if chance(1/3) {}
+	// ugh I hate unwrapped conditionals but it's not ambiguous because "not" accepts 1 token and parens are always an option
+	// wait should everything be curlies? nah here let's try to save it for block scope even though they should probably be equivalent FUCK I'M WRITING A LISP this is why statements vs. expressions
+	
+}
+
+// ***** BASS *****
+//I DON'T WANT TO DECLARITIVELY LIST ALL THE POSSIBLITIES :((
+// ok stay calm let's add functionality that makes it easier
+@track "acoustic_bass" as bass {
+	volume 1
+	octave 2
+	invertible
+	
+	// I want a declarative way to do this math >.<
+	// notation to choose from the notes in a chord? choose[...c]
+	// notation to get a future beat/measure's note besides progression tests
+	@pattern walk1 if not progression(1 | 1) {
+		choose [
+			<:1 :step :step :n7> covers (1,2,2.5,3,4) & (1,2,3,4,5) & (1,6.5,6,5,6) but risks things like (1,1,1.5,1.5,2)
+			// how about if there's not room for all the steps or too much space then the whole beatset returns nil?
+			// ok so then in a choose nil is not factored in, as opposed to representing silence
+			// silence only applies on a pattern scale
+			<:1 :step :step :n2>
+			<:1 :3 :5 :n7>
+			<:1 :5 :3 :n7>
+			<:1 :arp :arp :n7> // tries to arpeggiate in the chord of 1, else the key of 1, toward the final beat (smartly up or down)
+		]
+	}
+	
+	@pattern walk2 if inscale(1, n) {
+		<:1 :step :step :n5>
+	}
+	
+	// eh I'm starting to feel like phrases are more hassle than it's worth?
+	// maybe instead have a keyword for patterns that should be reserved for superphrases?
+	
+	@phrase default {
+		
+	}
+	// is this relative to the current beat or the song's key?
+	// I guess non-default phrases don't have to be named but 
+	@if (progression(1 6 | 2 5)) @phrase {
+		
+	}
+	
+}
+
+
+
+if (1-chord-per-measure) phrase phrase1 {
+	
+} else phrase phrase1 { // wtf I hate this
+	// beat[s=stacatto]:note[c=chord]:octave[i=invertable] // length? stacatto?
+	<1:1:2 2:1:2 3:1:2 4:1:2> // 1s:1c:2i for chords/invertability
+}

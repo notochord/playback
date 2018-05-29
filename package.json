@@ -1,0 +1,29 @@
+{
+  "name": "playback",
+  "version": "1.0.0",
+  "description": "Chord player that can load different styles",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node test/test.js",
+    "build": "nearleyc src/parser/grammar.ne -o src/parser/grammar.js",
+    "start": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/notochord/playback.git"
+  },
+  "author": "Jacob Bloom",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/notochord/playback/issues"
+  },
+  "homepage": "https://github.com/notochord/playback#readme",
+  "devDependencies": {
+    "jsdoc": "^3.5.5",
+    "moo": "^0.4.3",
+    "nearley": "^2.13.0"
+  },
+  "dependencies": {
+    "fs-extra": "^6.0.1"
+  }
+}
