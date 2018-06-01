@@ -1,44 +1,9 @@
+# import the lexer
+@preprocessor esmodule
 @{%
-const moo = require('moo');
-const ast = require('./ast_nodes.js'); // TODO: rename this
-
-const lexer = moo.states({
-  main: {
-    comment: {
-      match:/\/\/.*?(?:\n|$)/, // consuming newline should be fine since this is _?. Can I do eof anchor here? Guess we'll find out 
-      lineBreaks: true
-    },
-    quoted_string: /"(?:[^\\"\n]|\\.)*"/, // thanx https://stackoverflow.com/a/249937/1784306
-    ws: {
-      match: /\s+/,
-      lineBreaks: true
-    },
-    at_rule: ['@meta', '@options', '@import', '@track', '@pattern'],
-    identifier: {
-      // start with alpha, may contain digits and dashes but not end with dash
-      match: /[a-zA-z](?:[a-zA-Z\-\d]*[a-zA-Z\d])?/,
-      keywords: {
-        keyword: ['if', 'as'],
-        boolean: ['true', 'false']
-      }
-    },
-    number: /(?:\d*\.)?\d+/,
-    brackets: ['{', '}', '(', ')'],
-    left_angle: {match: '<', push: 'beat'},
-    operators: ['&', '+', '-', '*', '/', '.']
-  },
-  beat: {
-    beat_ws: / +/,
-    beat_colon: ':',
-    beat_number: /(?:\d*\.)?\d+/,
-    beat_flag: /[a-zA-Z]/,
-    beat_right_angle: {match: '>', pop: true},
-    beat_operators: ['|', '+', '-', '*', '/']
-  }
-});
+import lexer from '../lexer/lexer.js' ;
+import * as ast from '../ast/ast_nodes.js';
 %}
-
-# Pass the lexer
 @lexer lexer
 
 # macro for building whitespace-separated lists
@@ -50,12 +15,13 @@ SEP_LIST[X, SEP] -> $X (_? $SEP _? $X {% d => d[3][0] %}):* {% d => d[0].concat(
 SEP_LIST_MIN2[X, SEP] -> $X (_? $SEP _? $X {% d => d[3][0] %}):+ {% d => d[0].concat(d[1]) %}
 
 # start here lolz
-main -> _? SPACED_LIST[TopLevelStatement] _? {% d => d[1] %}
+main -> _? SPACED_LIST[TopLevelStatement] _? {% d => new ast.GlobalScope(d[1]) %}
 TopLevelStatement -> ConfigurationStatement {% id %}
-                   | TrackStatement         {% id %}
                    | ImportStatement        {% id %}
-ConfigurationStatement -> "@meta" _? "{" _? ConfigurationList _? "}" {% d => new ast.ConfigurationStatement({identifier: 'META', members: d[4]}) %}
-                        | "@options" _? "{" _? ConfigurationList _? "}" {% d => new ast.ConfigurationStatement({identifier: 'OPTIONS', members: d[4]}) %}
+                   | TrackStatement         {% id %}
+                   | TrackCallStatement     {% id %}
+ConfigurationStatement -> "@meta" _? "{" _? ConfigurationList _? "}" {% d => new ast.MetaStatement(d[4]) %}
+                        | "@options" _? "{" _? ConfigurationList _? "}" {% d => new ast.OptionsStatement(d[4]) %}
 ConfigurationList -> SPACED_LIST[FunctionCallExpression] {% id %}
 ImportStatement -> "@import" _ StringLiteral _ "as" _ Identifier {% d => new ast.ImportStatement({path: d[2], identifier: d[6]}) %}
 
@@ -63,6 +29,7 @@ ImportStatement -> "@import" _ StringLiteral _ "as" _ Identifier {% d => new ast
 TrackStatement -> "@track" _ StringLiteral _ "as" _ Identifier _? "{" _? SPACED_LIST[TrackMember] _? "}" {% d => new ast.TrackStatement({instrument: d[2], identifier: d[6], members: d[10]}) %}
 TrackMember -> FunctionCallExpression       {% id %} # I know this name is bad
              | PatternStatement             {% id %}
+TrackCallStatement -> "@track" _? "(" _? Identifier "." Identifier _? ")" {% d => new ast.TrackCall({import: d[4], track: d[6]}) %}
 
 # patterns
 PatternStatement -> "@pattern" _ Identifier _ PatternConditional _? PatternExpression {% d => new ast.PatternStatement({identifier: d[2], expression: d[6], condition: d[4]}) %}
@@ -76,13 +43,14 @@ PatternExpression_NoJoin -> PatternExpressionGroup {% id %} # because ambiguity 
                    | FunctionCallExpression {% id %}
                    | PatternCallExpression  {% id %}
 PatternExpressionGroup -> "{" _? SPACED_LIST[PatternExpression] _? "}" {% d => new ast.PatternExpressionGroup(d[2]) %}
-PatternCallExpression -> "@pattern" _? "(" _? Identifier _? ")" {% d => new ast.PatternCall({pattern: d[4], local: true}) %}
-                       | "@pattern" _? "(" _? Identifier "." Identifier _? ")" {% d => new ast.PatternCall({instrument: d[4], pattern: d[6], local: false}) %}
+PatternCallExpression -> "@pattern" _? "(" _? Identifier _? ")" {% d => new ast.PatternCall({pattern: d[4]}) %}
+                       | "@pattern" _? "(" _? Identifier "." Identifier _? ")" {% d => new ast.PatternCall({track: d[4], pattern: d[6]}) %}
+                       | "@pattern" _? "(" _? Identifier "." Identifier "." Identifier _? ")" {% d => new ast.PatternCall({import: d[4], track: d[6], pattern: d[8]}) %}
 JoinedPatternExpression -> SEP_LIST_MIN2[PatternExpression_NoJoin, "&"] {% d => new ast.JoinedPatternExpression(d[0]) %}
 
 # functions
 FunctionCallExpression -> Identifier _? "(" _? SPACED_LIST[FunctionCallArgument] _? ")" {% d => new ast.FunctionCall(d[0], d[4]) %}
-                        | Identifier _? "(" ")" {% d => new ast.FunctionCall(d[0]) %}
+                        | Identifier _? "(" ")" {% d => new ast.FunctionCall(d[0], []) %}
 FunctionCallArgument -> NumericExpression   {% id %}
                       | StringLiteral       {% id %}
                       | BooleanLiteral      {% id %}

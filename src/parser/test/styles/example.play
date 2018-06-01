@@ -33,11 +33,14 @@
 	}
 	@pattern drums-mixed {
 		@pattern(snare-hits) &
-		@pattern(stdlib.hi-hat) &
+		@pattern(piano.hi-hat) &
+		@pattern(stdlib.drums.hi-hat) &
 		{"Bass Drum" <1 2 3 4> volume(0.2)} // scopes are ok a lot of places but can only be named via @pattern
 		// {...snare-hits} & {...hi-hat} & {"Bass Drum" <1 2 3 4> volume 0.2}
 	}
 }
+
+@track(stdlib.jazz-guitar)
 
 // ***** PIANO  *****
 @track "acoustic_grand_piano" as piano { // "as" required.
