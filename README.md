@@ -21,11 +21,10 @@ which led to a couple problems:
     after the fact.
   * There's no kosher method to do all of the following in JavaScript:
     * Dynamically load a file from the server
-    * Execute code in that file as JavaScript
     * Avoid muddying the global scope and DOM
-    ...sure, I could've just dynamically loaded the .js files and `eval()`'d
-    them, but that'd pose a risk to both security and Douglas Crockford's
-    well-being.
+    * Execute code in that file as JavaScript (sure, I could've just fetched the
+      .js files and `eval()`'d them, but that'd pose a risk to both security and
+      Douglas Crockford's well-being)
 
 So I set off to create my very own language to define a playback style. The end.
 
