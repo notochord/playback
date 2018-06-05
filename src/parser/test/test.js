@@ -15,6 +15,7 @@ export default function() {
    * (this is the file I add new features to when I'm modifying the grammar)
    */
   file_example.then(parser.parse).then(ast => {
+    ast.init()
     // assert.ok(ast.tracks[0] typeof Track);
   });
   

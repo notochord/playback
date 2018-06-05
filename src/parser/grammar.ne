@@ -23,7 +23,7 @@ TopLevelStatement -> ConfigurationStatement {% id %}
 ConfigurationStatement -> "@meta" _? "{" _? ConfigurationList _? "}" {% d => new ast.MetaStatement(d[4]) %}
                         | "@options" _? "{" _? ConfigurationList _? "}" {% d => new ast.OptionsStatement(d[4]) %}
 ConfigurationList -> SPACED_LIST[FunctionCallExpression] {% id %}
-ImportStatement -> "@import" _ StringLiteral _ "as" _ Identifier {% d => new ast.ImportStatement({path: d[2], identifier: d[6]}) %}
+ImportStatement -> "@import" _ StringLiteral _ "as" _ Identifier {% d => new ast.ImportStatement(d[2], d[6]) %}
 
 # tracks
 TrackStatement -> "@track" _ StringLiteral _ "as" _ Identifier _? "{" _? SPACED_LIST[TrackMember] _? "}" {% d => new ast.TrackStatement({instrument: d[2], identifier: d[6], members: d[10]}) %}
@@ -55,7 +55,7 @@ FunctionCallArgument -> NumericExpression   {% id %}
                       | StringLiteral       {% id %}
                       | BooleanLiteral      {% id %}
                       | PatternExpression   {% id %}
-                      | BL_PP_Anchor        {% d => new ast.AnchorAsArgument(d[0]) %}
+                      | BL_PP_Anchor        {% d => new ast.AnchorArgument(d[0]) %}
                       | "not" _ FunctionCallArgument {% d => new ast.BooleanNot(d[2]) %}
                       | FunctionCallArgument _ "and" _ FunctionCallArgument {% d => new ast.BooleanAnd(d[0], d[4]) %}
                       | FunctionCallArgument _ "or" _ FunctionCallArgument {% d => new ast.BooleanOr(d[0], d[4]) %}

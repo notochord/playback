@@ -6,12 +6,13 @@ export default class Scope {
   constructor() {
     this.vars = new Map();
     this.name = null;
-    this.parent = null;
+    this.type = null;
+    this.scope = null;
   }
-  set init(parent) { // parent scope, if that's unclear
-    this.parent = parent;
+  init(scope) { // parent scope, if that's unclear
+    this.scope = scope;
     
     // in case this.vars was set in the constructor
-    this.vars = new Map([...parent.vars, ...this.vars]);
+    this.vars = new Map([...this.scope.vars, ...this.vars]);
   }
 }

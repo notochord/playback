@@ -45,7 +45,6 @@ module.exports = [
     },
     plugins: [
       new onBuild(function(stats) {
-        // if(['normal', 'verbose', true].includes(stats.compilation.options.stats)) {
         exec('npm run test', (err, stdout, stderr) => {
           if(stdout) console.log(stdout);
           if(err || stderr) {

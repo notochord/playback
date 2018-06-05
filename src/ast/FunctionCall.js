@@ -1,4 +1,4 @@
-import function_definitions from './function_definitions.js';
+import * as function_data from './function_data.js';
 import {FunctionNameError} from './errors.js';
 
 /**
@@ -15,27 +15,32 @@ export default class FunctionCall {
    */
   constructor(identifier, args) {
     this.identifier = identifier;
-    this.definition = function_definitions.get(identifier);
+    this.definition = function_data.definitions.get(identifier);
     this.args = args;
     this.scope = null;
   }
   init(scope) {
-    this.scope = scope
+    this.scope = scope;
     if(!this.definition) {
       throw new FunctionNameError(this.identifier, this.scope);
     }
+    this.returns = this.definition.returns;
+    function_data.assertScope(this.identifier, this.definition.scope, this.scope);
+    
     this.args.forEach(arg => {
       if(arg.init) arg.init(scope);
     });
+    
+    function_data.assertArgTypes(this.identifier, this.args, this.definition.types, this.scope);
   }
-  call_func() { // don't want to mess with JS's Function.prototype.call()
+  execute() { // don't want to mess with JS's Function.prototype.call()
     let evaluated_args = this.args.map(arg => {
-      if(arg instanceof FunctionCall) {
-        return arg.call_func();
+      if(arg.execute) {
+        return arg.execute();
       } else {
         return arg;
       }
     });
-    return this.definition(evaluated_args, this.scope);
+    return this.definition.execute(evaluated_args, this.scope);
   }
 }

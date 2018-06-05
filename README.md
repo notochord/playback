@@ -58,7 +58,7 @@ which led to a couple problems:
 
 - `npm test` - run the test suite, print nothing if all tests pass
 - `npm run build` - compile the grammar and bundle the files into
-  `dist/playback.js`. Also bundle the tests an run them
+  `dist/playback.js`. Also bundle the tests and run them
 - `npm run build-watch` - rebuild (and rerun tests) every time you change a file
 
 ## Credits

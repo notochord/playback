@@ -21,7 +21,7 @@
 			<2.5 3.5 4.5>
 		)
 		chance(3/10) // evaluates to 0.3
-		volume(0.1)
+		volume(1)
 	}
 	// if not it returns nil, if we end up with nil just don't play lol
 	

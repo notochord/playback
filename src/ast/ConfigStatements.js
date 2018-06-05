@@ -4,16 +4,19 @@ export class MetaStatement extends Scope {
   constructor(function_calls) {
     super();
     this.name = '@meta';
+    this.type = '@meta';
+    this.function_calls = function_calls;
+  }
+  init(scope) {
+    this.scope = scope;
     
     // nothing in here can be dynamic so resolve these at compile time
-    for(let function_call of function_calls) {
+    for(let function_call of this.function_calls) {
       function_call.init(this);
-      function_call.call_func();
+      function_call.execute();
     }
-  }
-  init(parent) {
-    this.parent = parent;
-    parent.meta = this.vars;
+    
+    scope.meta = this.vars;
   }
 }
 
@@ -21,17 +24,27 @@ export class OptionsStatement extends Scope {
   constructor(function_calls) {
     super();
     this.name = '@options';
-    
-    // nothing in here can be dynamic so resolve these at compile time
-    for(let function_call of function_calls) {
-      function_call.init(this);
-      function_call.call_func();
-    }
+    this.type = '@options';
+    this.function_calls = function_calls;
   }
-  init(parent) {
-    this.parent = parent;
-    // in this case we're actually overwriting our parent's variables, not
+  init(scope) {
+    
+    // nothing in here /should/ be dynamic so resolve these at compile time
+    for(let function_call of this.function_calls) {
+      function_call.init(this);
+      function_call.execute();
+    }
+    
+    this.scope = scope;
+    // in this case we're actually overwriting our scope's variables, not
     // vise-versa
-    parent.vars = new Map([...parent.vars, ...this.vars]);
+    scope.vars = new Map([...scope.vars, ...this.vars]);
+  }
+}
+
+export class ImportStatement {
+  constructor(path, identifier) {
+    this.path = path;
+    this.identifier = identifier;
   }
 }

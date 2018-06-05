@@ -7,8 +7,11 @@
  */
 
 import GlobalScope from './GlobalScope.js';
-import {MetaStatement, OptionsStatement} from './ConfigStatements.js';
+import {MetaStatement, OptionsStatement, ImportStatement} from './ConfigStatements.js';
+import {TrackStatement, TrackCall} from './Track.js';
+import {PatternStatement, PatternExpressionGroup, PatternCall, JoinedPatternExpression} from './Pattern.js';
 import FunctionCall from './FunctionCall.js';
+import {AnchorArgument, BooleanNot, BooleanAnd, BooleanOr} from './ArgumentOperators.js';
 
 var tab = (depth) => '\n' + '\t'.repeat(depth);
 var string = (item, depth) => {
@@ -25,10 +28,18 @@ var tabArr = (array, depth, joiner = '') => array.reduce((out, item, idx, arr) =
 
 export {
   /* global meta stuff */
-  GlobalScope, MetaStatement, OptionsStatement,
+  GlobalScope,
+  MetaStatement, OptionsStatement, ImportStatement,
+  
+  /* tracks */
+  TrackStatement, TrackCall,
+  
+  /* patterns */
+  PatternStatement, PatternExpressionGroup, PatternCall, JoinedPatternExpression,
   
   /* functions */
-  FunctionCall
+  FunctionCall,
+  AnchorArgument, BooleanNot, BooleanAnd, BooleanOr
 };
 
 /*export function ConfigurationStatement(opts) {
@@ -36,13 +47,14 @@ export {
   this.members = opts.members;
   this.toString = (depth = 0) => `${tab(depth)}@${this.identifier} {${tabArr(this.members, depth + 1)}${tab(depth)}}`
 }*/
-export function ImportStatement(opts) {
+/*export function ImportStatement(opts) {
   this.path = opts.path;
   this.identifier = opts.identifier;
   this.toString = (depth = 0) => `${tab(depth)}@import "${this.path}" as ${this.identifier}`;
-}
+}*/
 
 /* track */
+/*
 export function TrackStatement(opts) {
   this.instrument = opts.instrument;
   this.identifier = opts.identifier;
@@ -54,9 +66,10 @@ export function TrackCall(opts) {
   this.track = opts.track;
   this.toString = (depth = 0) => `${tab(depth)}@track( ${this.import} . ${this.track} )`
 }
+*/
 
 /* patterns */
-export function PatternStatement(opts) {
+/*export function PatternStatement(opts) {
   this.identifier = opts.identifier,
   this.expression = opts.expression,
   this.condition = (opts.condition !== undefined) ? opts.condition : null;
@@ -77,7 +90,7 @@ export function PatternCall(opts) {
 export function JoinedPatternExpression(_patterns) {
   this.patterns = _patterns;
   this.toString = (depth = 0) => `${tabArr(this.patterns, depth, ' &')}`
-}
+}*/
 
 /* functions */
 /*export function FunctionCall(identifier, args = []) {
@@ -85,7 +98,7 @@ export function JoinedPatternExpression(_patterns) {
   this.args = args;
   this.toString = (depth = 0) => `${tab(depth)}${this.identifier}(${tabArr(this.args, depth + 1)}${tab(depth)})`;
 }*/
-export function AnchorAsArgument(anchor) {
+/*export function AnchorAsArgument(anchor) {
   this.anchor = anchor;
   this.toString = (depth = 0) => `${tab(depth)}${this.anchor}`;
 }
@@ -102,7 +115,7 @@ export function BooleanOr(arg1, arg2) {
   this.arg1 = arg1;
   this.arg2 = arg2;
   this.toString = (depth = 0) => `${tab(depth)}(${string(this.arg1, depth+1)}${tab(depth)}or${string(this.arg2, depth+1)}${tab(depth)})`;
-}
+}*/
 
 /* beats */
 export function BeatGroupLiteral(measures) {

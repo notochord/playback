@@ -12,8 +12,8 @@ export class FunctionNameError extends PlaybackError {
   }
 }
 export class FunctionScopeError extends PlaybackError {
-  constructor(identifier, goalscopes, scope) {
-    super(`Function "${identifier}" must be in one of [${goalscopes.toString()}].`, scope);
+  constructor(message, scope) {
+    super(message, scope);
   }
 }
 export class FunctionArgumentsError extends PlaybackError {
