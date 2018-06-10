@@ -24,6 +24,7 @@ export default class GlobalScope extends Scope {
     this.meta = [];
     // @TODO: stop circular dependencies? cache them and mark one as mom
     this.importedStyles = new Map();
+    this.dependencies = [];
     
     for(let statement of this.statements) {
       if(statement instanceof MetaStatement
@@ -31,6 +32,7 @@ export default class GlobalScope extends Scope {
         this.meta.push(statement);
       } else if(statement instanceof ImportStatement) {
         this.importedStyles.set(statement.identifier, statement.path);
+        this.dependencies.push(statement.path);
       } else if(statement instanceof TrackStatement) {
         this.tracks.set(statement.name, statement);
       }

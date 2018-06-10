@@ -1,0 +1,19 @@
+@meta {
+	name("Standard Library")
+	author("Jacob Bloom")
+	description(":P")
+	playback-version(0.1)
+}
+
+@options {
+	time-signature(4 4)
+	swing()
+}
+
+@track "percussion" as drums {
+	@pattern hi-hat {
+		"Open Hi-Hat" <1 2 2.5 3 4 4.5> &
+		"Closed Hi Hat" <2 4>
+		volume(0.1)
+	}
+}

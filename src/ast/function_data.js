@@ -163,12 +163,13 @@ let defineBoolean = function(identifier, goalscope = null) {
   })
 }
 
-/*********** ACTUAL FUNCTION DEFINITINS ***********/
+/*********** ACTUAL FUNCTION DEFINITIONS ***********/
 
 /*** @meta functions ***/
 defineVar('name', 'string', 'meta');
 defineVar('author', 'string', 'meta');
 defineVar('description', 'string', 'meta');
+defineVar('playback-version', 'number', 'meta');
 
 /*** @options functions ***/
 define('time-signature',

@@ -30,5 +30,6 @@ export class TrackCall {
   constructor(opts) {
     this.import = opts.import;
     this.track = opts.track;
+    this.trackStatement = null; // will be set by the loader.
   }
 }

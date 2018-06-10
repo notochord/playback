@@ -12,6 +12,7 @@ import {TrackStatement, TrackCall} from './Track.js';
 import {PatternStatement, PatternExpressionGroup, PatternCall, JoinedPatternExpression} from './Pattern.js';
 import FunctionCall from './FunctionCall.js';
 import {AnchorArgument, BooleanNot, BooleanAnd, BooleanOr} from './ArgumentOperators.js';
+import {BeatGroupLiteral, Measure, DrumBeatGroupLiteral} from './BeatGroups.js';
 
 export {
   /* global meta stuff */
@@ -26,17 +27,13 @@ export {
   
   /* functions */
   FunctionCall,
-  AnchorArgument, BooleanNot, BooleanAnd, BooleanOr
+  AnchorArgument, BooleanNot, BooleanAnd, BooleanOr,
+  
+  /* beat groups */
+  BeatGroupLiteral, Measure, DrumBeatGroupLiteral
 };
 
 /* beats */
-export function BeatGroupLiteral(measures) {
-  this.measures = measures;
-}
-export function Measure(beats) {
-  this.beats = beats;
-  this.push = this.beats.push;
-}
 export function BeatLiteral(opts) {
   this.time = opts.time || {time: 'auto'};
   this.pitch = opts.pitch;
@@ -44,14 +41,6 @@ export function BeatLiteral(opts) {
 }
 
 /* drums */
-export function DrumBeatGroupLiteral(drum, beatGroup) {
-  this.drum = drum;
-  if(beatGroup instanceof FunctionCall) { // we were passed a function call (e.g. choose)
-    this.beatGroup = beatGroup; // for now there's no diff in functionality...
-  } else {
-    this.beatGroup = beatGroup;
-  }
-}
 export function DrumBeatLiteral(opts) {
   this.time = opts.time;
   this.accented = opts.accented || false;
