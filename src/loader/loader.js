@@ -3,6 +3,7 @@ import fs from 'fs'; // lol this shouldn't be allowed
 /**
  * Style locator algorithm:
  * if the path begins with . or / look in the filesystem
+ * If the path begins with a protocol, look on the internet
  * otherwise, look in:
  * 1. styles folder in this repo
  * 2. (node_modules equivalent?)

@@ -29,6 +29,7 @@ export default class GlobalScope extends Scope {
     for(let statement of this.statements) {
       if(statement instanceof MetaStatement
         || statement instanceof OptionsStatement) {
+        // @TODO: make sure there's exactly 1 meta block
         this.meta.push(statement);
       } else if(statement instanceof ImportStatement) {
         this.importedStyles.set(statement.identifier, statement.path);
