@@ -136,6 +136,7 @@ let defineVar = function(identifier, type, goalscope = null) {
   };
   define(identifier, opts, (args, scope, argErr) => {
     scope.vars.set(identifier, args[0]);
+    return Nil;
   })
 }
 
@@ -160,6 +161,7 @@ let defineBoolean = function(identifier, goalscope = null) {
     } else {
       scope.vars.set(identifier, true);
     }
+    return Nil;
   })
 }
 
@@ -183,6 +185,7 @@ define('time-signature',
       argErr('Argument 2 of "time-signature" must be a power of 2.');
     }
     scope.vars.set('time-signature', [args[0], args[1]]);
+    return Nil;
   });
 defineBoolean('swing', 'options');
 
@@ -198,6 +201,7 @@ define('volume',
       argErr('Argument 1 of "volume" must be in range 0-1 (inclusive).');
     }
     scope.vars.set('volume', args[0]);
+    return Nil;
   });
 defineBoolean('invertible', 'no-meta');
 defineVar('octave', 'number', 'no-meta');
@@ -214,6 +218,25 @@ define('choose',
     return nonNilArgs[Math.floor(Math.random() * nonNilArgs.length)];
   });
 
+define('progression',
+  {
+    types: '*',
+    scope: 'no-config',
+    returns: 'boolean'
+  },
+  (args, scope, argErr) => {
+    return true; // @TODO
+  });
+define('in-scale',
+  {
+    types: '*',
+    scope: 'no-config',
+    returns: 'boolean'
+  },
+  (args, scope, argErr) => {
+    return false; // @TODO
+  });
+
 /*** pattern-only functions ***/
 defineBoolean('private', 'pattern');
 defineVar('length', 'number', 'pattern');
@@ -228,6 +251,7 @@ define('chance',
       argErr('Argument 1 of "chance" must be in range 0-1 (inclusive).');
     }
     scope.vars.set('chance', args[0]);
+    return Nil;
   });
 
 export {definitions};

@@ -63,13 +63,13 @@ FunctionCallArgument -> NumericExpression   {% id %}
 # beats
 BeatGroupLiteral -> "<" _? MeasureGroup _? ">" {% d => new ast.BeatGroupLiteral(d[2]) %}
 MeasureGroup -> SEP_LIST[Measure, "|"]      {% id %}
-Measure -> SPACED_LIST[BeatLiteral]         {% d => new ast.Measure(d[0]) %}
+Measure -> SPACED_LIST[MelodicBeatLiteral]  {% d => new ast.Measure(d[0]) %}
          # choose allowed in here???? For now no
-BeatLiteral -> BL_TimePart ":" BL_PitchPart ":" BL_OctavePart {% d => new ast.BeatLiteral({time: d[0], pitch: d[2], octave: d[4]}) %}
-             | ":" BL_PitchPart ":" BL_OctavePart {% d => new ast.BeatLiteral({pitch: d[1], octave: d[3]}) %}
-             | BL_TimePart ":" BL_PitchPart {% d => new ast.BeatLiteral({time: d[0], pitch: d[2]}) %}
-             | ":" BL_PitchPart             {% d => new ast.BeatLiteral({pitch: d[1]}) %}
-             | DrumBeatLiteral              {% id %}
+MelodicBeatLiteral -> BL_TimePart ":" BL_PitchPart ":" BL_OctavePart {% d => new ast.MelodicBeatLiteral({time: d[0], pitch: d[2], octave: d[4]}) %}
+                    | ":" BL_PitchPart ":" BL_OctavePart {% d => new ast.MelodicBeatLiteral({pitch: d[1], octave: d[3]}) %}
+                    | BL_TimePart ":" BL_PitchPart {% d => new ast.MelodicBeatLiteral({time: d[0], pitch: d[2]}) %}
+                    | ":" BL_PitchPart      {% d => new ast.MelodicBeatLiteral({pitch: d[1]}) %}
+                    | DrumBeatLiteral       {% id %}
 BL_TimePart -> NumericExpression            {% d => ({time: d[0]}) %} # time can be an expression, e.g. tuplet
              | BL_TP_Flag                   {% d => ({time: 'auto', flag: d[0]}) %}
              | NumericExpression BL_TP_Flag {% d => ({time: d[0], flag: d[1]}) %}

@@ -14,6 +14,8 @@ import fs from 'fs'; // lol this shouldn't be allowed
  * @TODO: deal with relative paths outside of the repo vs inside
  * @TODO: windows/unix - https://nodejs.org/api/path.html#path_windows_vs_posix
  */
+ 
+ const path = require('path');
 
 /**
  * Load a file.
@@ -21,10 +23,19 @@ import fs from 'fs'; // lol this shouldn't be allowed
  * @param {string} path The path to the file to load.
  * @return {Promise.<string>} Resolves to the content of the file.
  */
-let load = function load(path) {
+let load = function load(stylePath) {
   return new Promise(function(resolve, reject) {
-    if(path.startsWith('.') || path.startsWith('/'))
-    fs.readFile(path, 'utf8', (err, data) => err ? reject(err) : resolve(data));
+    let isRelative = stylePath.startsWith('.') || stylePath.startsWith('/');
+    if(!isRelative) {
+        stylePath = path.join(__dirname, '../../styles/', stylePath + '.play');
+    }
+    fs.readFile(stylePath, 'utf8', (err, data) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data);
+      }
+    });
   });
 }
 

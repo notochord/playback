@@ -21,3 +21,12 @@ export class FunctionArgumentsError extends PlaybackError {
     super(message, scope);
   }
 }
+
+/* Pattern-related errors */
+export class TooManyBeatsError extends PlaybackError {
+  constructor(scope) {
+    super(
+      'Pattern may only contain 1 BeatGroup. Try the join operator "&"',
+      scope);
+  }
+}

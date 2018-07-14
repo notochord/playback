@@ -11,6 +11,10 @@ module.exports = [
     },
     stats: 'errors-only',
     target: 'node',
+    node: {
+      __dirname: true,
+      __filename: true,
+    },
     mode: 'production',
     module: {
       rules: [
@@ -34,6 +38,10 @@ module.exports = [
     },
     stats: 'errors-only',
     target: 'node',
+    node: {
+      __dirname: true,
+      __filename: true,
+    },
     mode: 'development',
     module: {
       rules: [

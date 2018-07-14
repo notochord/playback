@@ -1,5 +1,7 @@
+import {Nil} from './type_utils.js';
 import Scope from './Scope.js';
 import FunctionCall from './FunctionCall.js';
+import {PatternStatement, PatternCall} from './Pattern.js';
 
 export class TrackStatement extends Scope {
   constructor(opts) {
@@ -20,10 +22,19 @@ export class TrackStatement extends Scope {
       member.init(this);
       if(member instanceof FunctionCall) {
         this.function_calls.push(member);
-      } else {
+      } else if(member instanceof PatternStatement) {
         this.patterns.set(member.identifier, member);
-      }
+      } // @TODO: deal with pattern calls
     });
+  }
+  execute(songIterator) {
+    console.log(`executing ${this.name}`);
+    // @TODO: run functions before patterns
+    for(let [patternname, pattern] of this.patterns) {
+      console.log(`- ${patternname}: ${pattern.execute(songIterator, true).toString()}`);
+      // @TODO: handle multi-measure patterns (via locks?)
+      // true = I'm the instrument so if you're private return Nil
+    }
   }
 }
 export class TrackCall {

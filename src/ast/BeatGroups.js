@@ -1,3 +1,4 @@
+import {Note, NoteSet} from '../MIDI/Note.js';
 import FunctionCall from './FunctionCall.js';
 
 export class BeatGroupLiteral {
@@ -6,11 +7,18 @@ export class BeatGroupLiteral {
   }
   // @TODO for non-drums, make sure I'm not in a drum literal
   // because of choose() I don't think this is possible 'till execution?
+  execute(songIterator) {
+    return new NoteSet(new Note({beat: 1, pitch: 50, duration: 1, velocity: 0.4}));
+  }
 }
 
 export class Measure {
   constructor(beats) {
     this.beats = beats;
+  }
+  execute(songIterator) {
+    // @TODO: combine NoteSets somehow :o
+    return this.beats[0].execute(songIterator);
   }
 }
 

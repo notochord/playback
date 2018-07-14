@@ -6,7 +6,7 @@ export default function() {
   
   // load a couple test files
   // yes one promise can have multiple thens, I checked in chrome console
-  let styles_dir = 'src/parser/test/styles/';
+  let styles_dir = './src/parser/test/styles/';
   let file_ambig = loader.load(styles_dir + 'ambig.play');
   let file_example = loader.load(styles_dir + 'example.play');
   

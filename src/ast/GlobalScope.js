@@ -45,4 +45,9 @@ export default class GlobalScope extends Scope {
     
     this.tracks.forEach(statement => statement.init(this));
   }
+  execute(songIterator) {
+    for(let [trackname, track] of this.tracks) {
+      track.execute(songIterator);
+    }
+  }
 }

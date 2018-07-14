@@ -27,13 +27,18 @@ class Song {
     return this.measures[this._idx + dist];
   }
 }
-let song = new Song([
-  // Each array is a measure, and each item in an array is a beat.
-  // null inside a measure means there's no chord set for that beat.
-  ['A-', null, null, null], ['E', null, null, null], ['A-7', null, null, null], ['A-6', null, null, null],
-  ['CM7', null, 'A7', null], ['D-7', null, 'G7', null], ['C6', null, null, null], ['Bdim7', null, 'E7', null],
-  ['A-', null, null, null], ['E', null, null, null], ['A-7', null, null, null], ['A-6', null, null, null],
-  ['CM7', null, 'A7', null], ['D-7', null, 'G7', null], ['C6', null, null, null], ['C6', null, null, null]
-]);
 
-new index.PlaybackStyle('./test/styles/example.play');
+(async function() {
+  let song = new Song([
+    // Each array is a measure, and each item in an array is a beat.
+    // null inside a measure means there's no chord set for that beat.
+    ['A-', null, null, null], ['E', null, null, null], ['A-7', null, null, null], ['A-6', null, null, null],
+    ['CM7', null, 'A7', null], ['D-7', null, 'G7', null], ['C6', null, null, null], ['Bdim7', null, 'E7', null],
+    ['A-', null, null, null], ['E', null, null, null], ['A-7', null, null, null], ['A-6', null, null, null],
+    ['CM7', null, 'A7', null], ['D-7', null, 'G7', null], ['C6', null, null, null], ['C6', null, null, null]
+  ]);
+
+  let style = new index.PlaybackStyle('./test/styles/example.play');
+  await style._loadDependencies();
+  style.play(song)
+})();

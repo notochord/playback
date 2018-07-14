@@ -13,6 +13,7 @@ import {PatternStatement, PatternExpressionGroup, PatternCall, JoinedPatternExpr
 import FunctionCall from './FunctionCall.js';
 import {AnchorArgument, BooleanNot, BooleanAnd, BooleanOr} from './ArgumentOperators.js';
 import {BeatGroupLiteral, Measure, DrumBeatGroupLiteral} from './BeatGroups.js';
+import {MelodicBeatLiteral, DrumBeatLiteral} from './BeatLiterals.js';
 
 export {
   /* global meta stuff */
@@ -30,18 +31,8 @@ export {
   AnchorArgument, BooleanNot, BooleanAnd, BooleanOr,
   
   /* beat groups */
-  BeatGroupLiteral, Measure, DrumBeatGroupLiteral
+  BeatGroupLiteral, Measure, DrumBeatGroupLiteral,
+  
+  /* beats */
+  MelodicBeatLiteral, DrumBeatLiteral
 };
-
-/* beats */
-export function BeatLiteral(opts) {
-  this.time = opts.time || {time: 'auto'};
-  this.pitch = opts.pitch;
-  this.octave = opts.octave || 'inherit';
-}
-
-/* drums */
-export function DrumBeatLiteral(opts) {
-  this.time = opts.time;
-  this.accented = opts.accented || false;
-  }

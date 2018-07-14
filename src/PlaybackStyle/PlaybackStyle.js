@@ -15,7 +15,8 @@ export default class PlaybackStyle {
     // and letting GlobalScopes request instruments from deps
     // and other things I'll think of later
     // (do we need an ASTNode class that all nodes inherit from?)
-    this._loadDependencies();
+    
+    //this._loadDependencies();
     // @TODO: complain when you try to play before loading is done
   }
   /**
@@ -41,14 +42,18 @@ export default class PlaybackStyle {
       for(let newDependency of ast.dependencies) {
         if(!this._ASTs.has(newDependency)) {
           pendingDependencies.push(newDependency);
+        } else {
         }
       }
     }
+    this._main = this._ASTs.get(this._mainPath);
   }
   async play(song) {
+    this._main.execute(song);
+    /*
     for(measure of song) {
       let notes = this._main.execute(measure);
       await player.play(notes); // ????????????????????
-    }
+    }*/
   }
 }

@@ -64,12 +64,12 @@
 		// the second interpretation can include the first
 	}
 	
-	@pattern brainstorm if(not true) {
+	@pattern brainstorm if(not false) {
 		private()
 		<1/3:1 2/3:2 1:3 2:3 3:3 4:3>
 	}
 	
-	@pattern myPattern if(chance(1/3) and true) volume(1)
+	@pattern myPattern if(true and true) volume(1)
 	
 }
 

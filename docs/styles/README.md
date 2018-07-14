@@ -400,6 +400,9 @@ and 1 possible flag:
 | ---- | ------- |
 | `a`  | Accented (volume boost) |
 
+TODO case insensitivity? dash/space insensitivity? Would help with the
+inconsistencies in the spec I guess
+
 ## Operators
 
 ### Arithmetic operators

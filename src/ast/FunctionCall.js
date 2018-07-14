@@ -34,6 +34,7 @@ export default class FunctionCall {
     function_data.assertArgTypes(this.identifier, this.args, this.definition.types, this.scope);
   }
   execute() { // don't want to mess with JS's Function.prototype.call()
+    if(!this.scope) throw new Error('function not initialized :(');
     let evaluated_args = this.args.map(arg => {
       if(arg.execute) {
         return arg.execute();
@@ -41,6 +42,10 @@ export default class FunctionCall {
         return arg;
       }
     });
-    return this.definition.execute(evaluated_args, this.scope);
+    let return_value = this.definition.execute(evaluated_args, this.scope);
+    if(return_value === undefined) {
+      throw new Error(`Function "${this.identifier}" can return undefined`);
+    }
+    return return_value;
   }
 }
