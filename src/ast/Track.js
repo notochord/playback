@@ -1,9 +1,9 @@
 import {Nil} from './type_utils.js';
 import {
-    NoSuchStyleError,
-    NoSuchTrackError,
-    NoSuchPatternError
-  } from './errors.js';
+  NoSuchStyleError,
+  NoSuchTrackError,
+  NoSuchPatternError
+} from './errors.js';
 import Scope from './Scope.js';
 import FunctionCall from './FunctionCall.js';
 import {PatternStatement, PatternCall} from './Pattern.js';

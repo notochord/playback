@@ -56,3 +56,15 @@ export class TooManyBeatsError extends PlaybackError {
       scope);
   }
 }
+
+/* Beat-related errors*/
+export class MelodicBeatInDrumBeatGroupError extends PlaybackError {
+  constructor(scope) {
+    super('Unexpected Melodic Beat in a Drum Beat Group', scope);
+  }
+}
+export class DrumBeatInMelodicBeatGroupError extends PlaybackError {
+  constructor(scope) {
+    super('Unexpected Drum Beat in a Melodic Beat Group', scope);
+  }
+}

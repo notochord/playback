@@ -25,7 +25,11 @@ export class PatternExpressionGroup extends Scope {
       this.name = `@pattern(${this.patternStatement})`;
     }
     this.expressions.forEach(expression => {
-      if(expression.init) expression.init(this);
+      if(expression.init) {
+        expression.init(this);
+      } else {
+        console.log('expression not initialized:', expression);
+      }
       if(expression instanceof FunctionCall) {
         this.function_calls.push(expression);
       } else {
@@ -104,7 +108,6 @@ export class PatternCall {
   }
   init(scope) {
     this.scope = scope;
-    // @TODO: somehow request them from the PlaybackStyle object?
   }
   link(ASTs, parentStyle, parentTrack) {
     let ast;
@@ -136,7 +139,7 @@ export class PatternCall {
   }
   execute(songIterator) {
     // called patternStatement ignores private()
-    return this.patternStatement.execute(songIterator, true);
+    return this.patternStatement.execute(songIterator);
   }
 }
 
