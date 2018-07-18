@@ -34,38 +34,9 @@ export class PatternExpressionGroup extends Scope {
     });
   }
   link(ASTs, parentStyle, parentTrack) {
-    /*for(let patternCall of this.patternCalls) {
-      // get path name of style
-      let ast;
-      if(patternCall.import === null) {
-        ast = parentStyle
-      } else {
-        let importPath = parentStyle.importedStyles.get(patternCall.import);
-        ast = ASTs.get(importPath);
-        if(!ast) throw new NoSuchStyleError(patternCall.import, this);
-      }
-      let track;
-      if(patternCall.track === null) {
-        track = parentTrack;
-      } else {
-        let trackStatement = ast.tracks.get(patternCall.track);
-        if(!trackStatement) throw new NoSuchTrackError(
-          patternCall.import || 'this',
-          patternCall.track || 'this',
-          this);
-      }
-      let patternStatement = track.patterns.get(patternCall.pattern);
-      if(!patternStatement) throw new NoSuchPatternError(
-        patternCall.import || 'this',
-        patternCall.track || 'this',
-        patternCall.pattern,
-        this);
-      //trackCall.trackStatement = trackStatement;
-      let name = (patternCall.import || 'this') + '.' +
-        (patternCall.track || 'this') + '.' +
-        patternCall.pattern;
-      this.patterns.set(name, patternStatement);
-    }*/
+    this.expressions.forEach(expression => {
+      expression.link(ASTs, parentStyle, parentTrack);
+    });
   }
   execute(songIterator, callerIsTrack = false) {
     let beats = Nil;
@@ -87,7 +58,6 @@ export class PatternExpressionGroup extends Scope {
         expression = expression.execute(songIterator);
       }
       if(expression instanceof NoteSet) {
-        console.log('  - instanceof NoteSet');
         if(beats !== Nil) {
           throw new TooManyBeatsError(this);
         }
@@ -128,18 +98,62 @@ export class PatternCall {
     this.track = opts.track || null;
     this.pattern = opts.pattern;
     this.scope = null;
+    this.prettyprintname = (this.import || 'this') + '.' +
+      (this.track || 'this') + '.' +
+      this.pattern;
   }
   init(scope) {
     this.scope = scope;
     // @TODO: somehow request them from the PlaybackStyle object?
   }
+  link(ASTs, parentStyle, parentTrack) {
+    let ast;
+    if(this.import === null) {
+      ast = parentStyle
+    } else {
+      // get path name of style
+      let importPath = parentStyle.importedStyles.get(this.import);
+      ast = ASTs.get(importPath);
+      if(!ast) throw new NoSuchStyleError(this.import, this);
+    }
+    let track;
+    if(this.track === null) {
+      track = parentTrack;
+    } else {
+      track = ast.tracks.get(this.track);
+      if(!track) throw new NoSuchTrackError(
+        this.import || 'this',
+        this.track || 'this',
+        this);
+    }
+    let patternStatement = track.patterns.get(this.pattern);
+    if(!patternStatement) throw new NoSuchPatternError(
+      this.import || 'this',
+      this.track || 'this',
+      this.pattern,
+      this);
+    this.patternStatement = patternStatement;
+  }
+  execute(songIterator) {
+    // called patternStatement ignores private()
+    return this.patternStatement.execute(songIterator, true);
+  }
 }
+
 export class JoinedPatternExpression {
   constructor(patterns) {
     this.patterns = patterns;
   }
   init(scope) {
     this.scope = scope;
+    this.patterns.forEach(pattern => {
+      if(pattern.init) pattern.init(scope);
+    });
+  }
+  link(ASTs, parentStyle, parentTrack) {
+    this.patterns.forEach(pattern => {
+      pattern.link(ASTs, parentStyle, parentTrack);
+    });
   }
   execute(songIterator) {
     let noteSets = [];
@@ -149,6 +163,7 @@ export class JoinedPatternExpression {
       }
       if(pattern instanceof NoteSet) {
         noteSets.push(pattern);
+        console.log('    - NoteSet in joined expression:', pattern);
       } else {
         console.log('    - non NoteSet in joined expression:', pattern);
       }

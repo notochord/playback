@@ -7,6 +7,7 @@ export class BeatGroupLiteral {
   }
   // @TODO for non-drums, make sure I'm not in a drum literal
   // because of choose() I don't think this is possible 'till execution?
+  link() {return;}
   execute(songIterator) {
     return new NoteSet(new Note({beat: 1, pitch: 50, duration: 1, velocity: 0.4}));
   }
@@ -32,6 +33,7 @@ export class DrumBeatGroupLiteral {
     }
     // @TODO make sure our beats are all drummy
   }
+  link() {return;}
   execute(songIterator) {
     return this.beatGroup.execute(songIterator);
   }

@@ -37,36 +37,8 @@ export class TrackStatement extends Scope {
   }
   link(ASTs, parentStyle) {
     for(let patternCall of this.patternCalls) {
-      // get path name of style
-      let ast;
-      if(patternCall.import === null) {
-        ast = parentStyle
-      } else {
-        let importPath = parentStyle.importedStyles.get(patternCall.import);
-        ast = ASTs.get(importPath);
-        if(!ast) throw new NoSuchStyleError(patternCall.import, this);
-      }
-      let track;
-      if(patternCall.track === null) {
-        track = this;
-      } else {
-        let trackStatement = ast.tracks.get(patternCall.track);
-        if(!trackStatement) throw new NoSuchTrackError(
-          patternCall.import || 'this',
-          patternCall.track || 'this',
-          this);
-      }
-      let patternStatement = track.patterns.get(patternCall.pattern);
-      if(!patternStatement) throw new NoSuchPatternError(
-        patternCall.import || 'this',
-        patternCall.track || 'this',
-        patternCall.pattern,
-        this);
-      //trackCall.trackStatement = trackStatement;
-      let name = (patternCall.import || 'this') + '.' +
-        (patternCall.track || 'this') + '.' +
-        patternCall.pattern;
-      this.patterns.set(name, patternStatement);
+      patternCall.link(ASTs, parentStyle, this);
+      this.patterns.set(patternCall.prettyprintname, patternCall);
     }
     
     for(let [patternname, pattern] of this.patterns) {

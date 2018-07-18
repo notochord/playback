@@ -33,6 +33,11 @@ export default class FunctionCall {
     
     function_data.assertArgTypes(this.identifier, this.args, this.definition.types, this.scope);
   }
+  link(ASTs, parentStyle, parentTrack) {
+    this.args.forEach(arg => {
+      if(arg.link) arg.link(ASTs, parentStyle, parentTrack);
+    });
+  }
   execute() { // don't want to mess with JS's Function.prototype.call()
     if(!this.scope) throw new Error('function not initialized :(');
     let evaluated_args = this.args.map(arg => {
