@@ -40,5 +40,6 @@ class Song {
 
   let style = new index.PlaybackStyle('./test/styles/example.play');
   await style._loadDependencies();
+  style._link();
   style.play(song)
 })();

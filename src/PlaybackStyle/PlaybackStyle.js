@@ -38,18 +38,19 @@ export default class PlaybackStyle {
       let ast = await parser.parse(rawfile);
       this._ASTs.set(dependencyPath, ast);
       ast.init();
-      console.log(dependencyPath, pendingDependencies);
       for(let newDependency of ast.dependencies) {
         if(!this._ASTs.has(newDependency)) {
           pendingDependencies.push(newDependency);
-        } else {
         }
       }
     }
     this._main = this._ASTs.get(this._mainPath);
   }
+  _link() {
+    this._main.link(this._ASTs);
+  }
   async play(song) {
-    this._main.execute(song);
+    this._main.execute(song[Symbol.iterator]);
     /*
     for(measure of song) {
       let notes = this._main.execute(measure);

@@ -29,6 +29,7 @@ ImportStatement -> "@import" _ StringLiteral _ "as" _ Identifier {% d => new ast
 TrackStatement -> "@track" _ StringLiteral _ "as" _ Identifier _? "{" _? SPACED_LIST[TrackMember] _? "}" {% d => new ast.TrackStatement({instrument: d[2], identifier: d[6], members: d[10]}) %}
 TrackMember -> FunctionCallExpression       {% id %} # I know this name is bad
              | PatternStatement             {% id %}
+             | PatternCallExpression        {% id %}
 TrackCallStatement -> "@track" _? "(" _? Identifier "." Identifier _? ")" {% d => new ast.TrackCall({import: d[4], track: d[6]}) %}
 
 # patterns

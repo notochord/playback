@@ -1,3 +1,4 @@
+import {NoSuchStyleError, NoSuchTrackError} from './errors.js';
 import Scope from './Scope.js';
 import {MetaStatement, OptionsStatement, ImportStatement} from './ConfigStatements.js';
 import {TrackStatement, TrackCall} from './Track.js';
@@ -24,6 +25,7 @@ export default class GlobalScope extends Scope {
     this.meta = [];
     // @TODO: stop circular dependencies? cache them and mark one as mom
     this.importedStyles = new Map();
+    this.trackCalls = [];
     this.dependencies = [];
     
     for(let statement of this.statements) {
@@ -36,6 +38,8 @@ export default class GlobalScope extends Scope {
         this.dependencies.push(statement.path);
       } else if(statement instanceof TrackStatement) {
         this.tracks.set(statement.name, statement);
+      } else if(statement instanceof TrackCall) {
+        this.trackCalls.push(statement);
       }
     }
     // handle meta blocks first since they set variables in own scope
@@ -44,6 +48,26 @@ export default class GlobalScope extends Scope {
     // -- handle importing before statements --
     
     this.tracks.forEach(statement => statement.init(this));
+  }
+  link(ASTs) {
+    for(let trackCall of this.trackCalls) {
+      // get path name of style
+      let importPath = this.importedStyles.get(trackCall.import);
+      
+      let ast = ASTs.get(importPath);
+      if(!ast) throw new NoSuchStyleError(trackCall.import, this);
+      let trackStatement = ast.tracks.get(trackCall.track);
+      if(!trackStatement) throw new NoSuchTrackError(
+        trackCall.import,
+        trackCall.track,
+        this);
+      //trackCall.trackStatement = trackStatement;
+      this.tracks.set(`${trackCall.import}.${trackCall.track}`, trackStatement);
+    }
+    
+    for(let [trackname, track] of this.tracks) {
+      track.link(ASTs, this);
+    }
   }
   execute(songIterator) {
     for(let [trackname, track] of this.tracks) {

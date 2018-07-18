@@ -32,4 +32,7 @@ export class DrumBeatGroupLiteral {
     }
     // @TODO make sure our beats are all drummy
   }
+  execute(songIterator) {
+    return this.beatGroup.execute(songIterator);
+  }
 }

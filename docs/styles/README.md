@@ -225,9 +225,6 @@ You can create smaller, "anonymous" scopes that can have their own settings:
 
 ### Calling a pattern
 
-(TODO: calling a pattern directly into a track would be handy, it seems like
-`@patterh(my-track.my-pattern)` is 100% useless)
-
 You can re-use a pattern using a Pattern Call. This could be a pattern local
 to the current track:
 
@@ -265,6 +262,15 @@ Or, probably more usefully, use a pattern that's defined in an imported style
   @pattern hi-hat {
     @pattern(stdlib.drums.hi-hat)
   }
+}
+```
+
+You can also use a pattern call directly in a track definition:
+
+```
+@import "standard-library" as stdlib
+@track "percussion" as drums {
+  @pattern(stdlib.drums.hi-hat)
 }
 ```
 

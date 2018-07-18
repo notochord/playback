@@ -5,29 +5,6 @@ import Scope from './Scope.js';
 import FunctionCall from './FunctionCall.js';
 import {BeatGroupLiteral} from './BeatGroups.js';
 
-export class PatternStatement {
-  constructor(opts) {
-    this.identifier = opts.identifier,
-    this.expression = opts.expression,
-    this.condition = (opts.condition !== undefined) ? opts.condition : null;
-  }
-  init(scope) {
-    this.scope = scope;
-    if(this.condition && this.condition.init) this.condition.init(scope); //????
-    if(this.expression.init) this.expression.init(scope, this); // I am not a scope
-  }
-  execute(songIterator, callerIsTrack) {
-    if(this.condition) {
-      let condition_value = this.condition.execute();
-      if(cast_bool(condition_value) === false) return Nil;
-    }
-    if(this.expression.execute) {
-      return this.expression.execute(songIterator, callerIsTrack);
-    } else {
-      return 'expression not executable yet :/'
-    }
-  }
-}
 export class PatternExpressionGroup extends Scope {
   constructor(expressions) {
     super();
@@ -56,6 +33,40 @@ export class PatternExpressionGroup extends Scope {
       }
     });
   }
+  link(ASTs, parentStyle, parentTrack) {
+    /*for(let patternCall of this.patternCalls) {
+      // get path name of style
+      let ast;
+      if(patternCall.import === null) {
+        ast = parentStyle
+      } else {
+        let importPath = parentStyle.importedStyles.get(patternCall.import);
+        ast = ASTs.get(importPath);
+        if(!ast) throw new NoSuchStyleError(patternCall.import, this);
+      }
+      let track;
+      if(patternCall.track === null) {
+        track = parentTrack;
+      } else {
+        let trackStatement = ast.tracks.get(patternCall.track);
+        if(!trackStatement) throw new NoSuchTrackError(
+          patternCall.import || 'this',
+          patternCall.track || 'this',
+          this);
+      }
+      let patternStatement = track.patterns.get(patternCall.pattern);
+      if(!patternStatement) throw new NoSuchPatternError(
+        patternCall.import || 'this',
+        patternCall.track || 'this',
+        patternCall.pattern,
+        this);
+      //trackCall.trackStatement = trackStatement;
+      let name = (patternCall.import || 'this') + '.' +
+        (patternCall.track || 'this') + '.' +
+        patternCall.pattern;
+      this.patterns.set(name, patternStatement);
+    }*/
+  }
   execute(songIterator, callerIsTrack = false) {
     let beats = Nil;
     for(let function_call of this.function_calls) {
@@ -72,9 +83,11 @@ export class PatternExpressionGroup extends Scope {
     }
     for(let expression of this.non_function_call_expressions) {
       if(expression.execute) {
+        console.log('  - executing executable expression')
         expression = expression.execute(songIterator);
       }
       if(expression instanceof NoteSet) {
+        console.log('  - instanceof NoteSet');
         if(beats !== Nil) {
           throw new TooManyBeatsError(this);
         }
@@ -83,8 +96,32 @@ export class PatternExpressionGroup extends Scope {
     }
     return beats
   }
-  
 }
+
+export class PatternStatement extends PatternExpressionGroup {
+  constructor(opts) {
+    if(opts.expression instanceof PatternExpressionGroup) {
+      // unroll the redundant expression group
+      super(opts.expression.expressions);
+    } else {
+      super([opts.expression]);
+    }
+    this.identifier = opts.identifier;
+    this.condition = (opts.condition !== undefined) ? opts.condition : null;
+  }
+  init(scope) {
+    super.init(scope);
+    if(this.condition && this.condition.init) this.condition.init(this);
+  }
+  execute(songIterator, callerIsTrack) {
+    if(this.condition) {
+      let condition_value = this.condition.execute();
+      if(cast_bool(condition_value) === false) return Nil;
+    }
+    return super.execute(songIterator, callerIsTrack);
+  }
+}
+
 export class PatternCall {
   constructor(opts) {
     this.import = opts.import || null;
@@ -105,6 +142,21 @@ export class JoinedPatternExpression {
     this.scope = scope;
   }
   execute(songIterator) {
-    return true;
+    let noteSets = [];
+    for(let pattern of this.patterns) {
+      if(pattern.execute) {
+        pattern = pattern.execute(songIterator);
+      }
+      if(pattern instanceof NoteSet) {
+        noteSets.push(pattern);
+      } else {
+        console.log('    - non NoteSet in joined expression:', pattern);
+      }
+    }
+    if(noteSets.length) {
+      return (new NoteSet()).concat(...noteSets);
+    } else {
+      return Nil;
+    }
   }
 }
