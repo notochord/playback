@@ -50,7 +50,7 @@ export class TrackStatement extends Scope {
     // @TODO: run functions before patterns
     for(let [patternname, pattern] of this.patterns) {
       console.log(`- pattern "${patternname}":`);
-      console.log(`  - Result: ${pattern.execute(songIterator, true).toString()}`);
+      console.log('  - Result:', pattern.execute(songIterator, true));
       // @TODO: handle multi-measure patterns (via locks?)
       // true = I'm the instrument so if you're private return Nil
     }

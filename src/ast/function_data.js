@@ -215,7 +215,12 @@ define('choose',
   },
   (args, scope, argErr) => {
     let nonNilArgs = args.filter(arg => arg !== Nil);
-    return nonNilArgs[Math.floor(Math.random() * nonNilArgs.length)];
+    if(nonNilArgs.length) {
+      let index = Math.floor(Math.random() * nonNilArgs.length);
+      return nonNilArgs[index];
+    } else {
+      return Nil;
+    }
   });
 
 define('progression',

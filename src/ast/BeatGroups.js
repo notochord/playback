@@ -1,3 +1,4 @@
+import {Nil} from './type_utils.js';
 import {Note, NoteSet} from '../MIDI/Note.js';
 import FunctionCall from './FunctionCall.js';
 
@@ -9,7 +10,17 @@ export class BeatGroupLiteral {
   // because of choose() I don't think this is possible 'till execution?
   link() {return;}
   execute(songIterator) {
-    return new NoteSet(new Note({beat: 1, pitch: 50, duration: 1, velocity: 0.4}));
+    let joinedMeasures = new NoteSet();
+    for(let i = 0; i < this.measures.length; i++) {
+      let offset = i * 4; // @TODO: pull in actual meter somehow
+      let measureNotes = this.measures[i].execute(songIterator);
+      if(measureNotes === Nil) return Nil; // lets a/s abort the beatgroup
+      for(let measureNote of measureNotes) {
+        measureNote.time += offset;
+        joinedMeasures.push(measureNote);
+      }
+    }
+    return joinedMeasures;
   }
 }
 
@@ -18,8 +29,14 @@ export class Measure {
     this.beats = beats;
   }
   execute(songIterator) {
-    // @TODO: combine NoteSets somehow :o
-    return this.beats[0].execute(songIterator);
+    // each beat returns a NoteSet since it could be a chord or whatever
+    let joined = new NoteSet();
+    for(let beat of this.beats) {
+      let notes = beat.execute(songIterator);
+      if(notes === Nil) return Nil; // lets a and s abort the beatgroup.
+      joined.push(...notes);
+    }
+    return joined;
   }
 }
 
