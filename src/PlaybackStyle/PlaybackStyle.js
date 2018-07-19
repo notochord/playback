@@ -10,14 +10,7 @@ export default class PlaybackStyle {
   constructor(mainPath) {
     this._mainPath = mainPath;
     this._ASTs = new Map();
-    // @TODO: generate a globals object that gets passed down the ast
-    // for throwing errors without using actual JS errors
-    // and letting GlobalScopes request instruments from deps
-    // and other things I'll think of later
-    // (do we need an ASTNode class that all nodes inherit from?)
-    
-    //this._loadDependencies();
-    // @TODO: complain when you try to play before loading is done
+    this._initialized = false;
   }
   /**
    * Parse each file, pull its dependencies, put it all in a cache, rinse and
@@ -49,12 +42,40 @@ export default class PlaybackStyle {
   _link() {
     this._main.link(this._ASTs);
   }
-  async play(song) {
-    this._main.execute(song[Symbol.iterator]);
+  /**
+   * Initialize the style, which includes loading dependencies and linking
+   * track/pattern calls. Must be called before compiling/playing.
+   */
+  async init() {
+    await this._loadDependencies();
+    this._link();
+    this._initialized = true;
+  }
+  /**
+   * Compile a song into a set of MIDI-like note instructions.
+   * @param {Song} song A Playback Song (notochord????)
+   * @returns {NoteSet.<Note>} An array-like object containing MIDI-like note
+   * instructions.
+   */
+  compile(song) {
+    if(!this._initialized) {
+      throw new Error('PlayBack style must be initialized before compiling');
+    }
+    let songIterator = song[Symbol.iterator]();
+    let nextValue = songIterator.next();
+    console.log('nextValue', nextValue)
+    let notes = this._main.execute(songIterator);
+    console.log('---final result---');
+    console.log(notes);
+    
     /*
-    for(measure of song) {
-      let notes = this._main.execute(measure);
-      await player.play(notes); // ????????????????????
-    }*/
+    while(nextValue = songIterator.next(), !nextValue.done) {
+      this._main.execute(songIterator);
+    }
+    */
+  }
+  async play(song) {
+    this.compile(song);
+    // @TODO: take the MIDI events and play them
   }
 }

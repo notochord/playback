@@ -10,21 +10,33 @@ parser_tests();
 // @TODO: have a set of tests directly on playback.js to make sure the apis
 // export correctly cuz webpack is being iffy about that
 
-class Song {
+class Song extends Array {
   constructor(measures) {
-    this.measures = measures;
-    this.length = this.measures.length;
+    super(...measures);
     this._idx = -1;
   }
+  [Symbol.iterator]() {
+    return new SongIterator(this);
+  }
+}
+
+class SongIterator {
+  constructor(song) {
+    this.song = song;
+    this.index = -1;
+  }
   next() {
-    if(++this._idx < this.length) {
-      return {value: this.measures[this._idx], done: false};
+    if(++this.index < this.song.length) {
+      return {value: this.song[this.index], done: false};
     } else {
       return {value: undefined, done: true};
     }
   }
-  lookahead(dist) {
-    return this.measures[this._idx + dist];
+  get(idx) {
+    return this.song[idx];
+  }
+  getRelative(dist = 0) {
+    return this.song[this.index + dist];
   }
 }
 
@@ -39,7 +51,6 @@ class Song {
   ]);
 
   let style = new index.PlaybackStyle('./test/styles/example.play');
-  await style._loadDependencies();
-  style._link();
+  await style.init();
   style.play(song)
 })();

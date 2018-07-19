@@ -1,3 +1,5 @@
+import {Nil} from './type_utils.js';
+import {NoteSet} from '../MIDI/Note.js';
 import {NoSuchStyleError, NoSuchTrackError} from './errors.js';
 import Scope from './Scope.js';
 import {MetaStatement, OptionsStatement, ImportStatement} from './ConfigStatements.js';
@@ -70,8 +72,13 @@ export default class GlobalScope extends Scope {
     }
   }
   execute(songIterator) {
+    let notes = new NoteSet();
     for(let [trackname, track] of this.tracks) {
-      track.execute(songIterator);
+      let trackNotes = track.execute(songIterator);
+      if(trackNotes !== Nil) {
+        notes.push(...trackNotes);
+      }
     }
+    return notes;
   }
 }

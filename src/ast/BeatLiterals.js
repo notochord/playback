@@ -70,16 +70,39 @@ export class DrumBeatLiteral {
     this.time = opts.time;
     this.accented = opts.accented || false;
     this.scope = null;
+    this.parentMeasure = null;
+    this.indexInMeasure = null;
   }
-  init(scope) {
+  init(scope, parentMeasure, indexInMeasure) {
     this.scope = scope;
+    this.parentMeasure = parentMeasure;
+    this.indexInMeasure = indexInMeasure;
+  }
+  getTime() {
+    return this.time;
+  }
+  getDuration() {
+    let duration;
+    duration = this.parentMeasure.calculateDurationAfter(this.indexInMeasure);
+    return duration;
+  }
+  getVolume() {
+    let volume = this.scope.vars.get('volume');
+    if(this.accented) volume = Math.min(1, volume += .1);
+    return volume;
   }
   execute(songIterator) {
-    return new NoteSet(new Note({
-      time: 1,
-      pitch: AwaitingDrum,
-      duration: 1,
-      volume: this.scope.vars.get('volume')
-    }));
+    let time = this.getTime();
+    let duration = this.getDuration();
+    let volume = this.getVolume();
+    
+    return new NoteSet(
+      new Note({
+        time: time,
+        pitch: AwaitingDrum,
+        duration: duration,
+        volume: volume
+      })
+    );
   }
 }

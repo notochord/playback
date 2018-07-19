@@ -28,7 +28,7 @@ export class PatternExpressionGroup extends Scope {
       if(expression.init) {
         expression.init(this);
       } else {
-        console.log('expression not initialized:', expression);
+        throw ['expression not initialized:', expression];
       }
       if(expression instanceof FunctionCall) {
         this.function_calls.push(expression);
@@ -58,7 +58,6 @@ export class PatternExpressionGroup extends Scope {
     }
     for(let expression of this.non_function_call_expressions) {
       if(expression.execute) {
-        console.log('  - executing executable expression')
         expression = expression.execute(songIterator);
       }
       if(expression instanceof NoteSet) {
@@ -83,6 +82,9 @@ export class PatternStatement extends PatternExpressionGroup {
     this.identifier = opts.identifier;
     this.condition = (opts.condition !== undefined) ? opts.condition : null;
   }
+  getChance() {
+    return this.vars.get('chance');
+  }
   init(scope) {
     super.init(scope);
     if(this.condition && this.condition.init) this.condition.init(this);
@@ -102,9 +104,13 @@ export class PatternCall {
     this.track = opts.track || null;
     this.pattern = opts.pattern;
     this.scope = null;
+    this.patternStatement = null;
     this.prettyprintname = (this.import || 'this') + '.' +
       (this.track || 'this') + '.' +
       this.pattern;
+  }
+  getChance() {
+    return this.patternStatement.getChance()();
   }
   init(scope) {
     this.scope = scope;
@@ -166,9 +172,6 @@ export class JoinedPatternExpression {
       }
       if(pattern instanceof NoteSet) {
         noteSets.push(pattern);
-        console.log('    - NoteSet in joined expression:', pattern);
-      } else {
-        console.log('    - non NoteSet in joined expression:', pattern);
       }
     }
     if(noteSets.length) {

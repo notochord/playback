@@ -37,6 +37,7 @@ export class BeatGroupLiteral {
 export class Measure {
   constructor(beats) {
     this.beats = beats;
+    this.beatsPerMeasure = null;
     this.scope = null;
   }
   calculateDurationAfter(beatIndex) {
@@ -45,7 +46,7 @@ export class Measure {
     
     let nextBeatTime;
     if(beatIndex + 1 >= this.beats.length) {
-      nextBeatTime = this.beats.length + 1;
+      nextBeatTime = this.beatsPerMeasure + 1;
     } else {
       let nextBeat = this.beats[beatIndex + 1];
       nextBeatTime = nextBeat.getTime();
@@ -54,6 +55,8 @@ export class Measure {
   }
   init(scope) {
     this.scope = scope;
+    this.beatsPerMeasure = this.scope.vars.get('time-signature')[0];
+    // @TODO does this need more math?
     this.beats.forEach((beat, i) => {
       beat.init(scope, this, i);
     });
@@ -85,7 +88,7 @@ export class DrumBeatGroupLiteral {
     let notes = this.beatGroup.execute(songIterator);
     for(let note of notes) {
       if(note.pitch === AwaitingDrum) {
-        note.pitch = this.drum;
+        note.pitch = this.drum; // @TODO: convert to number?
       } else {
         throw new MelodicBeatInDrumBeatGroupError(this.scope);
       }
