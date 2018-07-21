@@ -22,8 +22,28 @@ export class MelodicBeatLiteral {
       return this.time.time;
     }
   }
-  getPitches() {
-    return [60];
+  getPitches(songIterator) { // should current chord be requested from measure?
+    let root;
+    
+    switch(this.pitch.anchor) {
+      case 'KEY': {
+        root = songIterator.song.getKey();
+        break;
+      }
+      case 'NEXT': {
+        root = songIterator.getRelative(1)[0];
+        break;
+      }
+      default: {
+        root = 59;
+      }
+    }
+    
+    if(this.pitch.chord) {
+      return [root, 60];
+    } else {
+      return [root];
+    }
   }
   getOctave() {
     if(this.octave === 'inherit') {
@@ -48,7 +68,7 @@ export class MelodicBeatLiteral {
   execute(songIterator) {
     let notes = new NoteSet();
     let time = this.getTime(); // @TODO: this varies with rolling
-    let pitches = this.getPitches();
+    let pitches = this.getPitches(songIterator);
     let duration = this.getDuration(); // @TODO: this varies with rolling
     let volume = this.getVolume();
     

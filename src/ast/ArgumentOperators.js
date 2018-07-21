@@ -10,16 +10,21 @@ class BooleanOperator {
   constructor() {
     this.args = Array.prototype.slice.call(arguments);
   }
+  link(ASTs, parentStyle, parentTrack) {
+    this.args.forEach(arg => {
+      if(arg.link) arg.link(ASTs, parentStyle, parentTrack);
+    });
+  }
   init(scope) {
     this.scope = scope
     this.args.forEach(arg => {
       if(arg.init) arg.init(scope);
     });
   }
-  resolve_args() {
+  resolve_args(songIterator) {
     return this.args.map(arg => {
       if(arg.init) {
-        return arg.init();
+        return arg.init(songIterator);
       } else {
         return arg;
       }
@@ -31,8 +36,8 @@ export class BooleanNot extends BooleanOperator {
   constructor() {
     super(arguments);
   }
-  execute() {
-    let args = this.resolve_args();
+  execute(songIterator) {
+    let args = this.resolve_args(songIterator);
     return !cast_bool(args[0]);
   }
 }
@@ -40,10 +45,10 @@ export class BooleanAnd extends BooleanOperator {
   constructor() {
     super(arguments);
   }
-  execute() {
+  execute(songIterator) {
     // sorry no short-circuiting because this code is prettier
     // @TODO: add short-circuiting if this actually makes it too slow
-    let args = this.resolve_args();
+    let args = this.resolve_args(songIterator);
     return cast_bool(args[0]) && cast_bool(args[1]);
   }
 }
@@ -51,8 +56,8 @@ export class BooleanOr extends BooleanOperator {
   constructor() {
     super(arguments);
   }
-  execute(arg) {
-    let args = this.resolve_args();
+  execute(songIterator) {
+    let args = this.resolve_args(songIterator);
     return cast_bool(args[0]) || cast_bool(args[1]);
   }
 }

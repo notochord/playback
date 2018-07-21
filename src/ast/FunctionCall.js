@@ -38,11 +38,11 @@ export default class FunctionCall {
       if(arg.link) arg.link(ASTs, parentStyle, parentTrack);
     });
   }
-  execute() { // don't want to mess with JS's Function.prototype.call()
+  execute(songIterator) {
     if(!this.scope) throw new Error('function not initialized :(');
     let evaluated_args = this.args.map(arg => {
       if(arg.execute) {
-        return arg.execute();
+        return arg.execute(songIterator);
       } else {
         return arg;
       }

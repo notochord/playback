@@ -15,6 +15,9 @@ class Song extends Array {
     super(...measures);
     this._idx = -1;
   }
+  getKey() {
+    return this[0][0];
+  }
   [Symbol.iterator]() {
     return new SongIterator(this);
   }

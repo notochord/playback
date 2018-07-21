@@ -45,7 +45,7 @@ export class PatternExpressionGroup extends Scope {
   execute(songIterator, callerIsTrack = false) {
     let beats = Nil;
     for(let function_call of this.function_calls) {
-      let return_value = function_call.execute();
+      let return_value = function_call.execute(songIterator);
       if(return_value instanceof NoteSet) {
         if(beats !== Nil) {
           throw new TooManyBeatsError(this);
@@ -84,6 +84,12 @@ export class PatternStatement extends PatternExpressionGroup {
   }
   getChance() {
     return this.vars.get('chance');
+  }
+  link(ASTs, parentStyle, parentTrack) {
+    super.link(ASTs, parentStyle, parentTrack);
+    if(this.condition && this.condition.link) {
+      this.condition.link(ASTs, parentStyle, parentTrack);
+    }
   }
   init(scope) {
     super.init(scope);
