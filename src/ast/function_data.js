@@ -1,6 +1,6 @@
 import {FunctionArgumentsError, FunctionScopeError} from './errors.js';
 import FunctionCall from './FunctionCall.js';
-import {Nil, cast_bool} from './type_utils.js';
+import {Nil} from './type_utils.js';
 
 let definitions = new Map();
 

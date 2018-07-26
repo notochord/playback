@@ -1,5 +1,5 @@
-import loader from '../loader/loader.js';
-import parser from '../parser/parser.js';
+import {load} from '../loader/loader.js';
+import {parse} from '../parser/parser.js';
 
 export default class PlaybackStyle {
   /**
@@ -24,11 +24,11 @@ export default class PlaybackStyle {
     while(dependencyPath = pendingDependencies.pop()) {
       let rawfile;
       try {
-        rawfile = await loader.load(dependencyPath);
+        rawfile = await load(dependencyPath);
       } catch(e) {
         throw new Error(`Couldn't locate imported style "${dependencyPath}".`);
       }
-      let ast = await parser.parse(rawfile);
+      let ast = await parse(rawfile);
       this._ASTs.set(dependencyPath, ast);
       ast.init();
       for(let newDependency of ast.dependencies) {

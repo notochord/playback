@@ -1,4 +1,4 @@
-import moo from 'moo';
+import moo from '../lib/moo/moo.js';
 
 export default moo.states({
   main: {

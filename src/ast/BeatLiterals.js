@@ -1,5 +1,5 @@
-import {Nil} from './type_utils.js';
-import * as tonal from 'tonal';
+//import {Nil} from './type_utils.js';
+import tonal from '../lib/tonal.min.js';
 import {AwaitingDrum, Note, NoteSet} from '../MIDI/Note.js';
 
 export class MelodicBeatLiteral {

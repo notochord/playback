@@ -1,9 +1,6 @@
 /**
  * Load a file.
  * 
- * Note: This version won't compile under webpack because import.meta isn't
- * supported by their parser
- * 
  * * Style locator algorithm:
  * 1. If the path begins with http:// or https://, look at that URL
  * 2. If the path begins with . or / look in the filesystem or at a relative URL
@@ -16,13 +13,25 @@
  */
 export async function load(stylePath) {
   let isHTTP = stylePath.startsWith('http://') || stylePath.startsWith('https://');
-  let isRelative = stylePath.startsWith('.') || stylePath.startsWith('/');
-  if (isHTTP || isRelative) {
-    return await fetch(stylePath).then(r => r.text());
+  if (isHTTP) {
+    console.log('TODO');
+    return '';
   } else {
-    let modulePath = String(import.meta.url).replace(/[^\/]+$/, '');
-    stylePath = modulePath + '../../styles/' + stylePath;
-    if (!stylePath.endsWith('.play')) stylePath += '.play';
-    return await fetch(stylePath).then(r => r.text());
+    let isRelative = stylePath.startsWith('.') || stylePath.startsWith('/');
+    if (!isRelative) {
+      let path = await import('path');
+      stylePath = path.join(__dirname, '../../styles/', stylePath);
+      if (!stylePath.endsWith('.play')) stylePath += '.play';
+    }
+    let fs = await import('fs');
+    return await (new Promise((resolve, reject) => {
+      fs.readFile(stylePath, 'utf8', (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data);
+        }
+      });
+    }));
   }
-};
+}

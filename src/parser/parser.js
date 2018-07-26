@@ -1,5 +1,5 @@
-import nearley from 'nearley';
-import grammar from './grammar.ne';
+import nearley from '../lib/nearley/nearley.js';
+import grammar from './grammar.js';
 /**
  * Parses a string into a set of possible abstract systax trees (ASTs) trees of
  * objects representing the syntax of the file.
@@ -11,7 +11,7 @@ import grammar from './grammar.ne';
  * tree might look like.
  * @private
  */
-let string_to_ast = function string_to_ast(data) {
+export let string_to_ast = function string_to_ast(data) {
   // Create a Parser object from our grammar.
   // (I don't think you can reset the parser so make a new one each time)
   const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
@@ -34,7 +34,7 @@ let string_to_ast = function string_to_ast(data) {
  * @param {string}  data The string to parse
  * @return {Promise.<GlobalScope>} The Abstract Systax Tree (AST).
  */
- let parse = function parse(data) {
+ export let parse = function parse(data) {
    return new Promise(function(resolve, reject) {
      string_to_ast(data)
        .then(parses => {
@@ -45,8 +45,3 @@ let string_to_ast = function string_to_ast(data) {
        });
    });
  };
- 
-export default {
-  string_to_ast: string_to_ast,
-  parse: parse
-};

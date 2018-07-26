@@ -23,7 +23,7 @@ export class NoSuchTrackError extends ImportError {
       scope);
   }
 }
-export class NoSuchPatternErrorError extends ImportError {
+export class NoSuchPatternError extends ImportError {
   constructor(style, track, pattern, scope) {
     super(
       `Pattern "${style}.${track}.${pattern}" does not exist`,

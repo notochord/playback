@@ -1,6 +1,6 @@
 import parser_tests from '../src/parser/test/test.js';
 import {Song} from './song.js';
-import index from '../src/index.js';
+import {PlaybackStyle} from '../src/index.js';
 
 //const verbose = process.argv.includes('--verbose');
 
@@ -20,7 +20,7 @@ parser_tests();
     ['CM7', null, 'A7', null], ['D-7', null, 'G7', null], ['C6', null, null, null], ['C6', null, null, null]
   ]);
 
-  let style = new index.PlaybackStyle('./test/styles/example.play');
+  let style = new PlaybackStyle('./test/styles/example.play');
   await style.init();
   style.play(song);
 })();

@@ -67,18 +67,16 @@ export default class GlobalScope extends Scope {
       this.tracks.set(`${trackCall.import}.${trackCall.track}`, trackStatement);
     }
     
-    for(let [trackname, track] of this.tracks) {
+    for(let [, track] of this.tracks) {
       track.link(ASTs, this);
     }
   }
   execute(songIterator) {
-    let notes = new NoteSet();
-    for(let [trackname, track] of this.tracks) {
+    let trackNoteMap = new Map();
+    for(let [, track] of this.tracks) {
       let trackNotes = track.execute(songIterator);
-      if(trackNotes !== Nil) {
-        notes.push(...trackNotes);
-      }
+      trackNoteMap.set(track.instrument, trackNotes);
     }
-    return notes;
+    return trackNoteMap;
   }
 }

@@ -1,6 +1,27 @@
-import * as tonal from 'tonal';
+import tonal from '../lib/tonal.min.js';
+import drumJson from './drums.json.js';
 
-// special pitch value meaning the note will be set later by a DrumBeatGroup
+/**
+ * There are some inconsistencies with the official MIDI drum names, this
+ * transformation will hopefully ease the pain there.
+ * Note: What's the more general word for case-folding? Just "normalizing"? Eh
+ * @param {string} name
+ * @return {string}
+ */
+function normalizeDrumName(name) {
+  return name.toLowerCase().replace(/ |-|_/g, ' ');
+}
+
+// make a map of drum names, which is the inverse of the given JSON file
+let DRUM_MAP = new Map();
+for(let midi in drumJson) {
+  let name = normalizeDrumName(drumJson[midi])
+  DRUM_MAP.set(name, midi);
+}
+
+/**
+ * Special pitch value meaning the note will be set later by a DrumBeatGroup
+ */
 let AwaitingDrum = Symbol('AwaitingDrum');
 export {AwaitingDrum};
 
@@ -43,7 +64,12 @@ export class Note {
     if(this.pitch === AwaitingDrum) {
       return null;
     } else {
-      return tonal.Note.midi(this.pitch);
+      let drumValue = DRUM_MAP.get(normalizeDrumName(this.pitch));
+      if(drumValue) {
+        return drumValue;
+      } else {
+        return tonal.Note.midi(this.pitch);
+      }
     }
   }
   /**

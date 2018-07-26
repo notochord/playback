@@ -1,6 +1,7 @@
 const path = require('path');
 const onBuild = require('on-build-webpack');
 const { exec } = require('child_process');
+const {NormalModuleReplacementPlugin} = require('webpack');
 
 module.exports = [
   // package playback
@@ -10,22 +11,8 @@ module.exports = [
       filename: 'playback.js'
     },
     stats: 'errors-only',
-    target: 'node',
-    node: {
-      __dirname: true,
-      __filename: true,
-    },
+    target: 'web',
     mode: 'production',
-    module: {
-      rules: [
-          {
-            test: /\.ne$/,
-            use: [
-              'nearley-loader',
-            ]
-          }
-      ]
-    }
   },
   
   // bundle and run the test suite
@@ -43,15 +30,11 @@ module.exports = [
       __filename: true,
     },
     mode: 'development',
-    module: {
-      rules: [
-          {
-            test: /\.ne$/,
-            use: ['nearley-loader']
-          }
-      ]
-    },
     plugins: [
+      new NormalModuleReplacementPlugin(
+        /loader\.js/,
+        path.resolve(__dirname, 'src/loader/loader-node.js')
+      ),
       new onBuild(function(stats) {
         exec('npm run test', (err, stdout, stderr) => {
           if(stdout) console.log(stdout);

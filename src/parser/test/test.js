@@ -1,5 +1,5 @@
-import loader from '../../loader/loader.js';
-import parser from '../parser.js';
+import {load} from '../../loader/loader.js';
+import * as parser from '../parser.js';
 import assert from 'assert';
 
 export default function() {
@@ -7,8 +7,8 @@ export default function() {
   // load a couple test files
   // yes one promise can have multiple thens, I checked in chrome console
   let styles_dir = './src/parser/test/styles/';
-  let file_ambig = loader.load(styles_dir + 'ambig.play');
-  let file_example = loader.load(styles_dir + 'example.play');
+  let file_ambig = load(styles_dir + 'ambig.play');
+  let file_example = load(styles_dir + 'example.play');
   
   /**
    * Parser smoketest: try parsing an old/modified version of the swing style
