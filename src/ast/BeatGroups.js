@@ -1,5 +1,4 @@
 import {
-  DrumBeatInMelodicBeatGroupError,
   MelodicBeatInDrumBeatGroupError
 } from './errors.js';
 import {Nil} from './type_utils.js';
@@ -23,9 +22,6 @@ export class BeatGroupLiteral {
       let measureNotes = this.measures[i].execute(songIterator);
       if(measureNotes === Nil) return Nil; // lets a/s abort the beatgroup
       for(let measureNote of measureNotes) {
-        /*if(measureNote.pitch === AwaitingDrum) {
-          throw new DrumBeatInMelodicBeatGroupError({}); //@TODO: scope
-        }*/
         measureNote.time += offset;
         joinedMeasures.push(measureNote);
       }

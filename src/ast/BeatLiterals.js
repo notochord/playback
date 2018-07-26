@@ -1,4 +1,5 @@
 import {Nil} from './type_utils.js';
+import * as tonal from 'tonal';
 import {AwaitingDrum, Note, NoteSet} from '../MIDI/Note.js';
 
 export class MelodicBeatLiteral {
@@ -22,25 +23,82 @@ export class MelodicBeatLiteral {
       return this.time.time;
     }
   }
+  /**
+   * Normalize a chord into a form tonal can handle
+   * @param {string} chord
+   * @return {string}
+   */
+  normalizeChord(chord) {
+    return chord
+      .replace(/-/g, '_') // tonal uses _ over - for minor7
+      .replace(/minor|min/g, 'm'); // tonal is surprisingly bad at identifying minor chords??
+  }
+  chordToScaleName(chord) {
+    let chordType = tonal.Chord.tokenize(chord)[1];
+
+    // @TODO: make this more robust
+    let names = tonal.Chord.props(chordType).names;
+    if(names.includes('dim')) return 'diminished';
+    if(names.includes('aug')) return 'augmented';
+    if(names.includes('Major')) return 'major';
+    if(names.includes('minor')) return 'minor';
+    if(names.includes('minor7')) return 'dorian';
+    if(names.includes('Dominant')) return 'mixolydian';
+    // if none of the above match, do our best to find the closest fit
+    let closestScale = 'major'
+    names.forEach(name => {
+      if(name.startsWith('dim')) closestScale = 'diminished';
+      if(name.startsWith('aug')) closestScale = 'augmented';
+      if(name.startsWith('M')) closestScale = 'major';
+      if(name.startsWith('m')) closestScale = 'minor';
+    });
+    return closestScale;
+  };
   getPitches(songIterator) { // should current chord be requested from measure?
-    let root;
+    let anchorChord, root;
     
     switch(this.pitch.anchor) {
       case 'KEY': {
-        root = songIterator.song.getKey();
+        anchorChord = songIterator.song.getKey();
         break;
       }
       case 'NEXT': {
-        root = songIterator.getRelative(1)[0];
+        let nextMeasure = songIterator.getRelative(1);
+        if(nextMeasure) {
+          anchorChord = nextMeasure[0];
+        } else {
+          anchorChord = songIterator.song.getKey();
+        }
+        break;
+      }
+      case 'STEP':
+      case 'ARPEGGIATE': { // @TODO
+        anchorChord = songIterator.getRelative(0)[0];
         break;
       }
       default: {
-        root = 59;
+        // crawl backward through this measure to get the last set beat
+        let lastSetBeat = Math.floor(this.getTime());
+        do {
+          anchorChord = songIterator.getRelative(0)[lastSetBeat];
+          lastSetBeat--;
+        } while(!anchorChord);
       }
     }
-    
+
+    anchorChord = this.normalizeChord(anchorChord);
+
+    let anchorTonic = tonal.Chord.tokenize(anchorChord)[0]; // does this always work? *shrug*
+    let anchorScaleName = this.chordToScaleName(anchorChord);
+    let scalePCs = tonal.Scale.notes(anchorTonic, anchorScaleName);
+    let rootPC = scalePCs[this.pitch.degree - 1];
+    root = tonal.Note.from({oct: this.getOctave()}, rootPC);
+
     if(this.pitch.chord) {
-      return [root, 60];
+      // this feels extremely incorrect
+      // why would anyone need it to work this way
+      let anchorChordType = tonal.Chord.tokenize(anchorChord)[1];
+      return tonal.Chord.notes(root, anchorChordType);
     } else {
       return [root];
     }

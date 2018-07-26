@@ -1,5 +1,5 @@
 import parser_tests from '../src/parser/test/test.js';
-import parser from '../src/parser/parser.js';
+import {Song} from './song.js';
 import index from '../src/index.js';
 
 //const verbose = process.argv.includes('--verbose');
@@ -9,39 +9,6 @@ parser_tests();
 
 // @TODO: have a set of tests directly on playback.js to make sure the apis
 // export correctly cuz webpack is being iffy about that
-
-class Song extends Array {
-  constructor(measures) {
-    super(...measures);
-    this._idx = -1;
-  }
-  getKey() {
-    return this[0][0];
-  }
-  [Symbol.iterator]() {
-    return new SongIterator(this);
-  }
-}
-
-class SongIterator {
-  constructor(song) {
-    this.song = song;
-    this.index = -1;
-  }
-  next() {
-    if(++this.index < this.song.length) {
-      return {value: this.song[this.index], done: false};
-    } else {
-      return {value: undefined, done: true};
-    }
-  }
-  get(idx) {
-    return this.song[idx];
-  }
-  getRelative(dist = 0) {
-    return this.song[this.index + dist];
-  }
-}
 
 (async function() {
   let song = new Song([
@@ -55,5 +22,5 @@ class SongIterator {
 
   let style = new index.PlaybackStyle('./test/styles/example.play');
   await style.init();
-  style.play(song)
+  style.play(song);
 })();
