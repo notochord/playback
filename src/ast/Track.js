@@ -1,8 +1,5 @@
 import {Nil} from './type_utils.js';
 import {
-  NoSuchStyleError,
-  NoSuchTrackError,
-  NoSuchPatternError,
   DrumBeatInMelodicBeatGroupError
 } from './errors.js';
 import {AwaitingDrum} from '../MIDI/Note.js';
@@ -15,6 +12,10 @@ export class TrackStatement extends Scope {
     super();
     this.name = opts.identifier;
     this.type = '@track';
+
+    this.defaultVars.set('octave', 2);
+    this.defaultVars.set('volume', 1);
+    this.defaultVars.set('private', false);
     
     this.instrument = opts.instrument;
     this.identifier = opts.identifier;
@@ -43,17 +44,19 @@ export class TrackStatement extends Scope {
       this.patterns.set(patternCall.prettyprintname, patternCall);
     }
     
-    for(let [patternname, pattern] of this.patterns) {
+    for(let [, pattern] of this.patterns) {
       pattern.link(ASTs, parentStyle, this);
     }
   }
   execute(songIterator) {
+    this.inherit();
     console.log(`executing TrackStatement "${this.name}"`);
     
     this.function_calls.forEach(function_call => {
       function_call.execute(songIterator);
     });
     
+    // weighted random picking
     // https://stackoverflow.com/a/4463613/1784306
     // I don't really understand the above explanation, this is probs wrong
     let totalWeight = 0;

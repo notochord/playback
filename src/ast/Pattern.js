@@ -1,9 +1,13 @@
 import {Nil, cast_bool} from './type_utils.js';
 import {NoteSet} from '../MIDI/Note.js';
-import {TooManyBeatsError} from './errors.js';
+import {
+  TooManyBeatsError,
+  NoSuchStyleError,
+  NoSuchTrackError,
+  NoSuchPatternError
+} from './errors.js';
 import Scope from './Scope.js';
 import FunctionCall from './FunctionCall.js';
-import {BeatGroupLiteral} from './BeatGroups.js';
 
 export class PatternExpressionGroup extends Scope {
   constructor(expressions) {
@@ -11,8 +15,8 @@ export class PatternExpressionGroup extends Scope {
     this.type = 'PatternExpressionGroup';
     this.name = '@pattern(<anonymous>)';
     
-    this.vars.set('private', false);
-    this.vars.set('chance', 1);
+    this.defaultVars.set('private', false);
+    this.defaultVars.set('chance', 1);
     
     this.expressions = expressions;
     this.function_calls = [];
@@ -43,6 +47,7 @@ export class PatternExpressionGroup extends Scope {
     });
   }
   execute(songIterator, callerIsTrack = false) {
+    this.inherit();
     let beats = Nil;
     for(let function_call of this.function_calls) {
       let return_value = function_call.execute(songIterator);
@@ -97,7 +102,12 @@ export class PatternStatement extends PatternExpressionGroup {
   }
   execute(songIterator, callerIsTrack) {
     if(this.condition) {
-      let condition_value = this.condition.execute();
+      let condition_value;
+      if(this.condition.execute) {
+        condition_value = this.condition.execute(songIterator);
+      } else {
+        condition_value = this.condition;
+      }
       if(cast_bool(condition_value) === false) return Nil;
     }
     return super.execute(songIterator, callerIsTrack);

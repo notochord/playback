@@ -8,7 +8,7 @@ export class AnchorArgument {
 
 class BooleanOperator {
   constructor() {
-    this.args = Array.prototype.slice.call(arguments);
+    this.args = [...arguments];
   }
   link(ASTs, parentStyle, parentTrack) {
     this.args.forEach(arg => {
@@ -23,8 +23,8 @@ class BooleanOperator {
   }
   resolve_args(songIterator) {
     return this.args.map(arg => {
-      if(arg.init) {
-        return arg.init(songIterator);
+      if(arg.execute) {
+        return arg.execute(songIterator);
       } else {
         return arg;
       }
@@ -34,7 +34,7 @@ class BooleanOperator {
 
 export class BooleanNot extends BooleanOperator {
   constructor() {
-    super(arguments);
+    super(...arguments);
   }
   execute(songIterator) {
     let args = this.resolve_args(songIterator);
@@ -43,7 +43,7 @@ export class BooleanNot extends BooleanOperator {
 }
 export class BooleanAnd extends BooleanOperator {
   constructor() {
-    super(arguments);
+    super(...arguments);
   }
   execute(songIterator) {
     // sorry no short-circuiting because this code is prettier
@@ -54,7 +54,7 @@ export class BooleanAnd extends BooleanOperator {
 }
 export class BooleanOr extends BooleanOperator {
   constructor() {
-    super(arguments);
+    super(...arguments);
   }
   execute(songIterator) {
     let args = this.resolve_args(songIterator);

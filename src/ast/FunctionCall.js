@@ -47,7 +47,10 @@ export default class FunctionCall {
         return arg;
       }
     });
-    let return_value = this.definition.execute(evaluated_args, this.scope);
+    let return_value = this.definition.execute(
+      evaluated_args,
+      songIterator,
+      this.scope);
     if(return_value === undefined) {
       throw new Error(`Function "${this.identifier}" can return undefined`);
     }

@@ -28,12 +28,12 @@ export class MelodicBeatLiteral {
    * @param {string} chord
    * @return {string}
    */
-  normalizeChord(chord) {
+  static normalizeChord(chord) {
     return chord
       .replace(/-/g, '_') // tonal uses _ over - for minor7
       .replace(/minor|min/g, 'm'); // tonal is surprisingly bad at identifying minor chords??
   }
-  chordToScaleName(chord) {
+  static chordToScaleName(chord) {
     let chordType = tonal.Chord.tokenize(chord)[1];
 
     // @TODO: make this more robust
@@ -53,14 +53,24 @@ export class MelodicBeatLiteral {
       if(name.startsWith('m')) closestScale = 'minor';
     });
     return closestScale;
-  };
-  getPitches(songIterator) { // should current chord be requested from measure?
-    let anchorChord, root;
-    
-    switch(this.pitch.anchor) {
+  }
+  handleInversion(songIterator, pitches) {
+    let tonicPC = songIterator.song.getKey();
+    let tonicNote = tonal.Note.from({oct: this.getOctave()}, tonicPC);
+    let tonic = tonal.Note.midi(tonicNote);
+    let outPitches = [];
+    for(let pitchNote of pitches) {
+      let pitch = tonal.Note.midi(pitchNote);
+      if(pitch - tonic >= 6) pitch -= 12;
+      outPitches.push(tonal.Note.fromMidi(pitch));
+    }
+    return outPitches;
+  }
+  static getAnchorChord(anchor, songIterator, currentTime) {
+    let anchorChord;
+    switch(anchor) {
       case 'KEY': {
         anchorChord = songIterator.song.getKey();
-        break;
       }
       case 'NEXT': {
         let nextMeasure = songIterator.getRelative(1);
@@ -69,39 +79,54 @@ export class MelodicBeatLiteral {
         } else {
           anchorChord = songIterator.song.getKey();
         }
-        break;
       }
       case 'STEP':
       case 'ARPEGGIATE': { // @TODO
         anchorChord = songIterator.getRelative(0)[0];
-        break;
       }
       default: {
         // crawl backward through this measure to get the last set beat
-        let lastSetBeat = Math.floor(this.getTime());
+        let lastSetBeat = Math.floor(currentTime);
+        let iteratorMeasure = songIterator.getRelative(0);
         do {
-          anchorChord = songIterator.getRelative(0)[lastSetBeat];
+          anchorChord = iteratorMeasure[lastSetBeat];
           lastSetBeat--;
         } while(!anchorChord);
       }
     }
-
-    anchorChord = this.normalizeChord(anchorChord);
-
-    let anchorTonic = tonal.Chord.tokenize(anchorChord)[0]; // does this always work? *shrug*
+    return this.normalizeChord(anchorChord);
+  }
+  static anchorChordToRoot(anchorChord, degree, octave) {
+    let anchorTonic = tonal.Chord.tokenize(anchorChord)[0];
     let anchorScaleName = this.chordToScaleName(anchorChord);
     let scalePCs = tonal.Scale.notes(anchorTonic, anchorScaleName);
-    let rootPC = scalePCs[this.pitch.degree - 1];
-    root = tonal.Note.from({oct: this.getOctave()}, rootPC);
+    let rootPC = scalePCs[degree - 1];
+    return tonal.Note.from({oct: octave}, rootPC);
+  }
+  getPitches(songIterator) {
+    let anchorChord = this.constructor.getAnchorChord(
+      this.pitch.anchor, songIterator, this.getTime()
+    );
 
+    let root = this.constructor.anchorChordToRoot(
+      anchorChord, this.pitch.degree, this.getOctave()
+    );
+
+    let pitches;
     if(this.pitch.chord) {
       // this feels extremely incorrect
       // why would anyone need it to work this way
       let anchorChordType = tonal.Chord.tokenize(anchorChord)[1];
-      return tonal.Chord.notes(root, anchorChordType);
+      pitches = tonal.Chord.notes(root, anchorChordType);
     } else {
-      return [root];
+      pitches = [root];
     }
+
+    if(this.scope.vars.get('invertible')) {
+      pitches = this.handleInversion(songIterator, pitches);
+    }
+
+    return pitches;
   }
   getOctave() {
     if(this.octave === 'inherit') {
@@ -114,9 +139,10 @@ export class MelodicBeatLiteral {
     let duration;
     duration = this.parentMeasure.calculateDurationAfter(this.indexInMeasure);
     if(this.time.flag === 'STACCATO') {
-      // @TODO: how does one calculate staccatoness?
+      return Math.min(0.25, duration);
+    } else {
+      return duration;
     }
-    return duration;
   }
   getVolume() {
     let volume = this.scope.vars.get('volume');

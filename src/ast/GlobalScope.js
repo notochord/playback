@@ -17,9 +17,6 @@ export default class GlobalScope extends Scope {
   
   init() {
     // set some default values
-    this.vars.set('octave', 2);
-    this.vars.set('volume', 1);
-    this.vars.set('private', false);
     this.vars.set('time-signature', [4, 4]);
     this.vars.set('tempo', 120);
     
@@ -75,8 +72,15 @@ export default class GlobalScope extends Scope {
     let trackNoteMap = new Map();
     for(let [, track] of this.tracks) {
       let trackNotes = track.execute(songIterator);
-      trackNoteMap.set(track.instrument, trackNotes);
+      if(trackNotes !== Nil) trackNoteMap.set(track.instrument, trackNotes);
     }
     return trackNoteMap;
+  }
+  getInstruments() {
+    let instruments = new Set();
+    for(let [, track] of this.tracks) {
+      instruments.add(track.instrument);
+    }
+    return instruments;
   }
 }

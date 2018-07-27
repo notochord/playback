@@ -3,10 +3,13 @@
         <title>Playback Browser Test</title>
     </head>
     <body>
+        <button id="play" disabled type="button">Play</button>
         <script type="module">
             import { Song } from './song.js';
-            import {PlaybackStyle} from '../src/index.js';
+            import { PlaybackStyle, Player } from '../src/index.js';
 
+            let button = document.querySelector('#play');
+            let style, compiled, player;
             (async function () {
                 let song = new Song([
                     // Each array is a measure, and each item in an array is a beat.
@@ -17,10 +20,19 @@
                     ['CM7', null, 'A7', null], ['D-7', null, 'G7', null], ['C6', null, null, null], ['C6', null, null, null]
                 ]);
 
-                let style = new PlaybackStyle('./styles/example.play');
+                style = new PlaybackStyle('../styles/swing.play');
                 await style.init();
-                style.play(song);
+                compiled = style.compile(song);
+                let context = new AudioContext();
+                player = new Player(context);
+                await player.init(style.getInstruments());
+                button.removeAttribute('disabled');
             })();
+
+            button.addEventListener('click', () => {
+                player.context.resume();
+                player.play(compiled);
+            });
         </script>
     </body>
 </html>

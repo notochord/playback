@@ -1,3 +1,5 @@
+import tonal from '../lib/tonal.min.js';
+import {MelodicBeatLiteral} from './BeatLiterals.js'; 
 import {FunctionArgumentsError, FunctionScopeError} from './errors.js';
 import FunctionCall from './FunctionCall.js';
 import {Nil} from './type_utils.js';
@@ -108,11 +110,11 @@ let define = function(identifier, opts, func) {
     types: opts.types || '*',
     returns: opts.returns || '*',
     scope: opts.scope || 'no-meta',
-    execute: (args, scope) => {
+    execute: (args, songIterator, scope) => {
       let argErr = message => {
         throw new FunctionArgumentsError(message, scope);
       };
-      return func(args, scope, argErr);
+      return func(args, songIterator, scope, argErr);
     }
   };
   
@@ -134,7 +136,7 @@ let defineVar = function(identifier, type, goalscope = null) {
     scope: goalscope,
     returns: Nil
   };
-  define(identifier, opts, (args, scope, argErr) => {
+  define(identifier, opts, (args, songIterator, scope, argErr) => {
     scope.vars.set(identifier, args[0]);
     return Nil;
   })
@@ -154,7 +156,7 @@ let defineBoolean = function(identifier, goalscope = null) {
     scopes: goalscope,
     returns: Nil
   }
-  define(identifier, opts, (args, scope, argErr) => {
+  define(identifier, opts, (args, songIterator, scope, argErr) => {
     if(args.length) {
       assertArgTypes(identifier, args, ['boolean'], scope);
       scope.vars.set(identifier, args[0]);
@@ -180,7 +182,7 @@ define('time-signature',
     scope: 'options',
     returns: Nil
   },
-  (args, scope, argErr) => {
+  (args, songIterator, scope, argErr) => {
     if(!Number.isInteger(Math.log2(args[1]))) {
       argErr('Argument 2 of "time-signature" must be a power of 2.');
     }
@@ -196,7 +198,7 @@ define('volume',
     scope: 'no-meta',
     returns: Nil
   },
-  (args, scope, argErr) => {
+  (args, songIterator, scope, argErr) => {
     if(args[0] < 0 || args[0] > 1) {
       argErr('Argument 1 of "volume" must be in range 0-1 (inclusive).');
     }
@@ -213,7 +215,7 @@ define('choose',
     scope: 'no-config',
     returns: '*'
   },
-  (args, scope, argErr) => {
+  (args, songIterator, scope, argErr) => {
     let nonNilArgs = args.filter(arg => arg !== Nil);
     if(nonNilArgs.length) {
       let index = Math.floor(Math.random() * nonNilArgs.length);
@@ -223,14 +225,41 @@ define('choose',
     }
   });
 
+let anchorOrNumberToChordAndRoot = function(arg, songIterator) {
+  let anchorChord, root;
+  if(typeof arg == 'number') {
+    anchorChord = MelodicBeatLiteral.getAnchorChord(
+      null, songIterator, 1);
+    root = MelodicBeatLiteral.anchorChordToRoot(anchorChord, arg, 4);
+  } else if(arg.anchor) {
+    anchorChord = MelodicBeatLiteral.getAnchorChord(
+      arg.anchor, songIterator, 1);
+    root =  MelodicBeatLiteral.anchorChordToRoot(anchorChord, 1, 4);
+  }
+  return [anchorChord, root];
+};
+
 define('progression',
   {
     types: '*',
     scope: 'no-config',
     returns: 'boolean'
   },
-  (args, scope, argErr) => {
-    return true; // @TODO
+  (args, songIterator, scope, argErr) => {
+    for(let i in args) {
+      let arg = args[i];
+      let [,goal] = anchorOrNumberToChordAndRoot(arg, songIterator);
+      if(!goal) {
+        argErr('Arguments of "progression" must be numbers or anchors.');
+      }
+      let actualMeasure = songIterator.getRelative(Number(i));
+      if(!actualMeasure) return false;
+      let actualChord = MelodicBeatLiteral.normalizeChord(actualMeasure[0]);
+      let actual = MelodicBeatLiteral.anchorChordToRoot(
+        actualChord, 1, 4);
+      if(actual != goal) return false;
+    }
+    return true;
   });
 define('in-scale',
   {
@@ -238,8 +267,25 @@ define('in-scale',
     scope: 'no-config',
     returns: 'boolean'
   },
-  (args, scope, argErr) => {
-    return false; // @TODO
+  (args, songIterator, scope, argErr) => {
+    let [,note] = anchorOrNumberToChordAndRoot(args[0], songIterator);
+    let [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1], songIterator);
+    if(!note || !goalChord) {
+      argErr('Arguments of "in-scale" must be numbers or anchors.');
+    }
+    let goalScaleName = MelodicBeatLiteral.chordToScaleName(goalChord);
+    let goalScale = tonal.Scale.notes(goalTonic, goalScaleName);
+    return goalScale.includes(note);
+  });
+define('beat-defined',
+  {
+    types: ['number'],
+    scope: 'no-config',
+    returns: 'boolean'
+  },
+  (args, songIterator, scope, argErr) => {
+    let measure = songIterator.getRelative(0);
+    return measure[args[0]] !== null;
   });
 
 /*** pattern-only functions ***/
@@ -251,7 +297,7 @@ define('chance',
     scope: 'pattern',
     returns: Nil
   },
-  (args, scope, argErr) => {
+  (args, songIterator, scope, argErr) => {
     if(args[0] < 0 || args[0] > 1) {
       argErr('Argument 1 of "chance" must be in range 0-1 (inclusive).');
     }

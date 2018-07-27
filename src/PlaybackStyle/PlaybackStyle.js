@@ -1,5 +1,6 @@
 import {load} from '../loader/loader.js';
 import {parse} from '../parser/parser.js';
+import {NoteSet} from '../MIDI/Note.js';
 
 export default class PlaybackStyle {
   /**
@@ -62,20 +63,38 @@ export default class PlaybackStyle {
       throw new Error('PlayBack style must be initialized before compiling');
     }
     let songIterator = song[Symbol.iterator]();
-    let nextValue = songIterator.next();
-    console.log('nextValue', nextValue)
-    let notes = this._main.execute(songIterator);
-    console.log('---final result---');
-    console.log(notes);
-    
-    /*
-    while(nextValue = songIterator.next(), !nextValue.done) {
-      this._main.execute(songIterator);
+    let instruments = this.getInstruments();
+    let notes = new Map();
+    let beatsPerMeasure = this._main.vars.get('time-signature')[0];
+    let totalPastBeats = 0;
+    for(let instrument of instruments) notes.set(instrument, new NoteSet());
+    let nextValue;
+    while(nextValue = songIterator.next(), nextValue.done == false) {
+      let thisMeasureTracks = this._main.execute(songIterator);
+      for(let [instrument, thisMeasureNotes] of thisMeasureTracks) {
+        for(let note of thisMeasureNotes) {
+          note.time += totalPastBeats;
+          if(this._main.vars.get('swing')) {
+            let int_part = Math.floor(note.time);
+            let float_part = note.time - int_part;
+            if(float_part <= 0.5) {
+              float_part *= 2;
+              float_part = (2/3) * float_part;
+            } else {
+              float_part = 2 * (float_part - 0.5);
+              float_part = (2/3) + ((1/3) * float_part);
+            }
+            note.time = int_part + float_part;
+          }
+        }
+        notes.get(instrument).push(...thisMeasureNotes);
+      }
+      totalPastBeats += beatsPerMeasure;
     }
-    */
+    
+    return notes;
   }
-  async play(song) {
-    this.compile(song);
-    // @TODO: take the MIDI events and play them
+  getInstruments() {
+    return this._main.getInstruments();
   }
 }
