@@ -13,7 +13,7 @@ export class TrackStatement extends Scope {
     this.name = opts.identifier;
     this.type = '@track';
 
-    this.defaultVars.set('octave', 2);
+    this.defaultVars.set('octave', 4);
     this.defaultVars.set('volume', 1);
     this.defaultVars.set('private', false);
     

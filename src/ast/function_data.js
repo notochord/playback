@@ -206,7 +206,19 @@ define('volume',
     return Nil;
   });
 defineBoolean('invertible', 'no-meta');
-defineVar('octave', 'number', 'no-meta');
+define('octave',
+  {
+    types: ['number'],
+    scope: 'no-meta',
+    returns: Nil
+  },
+  (args, songIterator, scope, argErr) => {
+    if(!Number.isInteger(args[0]) || args[0] < 0 || args[0] > 9) {
+      argErr('Argument 1 of "octave" must be an integer 0-9.');
+    }
+    scope.vars.set('octave', args[0]);
+    return Nil;
+  });
 
 /*** anywhere but config functions (strictly dynamic functions) ***/
 define('choose',
