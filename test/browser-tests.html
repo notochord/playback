@@ -8,30 +8,25 @@
             import { Song } from './song.js';
             import { PlaybackStyle, Player } from '../src/index.js';
 
-            let button = document.querySelector('#play');
-            let style, compiled, player;
-            (async function () {
-                let song = new Song([
-                    // Each array is a measure, and each item in an array is a beat.
-                    // null inside a measure means there's no chord set for that beat.
-                    ['A-', null, null, null], ['E', null, null, null], ['A-7', null, null, null], ['A-6', null, null, null],
-                    ['CM7', null, 'A7', null], ['D-7', null, 'G7', null], ['C6', null, null, null], ['Bdim7', null, 'E7', null],
-                    ['A-', null, null, null], ['E', null, null, null], ['A-7', null, null, null], ['A-6', null, null, null],
-                    ['CM7', null, 'A7', null], ['D-7', null, 'G7', null], ['C6', null, null, null], ['C6', null, null, null]
-                ]);
+            let song = new Song([
+                // Each array is a measure, and each item in an array is a beat.
+                // null inside a measure means there's no chord set for that beat.
+                ['A-', null, null, null], ['E', null, null, null], ['A-7', null, null, null], ['A-6', null, null, null],
+                ['CM7', null, 'A7', null], ['D-7', null, 'G7', null], ['C6', null, null, null], ['Bdim7', null, 'E7', null],
+                ['A-', null, null, null], ['E', null, null, null], ['A-7', null, null, null], ['A-6', null, null, null],
+                ['CM7', null, 'A7', null], ['D-7', null, 'G7', null], ['C6', null, null, null], ['C6', null, null, null]
+            ]);
 
-                style = new PlaybackStyle('../styles/swing.play');
-                await style.init();
-                compiled = style.compile(song);
-                let context = new AudioContext();
-                player = new Player(context);
-                await player.init(style.getInstruments());
+            let button = document.querySelector('#play');
+
+            let player = new Player();
+            let style = new PlaybackStyle('../styles/swing.play');
+            player.setStyle(style).then( () => {
                 button.removeAttribute('disabled');
-            })();
+            });
 
             button.addEventListener('click', () => {
-                player.context.resume();
-                player.play(compiled);
+                player.play(song);
             });
         </script>
     </body>

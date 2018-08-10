@@ -2,20 +2,27 @@ import Soundfont from '../lib/soundfont-player.js';
 
 export default class Player {
   /**
-   * @param {AudioContext} context 
+   * Loads the necessary soundfonts and plays a song in a PlaybackStyle in the
+   * browser.
+   * @param {AudioContext=} context If you pass it an AudioContext it'll use
+   * it. Otherwise it'll make its own.
    */
   constructor(context) {
-    this.context = context
+    this._style = null;
+    this.context = context || new AudioContext({latencyHint: "playback"});
     this._initialized = false;
     window.player = this;
   }
-  async init(instruments) {
-    this._initialized = true;
+  async setStyle(style) {
+    this._style = style;
+    if(!style._initialized) {
+      await style.init();
+    }
+    this._initialized = false;
     this.soundfonts = new Map();
     let promises = [];
-    for(let instrument of instruments) {
+    for(let instrument of style.getInstruments()) {
       let sfpromise;
-      console.log(instrument);
       if(instrument.startsWith('http://') || instrument.startsWith('https://')) {
         // Soundfont has a bug where you can't just pass it a URL
         // @TODO: open an issue there
@@ -35,11 +42,22 @@ export default class Player {
       );
     }
     await Promise.all(promises);
+    this._initialized = true;
   }
-  play(compiledSong) {
-    if(!this._initialized) {
-      throw new Error('Player must be initialized before playing');
+  play(song) {
+    if(!this._style) {
+      throw new Error('No style selected');
     }
+    if(!this._initialized) {
+      throw new Error('A style hasn\'t finished loading');
+    }
+
+    if(this.context.state == 'suspended') {
+      this.context.resume();
+    }
+
+    let compiledSong = this._style.compile(song);
+
     let tempoCoef = 0.4; // WHATEVER IDC HOW ANYTHING WORKS
     for(let [instrument, notes] of compiledSong) {
       let soundfont = this.soundfonts.get(instrument);
