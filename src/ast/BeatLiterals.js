@@ -83,11 +83,13 @@ export class MelodicBeatLiteral {
       }
       case 'STEP':
       case 'ARPEGGIATE': {
+        /*
         let prev = songIterator.getRelative(0)[0]; //???
+        if(!this.parentMeasure) console.log('tttttttt', this);
         let next = this.parentMeasure.getNextStaticBeatRoot(
           this.indexInMeasure,
           songIterator
-        );
+        );*/
 
       }
       default: {
