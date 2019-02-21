@@ -59,10 +59,11 @@ export default class Player {
     let compiledSong = this._style.compile(song);
 
     let tempoCoef = 0.4; // WHATEVER IDC HOW ANYTHING WORKS
+    let startTime = this.context.currentTime + 1;
     for(let [instrument, notes] of compiledSong) {
       let soundfont = this.soundfonts.get(instrument);
       for(let note of notes) {
-        let start = this.context.currentTime + (tempoCoef * note.time);
+        let start = startTime + (tempoCoef * note.time);
         let dur = tempoCoef * note.duration - 0.05;
         soundfont.play(note.midi, start, {
           duration: dur,

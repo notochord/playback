@@ -3,6 +3,7 @@ import {
 } from './errors.js';
 import {Nil} from './type_utils.js';
 import {AwaitingDrum, Note, NoteSet} from '../MIDI/Note.js';
+import {MelodicBeatLiteral} from './BeatLiterals.js';
 import FunctionCall from './FunctionCall.js';
 
 export class BeatGroupLiteral {
@@ -12,7 +13,7 @@ export class BeatGroupLiteral {
   }
   init(scope) {
     this.scope = scope;
-    this.measures.forEach(measure => measure.init(scope));
+    this.measures.forEach((measure, i) => measure.init(scope, this, i));
   }
   link() {return;}
   execute(songIterator) {
@@ -27,6 +28,24 @@ export class BeatGroupLiteral {
       }
     }
     return joinedMeasures;
+  }
+  getNextStaticBeatRoot(measureIndex, beatIndex, songIterator) {
+    // first, try every subsequent beat in the beatGroup
+    // (including subsequent measures)
+    let measure, beat;
+    while(measure = this.parentBeatGroup.measures[measureIndex++]) {
+      while(beat = measure.beats[++beatIndex]) {
+        if(!beat.isDynamic()) {
+          return beat.getAnchorData(songIterator)[1];
+        }
+      }
+      beatIndex = -1;
+    }
+    // if there are no non-dynamic beats in the rest of the beat-group, return
+    // the first note of the next measure (@TODO: could be multiple measures
+    // later if it's a multi-measure beatgroup)
+    // @TODO: wtf?
+    return MelodicBeatLiteral.normalizeChord(songIterator.getRelative(1)[0]);
   }
 }
 
@@ -49,8 +68,17 @@ export class Measure {
     }
     return nextBeatTime - currentBeatTime;
   }
-  init(scope) {
+  getNextStaticBeatRoot(beatIndex, songIterator) {
+    return this.parentBeatGroup.getNextStaticBeatRoot(
+      this.indexInBeatGroup,
+      beatIndex,
+      songIterator
+    );
+  }
+  init(scope, parentBeatGroup, indexInBeatGroup) {
     this.scope = scope;
+    this.parentBeatGroup = parentBeatGroup;
+    this.indexInBeatGroup = indexInBeatGroup;
     this.beatsPerMeasure = this.scope.vars.get('time-signature')[0];
     // @TODO does this need more math?
     this.beats.forEach((beat, i) => {
@@ -58,6 +86,10 @@ export class Measure {
     });
   }
   execute(songIterator) {
+    // clear cached notes (used for STEP/ARPEGGIATE interpolation)
+    for(let beat of this.beats) {
+      beat.cachedAnchor = null;
+    }
     // each beat returns a NoteSet since it could be a chord or whatever
     let joined = new NoteSet();
     for(let beat of this.beats) {

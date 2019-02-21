@@ -1,11 +1,8 @@
 # Creating a style
 
-A style is a text file that describes how to play a song in a musical file. We
+A style is a text file that describes how to play a song in a musical style. We
 recommend the file extension `.play`, but you can use any file extension you
 like (see the API documentation) (TODO link)
-
-This is somewhere between a user's guide and a spec. I'll break it up into 2
-documents later.
 
 ## Overview
 

@@ -10,6 +10,7 @@ export class MelodicBeatLiteral {
     this.scope = null;
     this.parentMeasure = null;
     this.indexInMeasure = null;
+    this.cachedAnchor = null; // used for STEP/ARPEGGIATE interpolation
   }
   init(scope, parentMeasure, indexInMeasure) {
     this.scope = scope;
@@ -81,8 +82,13 @@ export class MelodicBeatLiteral {
         }
       }
       case 'STEP':
-      case 'ARPEGGIATE': { // @TODO
-        anchorChord = songIterator.getRelative(0)[0];
+      case 'ARPEGGIATE': {
+        let prev = songIterator.getRelative(0)[0]; //???
+        let next = this.parentMeasure.getNextStaticBeatRoot(
+          this.indexInMeasure,
+          songIterator
+        );
+
       }
       default: {
         // crawl backward through this measure to get the last set beat
@@ -103,7 +109,7 @@ export class MelodicBeatLiteral {
     let rootPC = scalePCs[degree - 1];
     return tonal.Note.from({oct: octave}, rootPC);
   }
-  getPitches(songIterator) {
+  getAnchorData(songIterator) {
     let anchorChord = this.constructor.getAnchorChord(
       this.pitch.anchor, songIterator, this.getTime()
     );
@@ -111,6 +117,10 @@ export class MelodicBeatLiteral {
     let root = this.constructor.anchorChordToRoot(
       anchorChord, this.pitch.degree, this.getOctave()
     );
+    return [anchorChord, root];
+  }
+  getPitches(songIterator) {
+    let [anchorChord, root] = this.getAnchorData(songIterator);
 
     let pitches;
     if(this.pitch.chord) {
@@ -127,6 +137,13 @@ export class MelodicBeatLiteral {
     }
 
     return pitches;
+  }
+  /**
+   * Returns true if the beat is anchored via STEP or ARPEGGIATE
+   * @returns {boolean}
+   */
+  isDynamic() {
+    return ['STEP', 'ARPEGGIATE'].includes(this.pitch.anchor);
   }
   getOctave() {
     if(this.octave === 'inherit') {
