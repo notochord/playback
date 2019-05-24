@@ -26,10 +26,10 @@ export class MelodicBeatLiteral {
   }
   /**
    * Normalize a chord into a form tonal can handle
-   * @param {string} chord
+   * @param {string} [chord='']
    * @return {string}
    */
-  static normalizeChord(chord) {
+  static normalizeChord(chord = '') {
     return chord
       .replace(/-/g, '_') // tonal uses _ over - for minor7
       .replace(/minor|min/g, 'm'); // tonal is surprisingly bad at identifying minor chords??
@@ -56,7 +56,7 @@ export class MelodicBeatLiteral {
     return closestScale;
   }
   handleInversion(songIterator, pitches) {
-    let tonicPC = songIterator.song.getKey();
+    let tonicPC = songIterator.song.getTransposedKey();
     let tonicNote = tonal.Note.from({oct: this.getOctave()}, tonicPC);
     let tonic = tonal.Note.midi(tonicNote);
     let outPitches = [];
@@ -71,14 +71,14 @@ export class MelodicBeatLiteral {
     let anchorChord;
     switch(anchor) {
       case 'KEY': {
-        anchorChord = songIterator.song.getKey();
+        anchorChord = songIterator.song.getTransposedKey();
       }
       case 'NEXT': {
         let nextMeasure = songIterator.getRelative(1);
         if(nextMeasure) {
-          anchorChord = nextMeasure[0];
+          anchorChord = nextMeasure.beats[0].chord;
         } else {
-          anchorChord = songIterator.song.getKey();
+          anchorChord = songIterator.song.getTransposedKey();
         }
       }
       case 'STEP':
@@ -97,7 +97,8 @@ export class MelodicBeatLiteral {
         let lastSetBeat = Math.floor(currentTime);
         let iteratorMeasure = songIterator.getRelative(0);
         do {
-          anchorChord = iteratorMeasure[lastSetBeat];
+          const beat = iteratorMeasure.beats[lastSetBeat]
+          anchorChord = beat && beat.chord;
           lastSetBeat--;
         } while(!anchorChord);
       }

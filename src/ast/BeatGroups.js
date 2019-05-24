@@ -45,7 +45,8 @@ export class BeatGroupLiteral {
     // the first note of the next measure (@TODO: could be multiple measures
     // later if it's a multi-measure beatgroup)
     // @TODO: wtf?
-    return MelodicBeatLiteral.normalizeChord(songIterator.getRelative(1)[0]);
+    const nextMeasure = songIterator.getRelative(1);
+    return MelodicBeatLiteral.normalizeChord(nextMeasure && nextMeasure.beats[0].chord);
   }
 }
 
