@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <title>Playback Browser Test</title>
+    </head>
+    <body>
+        <button id="play" disabled type="button">Play</button>
+        <script type="module">
+            import Song from '../node_modules/notochord-song/src/index.js';
+            import { PlaybackStyle, Player } from '../src/index.js';
+
+            import BLUE_SKIES from '../node_modules/notochord-song/blueSkies.mjs';
+
+            let blueSkies = new Song(BLUE_SKIES);
+
+            let button = document.querySelector('#play');
+
+            let player = new Player();
+            let style = new PlaybackStyle('../styles/swing.play');
+            player.setStyle(style).then( () => {
+                button.removeAttribute('disabled');
+            });
+
+            button.addEventListener('click', () => {
+                player.play(blueSkies);
+            });
+        </script>
+    </body>
+</html>

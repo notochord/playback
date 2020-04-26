@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "es6",
+    "removeComments": false,
+    "noImplicitAny": false,
+  },
+  "files": [
+    "src/playback.ts",
+    // "src/interfaces.d.ts"
+  ],
+}

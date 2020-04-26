@@ -1,8 +1,8 @@
 # import the lexer
 @preprocessor esmodule
 @{%
-import lexer from '../lexer/lexer.js' ;
-import * as ast from '../ast/ast_nodes.js';
+import lexer from '../lexer/lexer' ;
+import * as ast from '../ast/ast_nodes';
 %}
 @lexer lexer
 
