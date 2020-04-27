@@ -8,6 +8,8 @@ import Scope from './Scope';
 
 let definitions = new Map();
 
+type ArgType = '*' | 'string' | 'number' | 'boolean' | ((...args: any[]) => void) | Nil;
+
 /**
  * Make an assertion about argument count and types.
  * @param {string} identifier The function name.
@@ -16,7 +18,7 @@ let definitions = new Map();
  * (instanceof) to expect.
  * @param {Scope} scope The scope, for error logging.
  */
-export function assertArgTypes(identifier, args, types, scope) {
+export function assertArgTypes(identifier: string, args, types: ArgType[] | '*', scope: Scope) {
   if(types == '*') return;
   if(args.length != types.length) {
     throw new FunctionArgumentsError(`"${identifier}" requires ${types.length} arguments.`, scope);
@@ -50,6 +52,9 @@ export function assertArgTypes(identifier, args, types, scope) {
     }
   }
 }
+
+type GoalScope = 'meta' | 'options' | 'no-config' | 'pattern' | 'no-meta';
+
 /**
  * Make an assertion about the scope in which the function is called.
  * @param {string} identifier The function's name.
@@ -63,7 +68,7 @@ export function assertArgTypes(identifier, args, types, scope) {
  *   block, but runs anywhere else that the parser will let you call a function.
  * @param {Scope} scope The calling scope.
  */
-export function assertScope(identifier, goalscope = 'no-meta', scope) {
+export function assertScope(identifier: string, goalscope: GoalScope = 'no-meta', scope: Scope) {
   if(goalscope == 'meta') {
     if(scope.type != '@meta') {
       throw new FunctionScopeError(`Function "${identifier}" must only be called within a @meta block."`, scope);
@@ -88,6 +93,13 @@ export function assertScope(identifier, goalscope = 'no-meta', scope) {
     }
   }
 }
+
+interface IDefineOpts {
+  types?: ArgType | ArgType[];
+  scope?: GoalScope;
+  returns: ArgType;
+}
+
 /**
  * Define a function.
  * @param {string} identifier The name of the function.
@@ -107,7 +119,7 @@ export function assertScope(identifier, goalscope = 'no-meta', scope) {
  * - argErr: a function. If the function does further testing on its
  *   arguments and there's an issue, pass this the error message and it throws.
  */
-let define = function(identifier, opts, func) {
+let define = function(identifier: string, opts: IDefineOpts, func: (args: any[], songIterator: SongIterator, scope: Scope, argErr: (message: string) => void) => any) {
   let definition = {
     types: opts.types || '*',
     returns: opts.returns || '*',
@@ -133,7 +145,7 @@ let define = function(identifier, opts, func) {
  * See assertScope above.
  */
 let defineVar = function(identifier, type, goalscope = null) {
-  let opts = {
+  let opts: IDefineOpts = {
     types: [type],
     scope: goalscope,
     returns: Nil
@@ -152,10 +164,10 @@ let defineVar = function(identifier, type, goalscope = null) {
  * @param {?string=null} goalscope Throw error unless the calling scope matches.
  * See assertScope above.
  */
-let defineBoolean = function(identifier, goalscope = null) {
-  let opts = {
+let defineBoolean = function(identifier: string, goalscope = null) {
+  let opts: IDefineOpts = {
     types: '*',
-    scopes: goalscope,
+    scope: goalscope,
     returns: Nil
   }
   define(identifier, opts, (args, songIterator, scope, argErr) => {
@@ -186,7 +198,7 @@ define('time-signature',
   },
   (args, songIterator, scope, argErr) => {
     if(!Number.isInteger(Math.log2(args[1]))) {
-      argErr('Argument 2 of "time-signature" must be a power of 2.');
+      argErr(`Argument 2 of "time-signature" must be a power of 2 (got ${args}).`);
     }
     scope.vars.set('time-signature', [args[0], args[1]]);
     return Nil;
@@ -202,7 +214,7 @@ define('volume',
   },
   (args, songIterator, scope, argErr) => {
     if(args[0] < 0 || args[0] > 1) {
-      argErr('Argument 1 of "volume" must be in range 0-1 (inclusive).');
+      argErr(`Argument 1 of "volume" must be in range 0-1 (inclusive) (got ${args}).`);
     }
     scope.vars.set('volume', args[0]);
     return Nil;
@@ -216,7 +228,7 @@ define('octave',
   },
   (args, songIterator, scope, argErr) => {
     if(!Number.isInteger(args[0]) || args[0] < 0 || args[0] > 9) {
-      argErr('Argument 1 of "octave" must be an integer 0-9.');
+      argErr(`Argument 1 of "octave" must be an integer 0-9 (got ${args}).`);
     }
     scope.vars.set('octave', args[0]);
     return Nil;
@@ -264,7 +276,7 @@ define('progression',
       let arg = args[i];
       let [,goal] = anchorOrNumberToChordAndRoot(arg, songIterator);
       if(!goal) {
-        argErr('Arguments of "progression" must be numbers or anchors.');
+        argErr(`Arguments of "progression" must be numbers or anchors (got ${args}).`);
       }
       let actualMeasure = songIterator.getRelative(Number(i));
       if(!actualMeasure) return false;
@@ -285,7 +297,7 @@ define('in-scale',
     let [,note] = anchorOrNumberToChordAndRoot(args[0], songIterator);
     let [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1], songIterator);
     if(!note || !goalChord) {
-      argErr('Arguments of "in-scale" must be numbers or anchors.');
+      argErr(`Arguments of "in-scale" must be numbers or anchors (got ${args}).`);
     }
     let goalScaleName = MelodicBeatLiteral.chordToScaleName(goalChord);
     let goalScale = tonal.Scale.notes(goalTonic, goalScaleName);
@@ -314,7 +326,7 @@ define('chance',
   },
   (args, songIterator, scope, argErr) => {
     if(args[0] < 0 || args[0] > 1) {
-      argErr('Argument 1 of "chance" must be in range 0-1 (inclusive).');
+      argErr(`Argument 1 of "chance" must be in range 0-1 (inclusive) (got ${args}).`);
     }
     scope.vars.set('chance', args[0]);
     return Nil;

@@ -57,10 +57,9 @@ So I set off to create my very own language to define a playback style. The end.
 
 ## Building and testing, etc.
 
-- `npm test` - run the test suite, print nothing if all tests pass
-- `npm run build` - compile the grammar and bundle the files into
-  `dist/playback.js`. Also bundle the tests and run them
-- `npm run build-watch` - rebuild (and rerun tests) every time you change a file
+- `npm test` - run the test suite
+- `npm run build` - compile and bundle
+- `npm run playgrouns` - open the playground
 
 ## Credits
 

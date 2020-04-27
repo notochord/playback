@@ -1675,7 +1675,7 @@ define$1('time-signature', {
     returns: Nil
 }, (args, songIterator, scope, argErr) => {
     if (!Number.isInteger(Math.log2(args[1]))) {
-        argErr('Argument 2 of "time-signature" must be a power of 2.');
+        argErr(`Argument 2 of "time-signature" must be a power of 2 (got ${args}).`);
     }
     scope.vars.set('time-signature', [args[0], args[1]]);
     return Nil;
@@ -1688,7 +1688,7 @@ define$1('volume', {
     returns: Nil
 }, (args, songIterator, scope, argErr) => {
     if (args[0] < 0 || args[0] > 1) {
-        argErr('Argument 1 of "volume" must be in range 0-1 (inclusive).');
+        argErr(`Argument 1 of "volume" must be in range 0-1 (inclusive) (got ${args}).`);
     }
     scope.vars.set('volume', args[0]);
     return Nil;
@@ -1700,7 +1700,7 @@ define$1('octave', {
     returns: Nil
 }, (args, songIterator, scope, argErr) => {
     if (!Number.isInteger(args[0]) || args[0] < 0 || args[0] > 9) {
-        argErr('Argument 1 of "octave" must be an integer 0-9.');
+        argErr(`Argument 1 of "octave" must be an integer 0-9 (got ${args}).`);
     }
     scope.vars.set('octave', args[0]);
     return Nil;
@@ -1741,7 +1741,7 @@ define$1('progression', {
         let arg = args[i];
         let [, goal] = anchorOrNumberToChordAndRoot(arg, songIterator);
         if (!goal) {
-            argErr('Arguments of "progression" must be numbers or anchors.');
+            argErr(`Arguments of "progression" must be numbers or anchors (got "${args}").`);
         }
         let actualMeasure = songIterator.getRelative(Number(i));
         if (!actualMeasure)
@@ -1761,7 +1761,7 @@ define$1('in-scale', {
     let [, note] = anchorOrNumberToChordAndRoot(args[0], songIterator);
     let [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1], songIterator);
     if (!note || !goalChord) {
-        argErr('Arguments of "in-scale" must be numbers or anchors.');
+        argErr(`Arguments of "in-scale" must be numbers or anchors (got ${args}).`);
     }
     let goalScaleName = MelodicBeatLiteral.chordToScaleName(goalChord);
     let goalScale = tonal$1.Scale.notes(goalTonic, goalScaleName);
@@ -1786,7 +1786,7 @@ define$1('chance', {
     returns: Nil
 }, (args, songIterator, scope, argErr) => {
     if (args[0] < 0 || args[0] > 1) {
-        argErr('Argument 1 of "chance" must be in range 0-1 (inclusive).');
+        argErr(`Argument 1 of "chance" must be in range 0-1 (inclusive) (got ${args}).`);
     }
     scope.vars.set('chance', args[0]);
     return Nil;
