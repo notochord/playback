@@ -1,32 +1,33 @@
+import { Scope } from './ASTNodeBase';
 import { PlaybackValue } from '../values/values';
 
 // does this have to be an Error? idc
 class PlaybackError extends Error {
-  constructor(message, scope) {
+  public constructor(message: string, scope: Scope) {
     super(`${message}\nScope: "${scope.name}"`)
   }
 }
 
 /* Import-related errors */
 export class ImportError extends PlaybackError {
-  constructor(message, scope) {
+  public constructor(message: string, scope: Scope) {
     super(message, scope);
   }
 }
 export class NoSuchStyleError extends ImportError {
-  constructor(identifier, scope) {
+  public constructor(identifier: string, scope: Scope) {
     super(`No style with the name "${identifier}" was imported`, scope);
   }
 }
 export class NoSuchTrackError extends ImportError {
-  constructor(style, track, scope) {
+  public constructor(style: string, track: string, scope: Scope) {
     super(
       `No track with the name "${track}" exists in the style "${style}"`,
       scope);
   }
 }
 export class NoSuchPatternError extends ImportError {
-  constructor(style, track, pattern, scope) {
+  public constructor(style: string, track: string, pattern: string, scope: Scope) {
     super(
       `Pattern "${style}.${track}.${pattern}" does not exist`,
       scope);
@@ -35,24 +36,24 @@ export class NoSuchPatternError extends ImportError {
 
 /* Function-related errors */
 export class FunctionNameError extends PlaybackError {
-  constructor(identifier, scope) {
+  public constructor(identifier: string, scope: Scope) {
     super(`No function exists with name "${identifier}"`, scope);
   }
 }
 export class FunctionScopeError extends PlaybackError {
-  constructor(message, scope) {
+  public constructor(message: string, scope: Scope) {
     super(message, scope);
   }
 }
 export class FunctionArgumentsError extends PlaybackError {
-  constructor(message: string, args: PlaybackValue[], scope) {
+  public constructor(message: string, args: PlaybackValue[], scope: Scope) {
     super(`${message} (got ${args.map(a => a.toOutputString()).join(', ')})`, scope);
   }
 }
 
 /* Pattern-related errors */
 export class TooManyBeatsError extends PlaybackError {
-  constructor(scope) {
+  public constructor(scope: Scope) {
     super(
       'Pattern may only contain 1 BeatGroup. Try the join operator "&"',
       scope);
@@ -61,12 +62,12 @@ export class TooManyBeatsError extends PlaybackError {
 
 /* Beat-related errors*/
 export class MelodicBeatInDrumBeatGroupError extends PlaybackError {
-  constructor(scope) {
+  public constructor(scope: Scope) {
     super('Unexpected Melodic Beat in a Drum Beat Group', scope);
   }
 }
 export class DrumBeatInMelodicBeatGroupError extends PlaybackError {
-  constructor(scope) {
+  public constructor(scope: Scope) {
     super('Unexpected Drum Beat in a Melodic Beat Group', scope);
   }
 }

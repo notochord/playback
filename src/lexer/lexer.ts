@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import moo from '../lib/moo/moo.js';
 
 export default moo.states({

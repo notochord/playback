@@ -1,5 +1,6 @@
 import Soundfont from '../lib/soundfont-player.js';
 import PlaybackStyle from '../PlaybackStyle/PlaybackStyle';
+import Song from 'notochord-song/types/notochord-song';
 
 export default class Player {
   private style: PlaybackStyle
@@ -13,21 +14,21 @@ export default class Player {
    * @param {AudioContext=} context If you pass it an AudioContext it'll use
    * it. Otherwise it'll make its own.
    */
-  constructor(context) {
+  public constructor(context: AudioContext = new AudioContext({latencyHint: "playback"})) {
     this.style = null;
-    this.context = context || new AudioContext({latencyHint: "playback"});
+    this.context = context;
     this.initialized = false;
     (window as any).player = this;
   }
-  async setStyle(style) {
+  public async setStyle(style: PlaybackStyle): Promise<void> {
     this.style = style;
-    if(!style._initialized) {
+    if(!style.initialized) {
       await style.init();
     }
     this.initialized = false;
     this.soundfonts = new Map();
-    let promises = [];
-    for(let instrument of style.getInstruments()) {
+    const promises = [];
+    for(const instrument of style.getInstruments()) {
       let sfpromise;
       if(instrument.startsWith('http://') || instrument.startsWith('https://')) {
         // Soundfont has a bug where you can't just pass it a URL
@@ -50,7 +51,7 @@ export default class Player {
     await Promise.all(promises);
     this.initialized = true;
   }
-  play(song) {
+  public play(song: Song): void {
     if(!this.style) {
       throw new Error('No style selected');
     }
@@ -62,15 +63,15 @@ export default class Player {
       this.context.resume();
     }
 
-    let compiledSong = this.style.compile(song);
+    const compiledSong = this.style.compile(song);
 
-    let tempoCoef = 0.4; // WHATEVER IDC HOW ANYTHING WORKS
-    let startTime = this.context.currentTime + 1;
-    for(let [instrument, notes] of compiledSong) {
-      let soundfont = this.soundfonts.get(instrument);
-      for(let note of notes) {
-        let start = startTime + (tempoCoef * note.time);
-        let dur = tempoCoef * note.duration - 0.05;
+    const tempoCoef = 0.4; // WHATEVER IDC HOW ANYTHING WORKS
+    const startTime = this.context.currentTime + 1;
+    for(const [instrument, notes] of compiledSong) {
+      const soundfont = this.soundfonts.get(instrument);
+      for(const note of notes) {
+        const start = startTime + (tempoCoef * note.time);
+        const dur = tempoCoef * note.duration - 0.05;
         soundfont.play(note.midi, start, {
           duration: dur,
           gain: note.volume

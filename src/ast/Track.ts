@@ -2,7 +2,7 @@ import {
   DrumBeatInMelodicBeatGroupError
 } from './errors.js';
 import {AwaitingDrum} from '../MIDI/Note';
-import Scope from './Scope';
+import {Scope, ASTNodeBase} from './ASTNodeBase';
 import FunctionCall from './FunctionCall';
 import {PatternStatement, PatternCall} from './Pattern';
 import SongIterator from 'notochord-song/types/songiterator';
@@ -18,7 +18,7 @@ export class TrackStatement extends Scope {
   public patterns: Map<string, PatternStatement | PatternCall>;
   public patternCalls: PatternCall[];
 
-  constructor(opts) {
+  public constructor(opts) {
     super();
     this.name = opts.identifier;
     this.type = '@track';
@@ -31,7 +31,7 @@ export class TrackStatement extends Scope {
     this.identifier = opts.identifier;
     this.members = opts.members;
   }
-  init(scope) {
+  public init(scope: Scope): void {
     super.init(scope);
     this.functionCalls = [];
     this.patterns = new Map();
@@ -48,43 +48,43 @@ export class TrackStatement extends Scope {
       }
     });
   }
-  link(ASTs, parentStyle) {
-    for(let patternCall of this.patternCalls) {
+  public link(ASTs, parentStyle): void {
+    for(const patternCall of this.patternCalls) {
       patternCall.link(ASTs, parentStyle, this);
       this.patterns.set(patternCall.prettyprintname, patternCall);
     }
     
-    for(let [, pattern] of this.patterns) {
+    for(const [, pattern] of this.patterns) {
       pattern.link(ASTs, parentStyle, this);
     }
   }
-  execute(songIterator) {
+  public execute(songIterator: SongIterator): null {
     this.inherit();
     console.log(`executing TrackStatement "${this.name}"`);
     
-    this.functionCalls.forEach(function_call => {
-      function_call.execute(songIterator);
+    this.functionCalls.forEach(functionCall => {
+      functionCall.execute(songIterator);
     });
     
     // weighted random picking
     // https://stackoverflow.com/a/4463613/1784306
     // I don't really understand the above explanation, this is probs wrong
     let totalWeight = 0;
-    let weightedOptions = [];
-    for(let [patternname, pattern] of this.patterns) {
+    const weightedOptions = [];
+    for(const [patternname, pattern] of this.patterns) {
       console.log(`- pattern "${patternname}":`);
       // true = I'm the instrument so if you're private return Nil
-      let result = pattern.execute(songIterator, true);
+      const result = pattern.execute(songIterator, true);
       console.log('  - Result:', result);
       // @TODO: handle multi-measure patterns (via locks?)
       if(result) {
-        for(let note of (result as NoteSet)) {
+        for(const note of (result as NoteSet)) {
           if (note.pitch === AwaitingDrum) {
             throw new DrumBeatInMelodicBeatGroupError(pattern);
           }
         }
         
-        let chance = pattern.getChance();
+        const chance = pattern.getChance();
         weightedOptions.push({
           noteSet: result,
           lower: totalWeight,
@@ -94,8 +94,8 @@ export class TrackStatement extends Scope {
       }
     }
     // binary search would make sense here if I expected more items
-    let goal = Math.random() * totalWeight;
-    for(let option of weightedOptions) {
+    const goal = Math.random() * totalWeight;
+    for(const option of weightedOptions) {
       if(option.lower <= goal && goal <= option.upper) {
         console.log('  - Final result:', option.noteSet);
         return option.noteSet;
@@ -105,17 +105,18 @@ export class TrackStatement extends Scope {
     return null;
   }
 }
-export class TrackCall {
+export class TrackCall extends ASTNodeBase {
   public import: string;
   public track: string;
   public trackStatement: TrackStatement;
 
-  constructor(opts) {
+  public constructor(opts) {
+    super();
     this.import = opts.import;
     this.track = opts.track;
     this.trackStatement = null; // will be set by the loader.
   }
-  execute(songIterator: SongIterator) {
+  public execute(songIterator: SongIterator): void {
     this.trackStatement.execute(songIterator);
   }
 }

@@ -11,20 +11,21 @@
  * @param {string} path The path to the file to load.
  * @return {string} The content of the file.
  */
-export async function load(stylePath) {
-  let isHTTP = stylePath.startsWith('http://') || stylePath.startsWith('https://');
-  let isRelative = stylePath.startsWith('.') || stylePath.startsWith('/');
+export async function load(stylePath): Promise<string> {
+  const isHTTP = stylePath.startsWith('http://') || stylePath.startsWith('https://');
+  const isRelative = stylePath.startsWith('.') || stylePath.startsWith('/');
   if (typeof process === 'undefined') {
     if (isHTTP || isRelative) {
       return fetch(stylePath).then(r => r.text());
     } else {
-      let modulePath = ''; //String(import.meta.url).replace(/[^\/]+$/, '');
+      const modulePath = ''; //String(import.meta.url).replace(/[^\/]+$/, '');
       stylePath = modulePath + '../../styles/' + stylePath;
       if (!stylePath.endsWith('.play')) stylePath += '.play';
       return fetch(stylePath).then(r => r.text());
     }
   } else {
     if (isHTTP) {
+      // @ts-ignore
       const http = await import(stylePath.startsWith('https://') ? 'https' : 'http');
       return new Promise((resolve, reject) => {
         http.get(stylePath, res => {
@@ -37,13 +38,15 @@ export async function load(stylePath) {
       });
     }
     if (!isRelative) {
-      let path = await import('path');
+      // @ts-ignore
+      const path = await import('path');
       try {
         stylePath = path.join(__dirname, '../../styles/', stylePath);
       } catch {}
       if (!stylePath.endsWith('.play')) stylePath += '.play';
     }
-    let fs = await import('fs');
+    // @ts-ignore
+    const fs = await import('fs');
     return (new Promise((resolve, reject) => {
       fs.readFile(stylePath, 'utf8', (err, data) => {
         if (err) {
@@ -54,4 +57,4 @@ export async function load(stylePath) {
       });
     }));
   }
-};
+}

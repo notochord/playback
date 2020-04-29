@@ -1,4 +1,5 @@
 import drumJson from './drums.json.js';
+// @ts-ignore
 import * as _Tonal from 'tonal';
 const tonal = (_Tonal as any).default || _Tonal;
 
@@ -9,21 +10,21 @@ const tonal = (_Tonal as any).default || _Tonal;
  * @param {string} name
  * @return {string}
  */
-function normalizeDrumName(name) {
+function normalizeDrumName(name: string): string {
   return name.toLowerCase().replace(/ |-|_/g, ' ');
 }
 
 // make a map of drum names, which is the inverse of the given JSON file
-let DRUM_MAP = new Map();
-for(let midi in drumJson) {
-  let name = normalizeDrumName(drumJson[midi])
+const DRUM_MAP = new Map();
+for(const midi in drumJson) {
+  const name = normalizeDrumName(drumJson[midi])
   DRUM_MAP.set(name, midi);
 }
 
 /**
  * Special pitch value meaning the note will be set later by a DrumBeatGroup
  */
-let AwaitingDrum = Symbol('AwaitingDrum');
+const AwaitingDrum = Symbol('AwaitingDrum');
 export {AwaitingDrum};
 
 export class Note {
@@ -39,7 +40,7 @@ export class Note {
    * @param {number} opts.duraion The note's duration, in beats.
    * @param {number} opts.volume The note's volume, as a float 0-1 (inclusive).
    */
-  constructor(opts) {
+  public constructor(opts) {
     this.time = opts.time;
     this.pitch = opts.pitch;
     this.duration = opts.duration;
@@ -49,11 +50,11 @@ export class Note {
    * An integer representing the MIDI pitch value of the note.
    * @type {number}
    */
-  get midi() {
+  public get midi(): string {
     if(this.pitch === AwaitingDrum) {
       return null;
     } else {
-      let drumValue = DRUM_MAP.get(normalizeDrumName(this.pitch));
+      const drumValue = DRUM_MAP.get(normalizeDrumName(this.pitch as string));
       if(drumValue) {
         return drumValue;
       } else {
@@ -65,13 +66,13 @@ export class Note {
    * An integer 0-127 that roughly correlates to volume
    * @type {number}
    */
-  get velocity() {
+  public get velocity(): number {
     return Math.floor(this.volume * 127);
   }
 }
 
 export class NoteSet extends Array {
-  constructor(...args) {
+  public constructor(...args) {
     super();
     this.push(...args);
   }

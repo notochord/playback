@@ -1,6 +1,6 @@
 import {NoteSet} from '../MIDI/Note';
 import {NoSuchStyleError, NoSuchTrackError} from './errors';
-import Scope from './Scope';
+import {Scope} from './ASTNodeBase';
 import {MetaStatement, OptionsStatement, ImportStatement} from './ConfigStatements';
 import {TrackStatement, TrackCall} from './Track';
 import * as values from '../values/values';
@@ -17,7 +17,7 @@ export default class GlobalScope extends Scope {
   public trackCalls: TrackCall[];
   public metadata?: Map<string, any>;
 
-  constructor(statements) {
+  public constructor(statements: Statement[]) {
     super();
     
     this.name = 'global';
@@ -26,7 +26,7 @@ export default class GlobalScope extends Scope {
     this.statements = statements;
   }
   
-  init() {
+  public init(): void {
     // set some default values
     this.vars.set('time-signature', new values.PlaybackTimeSignatureValue([4, 4]));
     this.vars.set('tempo', new values.PlaybackNumberValue(120));
@@ -38,7 +38,7 @@ export default class GlobalScope extends Scope {
     this.trackCalls = [];
     this.dependencies = [];
     
-    for(let statement of this.statements) {
+    for(const statement of this.statements) {
       if(statement instanceof MetaStatement
         || statement instanceof OptionsStatement) {
         // @TODO: make sure there's exactly 1 meta block
@@ -59,14 +59,14 @@ export default class GlobalScope extends Scope {
     
     this.tracks.forEach(statement => statement.init(this));
   }
-  link(ASTs) {
-    for(let trackCall of this.trackCalls) {
+  public link(ASTs): void {
+    for(const trackCall of this.trackCalls) {
       // get path name of style
-      let importPath = this.importedStyles.get(trackCall.import);
+      const importPath = this.importedStyles.get(trackCall.import);
       
-      let ast = ASTs.get(importPath);
+      const ast = ASTs.get(importPath);
       if(!ast) throw new NoSuchStyleError(trackCall.import, this);
-      let trackStatement = ast.tracks.get(trackCall.track);
+      const trackStatement = ast.tracks.get(trackCall.track);
       if(!trackStatement) throw new NoSuchTrackError(
         trackCall.import,
         trackCall.track,
@@ -75,21 +75,21 @@ export default class GlobalScope extends Scope {
       this.tracks.set(`${trackCall.import}.${trackCall.track}`, trackStatement);
     }
     
-    for(let [, track] of this.tracks) {
+    for(const [, track] of this.tracks) {
       track.link(ASTs, this);
     }
   }
-  execute(songIterator: SongIterator) {
-    let trackNoteMap = new Map<string, NoteSet>();
-    for(let [, track] of this.tracks) {
-      let trackNotes = track.execute(songIterator);
+  public execute(songIterator: SongIterator): Map<string, NoteSet> {
+    const trackNoteMap = new Map<string, NoteSet>();
+    for(const [, track] of this.tracks) {
+      const trackNotes = track.execute(songIterator);
       if(trackNotes) trackNoteMap.set(track.instrument, trackNotes);
     }
     return trackNoteMap;
   }
-  getInstruments() {
-    let instruments = new Set<string>();
-    for(let [, track] of this.tracks) {
+  public getInstruments(): Set<string> {
+    const instruments = new Set<string>();
+    for(const [, track] of this.tracks) {
       instruments.add(track.instrument);
     }
     return instruments;

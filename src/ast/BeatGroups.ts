@@ -1,41 +1,39 @@
 import {
   MelodicBeatInDrumBeatGroupError
 } from './errors';
-import {AwaitingDrum, Note, NoteSet} from '../MIDI/Note';
+import {AwaitingDrum, NoteSet} from '../MIDI/Note';
 import {MelodicBeatLiteral} from './BeatLiterals';
-import FunctionCall from './FunctionCall';
-import Scope from './Scope';
+import {Scope, ASTNodeBase} from './ASTNodeBase';
 import SongIterator from 'notochord-song/types/songiterator';
-import { normalizeChordForTonal } from './music_utils';
+import { normalizeChordForTonal } from './musicUtils';
 
-export class BeatGroupLiteral {
+export class BeatGroupLiteral extends ASTNodeBase {
   public measures: Measure[];
-  public scope: Scope;
   public parentBeatGroup: BeatGroupLiteral;
 
-  constructor(measures: Measure[]) {
+  public constructor(measures: Measure[]) {
+    super();
     this.measures = measures;
-    this.scope = null;
   }
-  init(scope) {
-    this.scope = scope;
+  public init(scope: Scope): void {
+    super.init(scope)
     this.measures.forEach((measure, i) => measure.init(scope, this, i));
   }
-  link() {return;}
-  execute(songIterator: SongIterator): NoteSet | null {
-    let joinedMeasures = new NoteSet();
+  public link(): void {return;}
+  public execute(songIterator: SongIterator): NoteSet | null {
+    const joinedMeasures = new NoteSet();
     for(let i = 0; i < this.measures.length; i++) {
-      let offset = i * 4; // @TODO: pull in actual meter somehow
-      let measureNotes = this.measures[i].execute(songIterator);
+      const offset = i * 4; // @TODO: pull in actual meter somehow
+      const measureNotes = this.measures[i].execute(songIterator);
       if(measureNotes === null) return null; // lets a/s abort the beatgroup
-      for(let measureNote of measureNotes as NoteSet) {
+      for(const measureNote of measureNotes as NoteSet) {
         measureNote.time += offset;
         joinedMeasures.push(measureNote);
       }
     }
     return joinedMeasures;
   }
-  getNextStaticBeatRoot(measureIndex, beatIndex, songIterator) {
+  public getNextStaticBeatRoot(measureIndex: number, beatIndex: number, songIterator: SongIterator): string {
     // first, try every subsequent beat in the beatGroup
     // (including subsequent measures)
     let measure, beat;
@@ -56,39 +54,38 @@ export class BeatGroupLiteral {
   }
 }
 
-export class Measure {
+export class Measure extends ASTNodeBase {
   public beats: MelodicBeatLiteral[] | DrumBeatGroupLiteral[];
   public beatsPerMeasure: number;
-  public scope: Scope;
   public parentBeatGroup: BeatGroupLiteral;
   public indexInBeatGroup: number;
 
-  constructor(beats: MelodicBeatLiteral[] | DrumBeatGroupLiteral[]) {
+  public constructor(beats: MelodicBeatLiteral[] | DrumBeatGroupLiteral[]) {
+    super();
     this.beats = beats;
     this.beatsPerMeasure = null;
-    this.scope = null;
   }
-  calculateDurationAfter(beatIndex) {
-    let currentBeat = this.beats[beatIndex];
-    let currentBeatTime = (currentBeat as MelodicBeatLiteral).getTime();
+  public calculateDurationAfter(beatIndex: number): number {
+    const currentBeat = this.beats[beatIndex];
+    const currentBeatTime = (currentBeat as MelodicBeatLiteral).getTime();
     
     let nextBeatTime;
     if(beatIndex + 1 >= this.beats.length) {
       nextBeatTime = this.beatsPerMeasure + 1;
     } else {
-      let nextBeat = this.beats[beatIndex + 1];
+      const nextBeat = this.beats[beatIndex + 1];
       nextBeatTime = (nextBeat as MelodicBeatLiteral).getTime();
     }
     return nextBeatTime - currentBeatTime;
   }
-  getNextStaticBeatRoot(beatIndex, songIterator) {
+  public getNextStaticBeatRoot(beatIndex: number, songIterator: SongIterator): string {
     return this.parentBeatGroup.getNextStaticBeatRoot(
       this.indexInBeatGroup,
       beatIndex,
       songIterator
     );
   }
-  init(scope, parentBeatGroup, indexInBeatGroup) {
+  public init(scope: Scope, parentBeatGroup: BeatGroupLiteral, indexInBeatGroup: number): void {
     this.scope = scope;
     this.parentBeatGroup = parentBeatGroup;
     this.indexInBeatGroup = indexInBeatGroup;
@@ -98,15 +95,15 @@ export class Measure {
       beat.init(scope, this, i);
     });
   }
-  execute(songIterator: SongIterator) {
+  public execute(songIterator: SongIterator): NoteSet | null {
     // clear cached notes (used for STEP/ARPEGGIATE interpolation)
-    for(let beat of this.beats) {
+    for(const beat of this.beats) {
       if(beat instanceof MelodicBeatLiteral) beat.cachedAnchor = null;
     }
     // each beat returns a NoteSet since it could be a chord or whatever
-    let joined = new NoteSet();
-    for(let beat of this.beats) {
-      let notes = beat.execute(songIterator);
+    const joined = new NoteSet();
+    for(const beat of this.beats) {
+      const notes = beat.execute(songIterator);
       if(!notes) return null; // lets a and s abort the beatgroup.
       joined.push(...notes);
     }
@@ -114,24 +111,24 @@ export class Measure {
   }
 }
 
-export class DrumBeatGroupLiteral {
+export class DrumBeatGroupLiteral extends ASTNodeBase {
   public beatGroup: BeatGroupLiteral;
-  public scope: Scope;
   public drum: string;
 
-  constructor(drum, beatGroup) {
+  public constructor(drum, beatGroup) {
+    super();
     this.drum = drum;
     this.beatGroup = beatGroup; // for now there's no diff in functionality...
     // @TODO make sure our beats are all drummy
   }
-  init(scope) {
-    this.scope = scope;
+  public init(scope: Scope): void {
+    super.init(scope);
     if(this.beatGroup.init) this.beatGroup.init(scope);
   }
-  link() {return;} // @TODO: I think patterncalls are allowed here?
-  execute(songIterator: SongIterator) {
-    let notes = this.beatGroup.execute(songIterator);
-    for(let note of notes) {
+  public link(): void {return;} // @TODO: I think patterncalls are allowed here?
+  public execute(songIterator: SongIterator): NoteSet | null {
+    const notes = this.beatGroup.execute(songIterator);
+    for(const note of notes) {
       if(note.pitch === AwaitingDrum) {
         note.pitch = this.drum; // @TODO: convert to number?
       } else {

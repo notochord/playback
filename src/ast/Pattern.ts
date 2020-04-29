@@ -5,7 +5,7 @@ import {
   NoSuchTrackError,
   NoSuchPatternError
 } from './errors.js';
-import Scope from './Scope.js';
+import { Scope, ASTNodeBase } from './ASTNodeBase.js';
 import FunctionCall from './FunctionCall.js';
 import * as values from '../values/values';
 import SongIterator from 'notochord-song/types/songiterator';
@@ -16,7 +16,7 @@ export class PatternExpressionGroup extends Scope {
   public nonFunctionCallExpressions: any[];
   public patternStatement: PatternStatement;
 
-  constructor(expressions) {
+  public constructor(expressions) {
     super();
     this.type = 'PatternExpressionGroup';
     this.name = '@pattern(<anonymous>)';
@@ -28,7 +28,7 @@ export class PatternExpressionGroup extends Scope {
     this.functionCalls = [];
     this.nonFunctionCallExpressions = [];
   }
-  init(scope, patternStatement = null) {
+  public init(scope: Scope, patternStatement = null): void {
     super.init(scope);
     this.patternStatement = patternStatement;
     if(this.patternStatement) {
@@ -47,21 +47,21 @@ export class PatternExpressionGroup extends Scope {
       }
     });
   }
-  link(ASTs, parentStyle, parentTrack) {
+  public link(ASTs, parentStyle, parentTrack): void {
     this.expressions.forEach(expression => {
       expression.link(ASTs, parentStyle, parentTrack);
     });
   }
-  execute(songIterator: SongIterator, callerIsTrack = false): NoteSet | null {
+  public execute(songIterator: SongIterator, callerIsTrack = false): NoteSet | null {
     this.inherit();
     let beats: NoteSet = null;
-    for(let function_call of this.functionCalls) {
-      let return_value = function_call.execute(songIterator);
-      if(return_value instanceof NoteSet) {
+    for(const functionCall of this.functionCalls) {
+      const returnValue = functionCall.execute(songIterator);
+      if(returnValue instanceof NoteSet) {
         if(beats) {
           throw new TooManyBeatsError(this);
         }
-        beats = return_value;
+        beats = returnValue;
       }
     }
     if(callerIsTrack && this.vars.get('private').value === true) {
@@ -86,7 +86,7 @@ export class PatternStatement extends PatternExpressionGroup {
   public identifier: string;
   public condition?: any;
 
-  constructor(opts) {
+  public constructor(opts) {
     if(opts.expression instanceof PatternExpressionGroup) {
       // unroll the redundant expression group
       super(opts.expression.expressions);
@@ -96,34 +96,34 @@ export class PatternStatement extends PatternExpressionGroup {
     this.identifier = opts.identifier;
     this.condition = (opts.condition !== undefined) ? opts.condition : null;
   }
-  getChance() {
+  public getChance(): number {
     return this.vars.get('chance').value as number;
   }
-  link(ASTs, parentStyle, parentTrack) {
+  public link(ASTs, parentStyle, parentTrack): void {
     super.link(ASTs, parentStyle, parentTrack);
     if(this.condition && this.condition.link) {
       this.condition.link(ASTs, parentStyle, parentTrack);
     }
   }
-  init(scope) {
+  public init(scope): void {
     super.init(scope);
     if(this.condition && this.condition.init) this.condition.init(this);
   }
-  execute(songIterator: SongIterator, callerIsTrack = false) {
+  public execute(songIterator: SongIterator, callerIsTrack = false): NoteSet | null {
     if(this.condition) {
-      let condition_value;
+      let conditionValue;
       if(this.condition.execute) {
-        condition_value = this.condition.execute(songIterator);
+        conditionValue = this.condition.execute(songIterator);
       } else {
-        condition_value = this.condition;
+        conditionValue = this.condition;
       }
-      if((condition_value as values.PlaybackValue).toBoolean() === false) return null;
+      if((conditionValue as values.PlaybackValue).toBoolean() === false) return null;
     }
     return super.execute(songIterator, callerIsTrack);
   }
 }
 
-export class PatternCall {
+export class PatternCall extends ASTNodeBase {
   public import?: string;
   public track?: string;
   public pattern: string;
@@ -131,29 +131,29 @@ export class PatternCall {
   public patternStatement: PatternStatement;
   public prettyprintname: string;
 
-  constructor(opts) {
+  public constructor(opts) {
+    super();
     this.import = opts.import || null;
     this.track = opts.track || null;
     this.pattern = opts.pattern;
-    this.scope = null;
     this.patternStatement = null;
     this.prettyprintname = (this.import || 'this') + '.' +
       (this.track || 'this') + '.' +
       this.pattern;
   }
-  getChance() {
+  public getChance(): number {
     return this.patternStatement.getChance();
   }
-  init(scope) {
-    this.scope = scope;
+  public init(scope: Scope): void {
+    super.init(scope);
   }
-  link(ASTs, parentStyle, parentTrack) {
+  public link(ASTs, parentStyle, parentTrack): void {
     let ast;
     if(this.import === null) {
       ast = parentStyle
     } else {
       // get path name of style
-      let importPath = parentStyle.importedStyles.get(this.import);
+      const importPath = parentStyle.importedStyles.get(this.import);
       ast = ASTs.get(importPath);
       if(!ast) throw new NoSuchStyleError(this.import, this);
     }
@@ -167,7 +167,7 @@ export class PatternCall {
         this.track || 'this',
         this);
     }
-    let patternStatement = track.patterns.get(this.pattern);
+    const patternStatement = track.patterns.get(this.pattern);
     if(!patternStatement) throw new NoSuchPatternError(
       this.import || 'this',
       this.track || 'this',
@@ -175,32 +175,32 @@ export class PatternCall {
       this);
     this.patternStatement = patternStatement;
   }
-  execute(songIterator: SongIterator) {
+  public execute(songIterator: SongIterator): NoteSet | null {
     // called patternStatement ignores private()
     return this.patternStatement.execute(songIterator);
   }
 }
 
-export class JoinedPatternExpression {
+export class JoinedPatternExpression extends ASTNodeBase {
   public patterns: any[];
-  public scope: Scope;
 
-  constructor(patterns) {
+  public constructor(patterns) {
+    super();
     this.patterns = patterns;
   }
-  init(scope) {
-    this.scope = scope;
+  public init(scope: Scope): void {
+    super.init(scope);
     this.patterns.forEach(pattern => {
       if(pattern.init) pattern.init(scope);
     });
   }
-  link(ASTs, parentStyle, parentTrack) {
+  public link(ASTs, parentStyle, parentTrack): void {
     this.patterns.forEach(pattern => {
       pattern.link(ASTs, parentStyle, parentTrack);
     });
   }
-  execute(songIterator: SongIterator) {
-    let noteSets = [];
+  public execute(songIterator: SongIterator): NoteSet | null {
+    const noteSets = [];
     for(let pattern of this.patterns) {
       if(pattern.execute) {
         pattern = pattern.execute(songIterator);

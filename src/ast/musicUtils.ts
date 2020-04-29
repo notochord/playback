@@ -1,26 +1,28 @@
 import SongIterator from 'notochord-song/types/songiterator';
 import tonal from '../lib/tonal.min.js';
 
-export function normalizeChordForTonal(chord: string = ''): string {
+export function normalizeChordForTonal(chord = ''): string {
   return chord
     .replace(/-/g, '_') // tonal uses _ over - for minor7
     .replace(/minor|min/g, 'm'); // tonal is surprisingly bad at identifying minor chords??
 }
 
 type Anchor = 'KEY' | 'NEXT' | 'STEP' | 'ARPEGGIATE';
-export function getAnchorChord(anchor: Anchor, songIterator: SongIterator, currentTime: number) {
+export function getAnchorChord(anchor: Anchor, songIterator: SongIterator, currentTime: number): string {
   let anchorChord: string;
   switch(anchor) {
     case 'KEY': {
       anchorChord = songIterator.song.getTransposedKey();
+      break;
     }
     case 'NEXT': {
-      let nextMeasure = songIterator.getRelative(1);
+      const nextMeasure = songIterator.getRelative(1);
       if(nextMeasure) {
         anchorChord = nextMeasure.beats[0].chord;
       } else {
         anchorChord = songIterator.song.getTransposedKey();
       }
+      break;
     }
     case 'STEP':
     case 'ARPEGGIATE': {
@@ -31,36 +33,37 @@ export function getAnchorChord(anchor: Anchor, songIterator: SongIterator, curre
         this.indexInMeasure,
         songIterator
       );*/
-
+      break;
     }
     default: {
       // crawl backward through this measure to get the last set beat
       let lastSetBeat = Math.floor(currentTime);
-      let iteratorMeasure = songIterator.getRelative(0);
+      const iteratorMeasure = songIterator.getRelative(0);
       if(!iteratorMeasure) break;
       do {
         const beat = iteratorMeasure.beats[lastSetBeat]
         anchorChord = beat && beat.chord;
         lastSetBeat--;
       } while(!anchorChord);
+      break;
     }
   }
   return normalizeChordForTonal(anchorChord);
 }
 
 export function anchorChordToRoot(anchorChord: string, degree: number, octave: number): string {
-  let anchorTonic = tonal.Chord.tokenize(anchorChord)[0];
-  let anchorScaleName = chordToScaleName(anchorChord);
-  let scalePCs = tonal.Scale.notes(anchorTonic, anchorScaleName);
-  let rootPC = scalePCs[degree - 1];
+  const anchorTonic = tonal.Chord.tokenize(anchorChord)[0];
+  const anchorScaleName = chordToScaleName(anchorChord);
+  const scalePCs = tonal.Scale.notes(anchorTonic, anchorScaleName);
+  const rootPC = scalePCs[degree - 1];
   return tonal.Note.from({oct: octave}, rootPC);
 }
 
-export function chordToScaleName(chord: string) {
-  let chordType = tonal.Chord.tokenize(chord)[1];
+export function chordToScaleName(chord: string): string {
+  const chordType = tonal.Chord.tokenize(chord)[1];
 
   // @TODO: make this more robust
-  let names = tonal.Chord.props(chordType).names;
+  const names = tonal.Chord.props(chordType).names;
   if(names.includes('dim')) return 'diminished';
   if(names.includes('aug')) return 'augmented';
   if(names.includes('Major')) return 'major';

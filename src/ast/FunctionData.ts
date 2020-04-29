@@ -1,26 +1,25 @@
 import tonal from '../lib/tonal.min.js';
-import { normalizeChordForTonal, getAnchorChord, anchorChordToRoot, chordToScaleName } from './music_utils';
-import {MelodicBeatLiteral} from './BeatLiterals'; 
+import { normalizeChordForTonal, getAnchorChord, anchorChordToRoot, chordToScaleName } from './musicUtils';
 import * as values from '../values/values';
 import {FunctionArgumentsError, FunctionScopeError} from './errors';
 import FunctionCall from './FunctionCall';
 import SongIterator from 'notochord-song/types/songiterator';
-import Scope from './Scope';
+import { Scope } from './ASTNodeBase';
 
-interface IDefineOpts {
+interface DefineOpts {
   types?: ArgType[] | '*';
   scope?: GoalScope;
   returns: ArgType;
 }
 
-export interface IFunctionDefinition {
+export interface FunctionDefinition {
   types?: ArgType[] | '*';
   scope?: GoalScope;
   returns: ArgType;
   execute: (args: values.PlaybackValue[], songIterator: SongIterator, scope: Scope) => values.PlaybackValue;
 }
 
-let definitions = new Map<string, IFunctionDefinition>();
+const definitions = new Map<string, FunctionDefinition>();
 
 type ArgType = values.PlaybackValue['type'] | '*';
 
@@ -32,14 +31,14 @@ type ArgType = values.PlaybackValue['type'] | '*';
  * (instanceof) to expect.
  * @param {Scope} scope The scope, for error logging.
  */
-export function assertArgTypes(identifier: string, args: values.PlaybackValue[], types: ArgType[] | '*', scope: Scope) {
+export function assertArgTypes(identifier: string, args: values.PlaybackValue[], types: ArgType[] | '*', scope: Scope): void {
   if(types == '*') return;
   if(args.length != types.length) {
     throw new FunctionArgumentsError(`"${identifier}" requires ${types.length} arguments.`, args, scope);
   }
-  for(let i in args) {
+  for(const i in args) {
     if(types[i] == '*') continue;
-    let arg = args[i];
+    const arg = args[i];
     if(arg instanceof FunctionCall) {
       if(arg.returns == '*') {
         continue; // what's the correct functionality here? cry?
@@ -71,7 +70,7 @@ type GoalScope = 'meta' | 'options' | 'no-config' | 'pattern' | 'no-meta';
  *   block, but runs anywhere else that the parser will let you call a function.
  * @param {Scope} scope The calling scope.
  */
-export function assertScope(identifier: string, goalscope: GoalScope = 'no-meta', scope: Scope) {
+export function assertScope(identifier: string, goalscope: GoalScope = 'no-meta', scope: Scope): void {
   if(goalscope == 'meta') {
     if(scope.type != '@meta') {
       throw new FunctionScopeError(`Function "${identifier}" must only be called within a @meta block."`, scope);
@@ -116,13 +115,13 @@ export function assertScope(identifier: string, goalscope: GoalScope = 'no-meta'
  * - argErr: a function. If the function does further testing on its
  *   arguments and there's an issue, pass this the error message and it throws.
  */
-let define = function(identifier: string, opts: IDefineOpts, func: (args: values.PlaybackValue[], songIterator: SongIterator, scope: Scope, argErr: (message: string) => void) => values.PlaybackValue) {
-  let definition = {
+const define = function(identifier: string, opts: DefineOpts, func: (args: values.PlaybackValue[], songIterator: SongIterator, scope: Scope, argErr: (message: string) => void) => values.PlaybackValue): void {
+  const definition = {
     types: opts.types || '*',
     returns: opts.returns || '*',
     scope: opts.scope || 'no-meta',
-    execute: (args: values.PlaybackValue[], songIterator: SongIterator, scope: Scope) => {
-      let argErr = message => {
+    execute: (args: values.PlaybackValue[], songIterator: SongIterator, scope: Scope): values.PlaybackValue => {
+      const argErr = (message: string): never => {
         throw new FunctionArgumentsError(message, args, scope);
       };
       return func(args, songIterator, scope, argErr);
@@ -141,8 +140,8 @@ let define = function(identifier: string, opts: IDefineOpts, func: (args: values
  * @param {?string=null} goalscope Throw error unless the calling scope matches.
  * See assertScope above.
  */
-let defineVar = function(identifier, type, goalscope = null) {
-  let opts: IDefineOpts = {
+const defineVar = function(identifier, type, goalscope = null): void {
+  const opts: DefineOpts = {
     types: [type],
     scope: goalscope,
     returns: 'Nil'
@@ -161,8 +160,8 @@ let defineVar = function(identifier, type, goalscope = null) {
  * @param {?string=null} goalscope Throw error unless the calling scope matches.
  * See assertScope above.
  */
-let defineBoolean = function(identifier: string, goalscope = null) {
-  let opts: IDefineOpts = {
+const defineBoolean = function(identifier: string, goalscope = null): void {
+  const opts: DefineOpts = {
     types: '*',
     scope: goalscope,
     returns: 'Nil'
@@ -243,17 +242,17 @@ define('choose',
     returns: '*'
   },
   (args, songIterator, scope, argErr) => {
-    let nonNilArgs = args.filter(arg => arg.type !== 'Nil');
+    const nonNilArgs = args.filter(arg => arg.type !== 'Nil');
     if(nonNilArgs.length) {
-      let index = Math.floor(Math.random() * nonNilArgs.length);
+      const index = Math.floor(Math.random() * nonNilArgs.length);
       return nonNilArgs[index];
     } else {
       return new values.PlaybackNilValue();
     }
   });
 
-let anchorOrNumberToChordAndRoot = function(arg: values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator: SongIterator) {
-  let anchorChord, root;
+const anchorOrNumberToChordAndRoot = function(arg: values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator: SongIterator): [string, string] {
+  let anchorChord: string, root: string;
   if(arg.type === 'number') {
     anchorChord = getAnchorChord(
       null, songIterator, 1);
@@ -273,7 +272,7 @@ define('progression',
     returns: 'boolean'
   },
   (args, songIterator, scope, argErr) => {
-    for(let i in args) {
+    for(const i in args) {
       if(args[0].type !== 'number' && args[0].type !== 'anchor') {
         argErr(`Arguments of "progression" must be numbers or anchors`);
       }
@@ -298,10 +297,10 @@ define('in-scale',
       || args[1].type !== 'number' && args[1].type !== 'anchor') {
       argErr(`Arguments of "in-scale" must be numbers or anchors`);
     }
-    let [,note] = anchorOrNumberToChordAndRoot(args[0] as values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator);
-    let [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1] as values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator);
-    let goalScaleName = chordToScaleName(goalChord);
-    let goalScale = tonal.Scale.notes(goalTonic, goalScaleName);
+    const [,note] = anchorOrNumberToChordAndRoot(args[0] as values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator);
+    const [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1] as values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator);
+    const goalScaleName = chordToScaleName(goalChord);
+    const goalScale = tonal.Scale.notes(goalTonic, goalScaleName);
     return new values.PlaybackBooleanValue(goalScale.includes(note));
   });
 define('beat-defined',
@@ -311,7 +310,7 @@ define('beat-defined',
     returns: 'boolean'
   },
   (args, songIterator, scope, argErr) => {
-    let measure = songIterator.getRelative(0);
+    const measure = songIterator.getRelative(0);
     if(!measure) return new values.PlaybackBooleanValue(false);
     const index = (args[0] as values.PlaybackNumberValue).value;
     return new values.PlaybackBooleanValue(measure.beats[index].chord !== null);

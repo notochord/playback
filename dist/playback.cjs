@@ -70,14 +70,14 @@ function __awaiter(thisArg, _arguments, P, generator) {
  */
 function load(stylePath) {
     return __awaiter(this, void 0, void 0, function* () {
-        let isHTTP = stylePath.startsWith('http://') || stylePath.startsWith('https://');
-        let isRelative = stylePath.startsWith('.') || stylePath.startsWith('/');
+        const isHTTP = stylePath.startsWith('http://') || stylePath.startsWith('https://');
+        const isRelative = stylePath.startsWith('.') || stylePath.startsWith('/');
         if (typeof process === 'undefined') {
             if (isHTTP || isRelative) {
                 return fetch(stylePath).then(r => r.text());
             }
             else {
-                let modulePath = ''; //String(import.meta.url).replace(/[^\/]+$/, '');
+                const modulePath = ''; //String(import.meta.url).replace(/[^\/]+$/, '');
                 stylePath = modulePath + '../../styles/' + stylePath;
                 if (!stylePath.endsWith('.play'))
                     stylePath += '.play';
@@ -86,6 +86,7 @@ function load(stylePath) {
         }
         else {
             if (isHTTP) {
+                // @ts-ignore
                 const http = yield new Promise(function (resolve) { resolve(_interopNamespace(require(stylePath.startsWith('https://') ? 'https' : 'http'))); });
                 return new Promise((resolve, reject) => {
                     http.get(stylePath, res => {
@@ -98,7 +99,8 @@ function load(stylePath) {
                 });
             }
             if (!isRelative) {
-                let path = yield new Promise(function (resolve) { resolve(_interopNamespace(require('path'))); });
+                // @ts-ignore
+                const path = yield new Promise(function (resolve) { resolve(_interopNamespace(require('path'))); });
                 try {
                     stylePath = path.join(__dirname, '../../styles/', stylePath);
                 }
@@ -106,7 +108,8 @@ function load(stylePath) {
                 if (!stylePath.endsWith('.play'))
                     stylePath += '.play';
             }
-            let fs = yield new Promise(function (resolve) { resolve(_interopNamespace(require('fs'))); });
+            // @ts-ignore
+            const fs = yield new Promise(function (resolve) { resolve(_interopNamespace(require('fs'))); });
             return (new Promise((resolve, reject) => {
                 fs.readFile(stylePath, 'utf8', (err, data) => {
                     if (err) {
@@ -960,6 +963,7 @@ var moo = (function() {
 
 })();
 
+/* eslint-disable @typescript-eslint/camelcase */
 var lexer = moo.states({
     main: {
         comment: {
@@ -1056,23 +1060,26 @@ class DrumBeatInMelodicBeatGroupError extends PlaybackError {
     }
 }
 
+class ASTNodeBase {
+    init(parentScope, ...args) {
+        this.scope = parentScope;
+    }
+}
 /*
  * In Playback styles, basically any pair of curly brackets defines a scope
  * which inherits settings from its parent scope but can overwrite them.
  */
-class Scope {
+class Scope extends ASTNodeBase {
     constructor() {
+        super(...arguments);
         this.defaultVars = new Map();
         this.vars = new Map();
-        this.name = null;
-        this.type = null;
-        this.scope = null;
     }
     inherit() {
         this.vars = new Map([...this.defaultVars, ...this.scope.vars]);
     }
-    init(scope) {
-        this.scope = scope;
+    init(scope, ...args) {
+        super.init(scope);
         // in case this.vars was set in the constructor
         this.vars = new Map([...this.defaultVars, ...this.scope.vars, ...this.vars]);
     }
@@ -1086,14 +1093,15 @@ class MetaStatement extends Scope {
         this.functionCalls = functionCalls;
     }
     init(scope) {
-        this.scope = scope;
+        super.init(scope);
         // nothing in here can be dynamic so resolve these at compile time
-        for (let functionCall of this.functionCalls) {
+        for (const functionCall of this.functionCalls) {
             functionCall.init(this);
             functionCall.execute();
         }
         scope.metadata = this.vars;
     }
+    execute() { return null; }
 }
 class OptionsStatement extends Scope {
     constructor(functionCalls) {
@@ -1104,7 +1112,7 @@ class OptionsStatement extends Scope {
     }
     init(scope) {
         // nothing in here /should/ be dynamic so resolve these at compile time
-        for (let functionCall of this.functionCalls) {
+        for (const functionCall of this.functionCalls) {
             functionCall.init(this);
             functionCall.execute();
         }
@@ -1113,9 +1121,11 @@ class OptionsStatement extends Scope {
         // vise-versa
         scope.vars = new Map([...scope.vars, ...this.vars]);
     }
+    execute() { return null; }
 }
-class ImportStatement {
+class ImportStatement extends ASTNodeBase {
     constructor(path, identifier) {
+        super();
         this.path = path;
         this.identifier = identifier;
     }
@@ -1198,15 +1208,15 @@ function normalizeDrumName(name) {
     return name.toLowerCase().replace(/ |-|_/g, ' ');
 }
 // make a map of drum names, which is the inverse of the given JSON file
-let DRUM_MAP = new Map();
-for (let midi in drumJson) {
-    let name = normalizeDrumName(drumJson[midi]);
+const DRUM_MAP = new Map();
+for (const midi in drumJson) {
+    const name = normalizeDrumName(drumJson[midi]);
     DRUM_MAP.set(name, midi);
 }
 /**
  * Special pitch value meaning the note will be set later by a DrumBeatGroup
  */
-let AwaitingDrum = Symbol('AwaitingDrum');
+const AwaitingDrum = Symbol('AwaitingDrum');
 class Note {
     /**
      * @param {Object} opts Options object.
@@ -1230,7 +1240,7 @@ class Note {
             return null;
         }
         else {
-            let drumValue = DRUM_MAP.get(normalizeDrumName(this.pitch));
+            const drumValue = DRUM_MAP.get(normalizeDrumName(this.pitch));
             if (drumValue) {
                 return drumValue;
             }
@@ -1267,22 +1277,33 @@ function getAnchorChord(anchor, songIterator, currentTime) {
     switch (anchor) {
         case 'KEY': {
             anchorChord = songIterator.song.getTransposedKey();
+            break;
         }
         case 'NEXT': {
-            let nextMeasure = songIterator.getRelative(1);
+            const nextMeasure = songIterator.getRelative(1);
             if (nextMeasure) {
                 anchorChord = nextMeasure.beats[0].chord;
             }
             else {
                 anchorChord = songIterator.song.getTransposedKey();
             }
+            break;
         }
         case 'STEP':
-        case 'ARPEGGIATE':
+        case 'ARPEGGIATE': {
+            /*
+            let prev = songIterator.getRelative(0)[0]; //???
+            if(!this.parentMeasure) console.log('tttttttt', this);
+            let next = this.parentMeasure.getNextStaticBeatRoot(
+              this.indexInMeasure,
+              songIterator
+            );*/
+            break;
+        }
         default: {
             // crawl backward through this measure to get the last set beat
             let lastSetBeat = Math.floor(currentTime);
-            let iteratorMeasure = songIterator.getRelative(0);
+            const iteratorMeasure = songIterator.getRelative(0);
             if (!iteratorMeasure)
                 break;
             do {
@@ -1290,21 +1311,22 @@ function getAnchorChord(anchor, songIterator, currentTime) {
                 anchorChord = beat && beat.chord;
                 lastSetBeat--;
             } while (!anchorChord);
+            break;
         }
     }
     return normalizeChordForTonal(anchorChord);
 }
 function anchorChordToRoot(anchorChord, degree, octave) {
-    let anchorTonic = tonal$1.Chord.tokenize(anchorChord)[0];
-    let anchorScaleName = chordToScaleName(anchorChord);
-    let scalePCs = tonal$1.Scale.notes(anchorTonic, anchorScaleName);
-    let rootPC = scalePCs[degree - 1];
+    const anchorTonic = tonal$1.Chord.tokenize(anchorChord)[0];
+    const anchorScaleName = chordToScaleName(anchorChord);
+    const scalePCs = tonal$1.Scale.notes(anchorTonic, anchorScaleName);
+    const rootPC = scalePCs[degree - 1];
     return tonal$1.Note.from({ oct: octave }, rootPC);
 }
 function chordToScaleName(chord) {
-    let chordType = tonal$1.Chord.tokenize(chord)[1];
+    const chordType = tonal$1.Chord.tokenize(chord)[1];
     // @TODO: make this more robust
-    let names = tonal$1.Chord.props(chordType).names;
+    const names = tonal$1.Chord.props(chordType).names;
     if (names.includes('dim'))
         return 'diminished';
     if (names.includes('aug'))
@@ -1437,7 +1459,7 @@ class PlaybackTimeSignatureValue {
     toOutputString() { return `${this.value[0]} / ${this.value[1]}`; }
 }
 
-let definitions = new Map();
+const definitions = new Map();
 /**
  * Make an assertion about argument count and types.
  * @param {string} identifier The function name.
@@ -1452,10 +1474,10 @@ function assertArgTypes(identifier, args, types, scope) {
     if (args.length != types.length) {
         throw new FunctionArgumentsError(`"${identifier}" requires ${types.length} arguments.`, args, scope);
     }
-    for (let i in args) {
+    for (const i in args) {
         if (types[i] == '*')
             continue;
-        let arg = args[i];
+        const arg = args[i];
         if (arg instanceof FunctionCall) {
             if (arg.returns == '*') {
                 continue; // what's the correct functionality here? cry?
@@ -1534,13 +1556,13 @@ function assertScope(identifier, goalscope = 'no-meta', scope) {
  * - argErr: a function. If the function does further testing on its
  *   arguments and there's an issue, pass this the error message and it throws.
  */
-let define$1 = function (identifier, opts, func) {
-    let definition = {
+const define$1 = function (identifier, opts, func) {
+    const definition = {
         types: opts.types || '*',
         returns: opts.returns || '*',
         scope: opts.scope || 'no-meta',
         execute: (args, songIterator, scope) => {
-            let argErr = message => {
+            const argErr = (message) => {
                 throw new FunctionArgumentsError(message, args, scope);
             };
             return func(args, songIterator, scope, argErr);
@@ -1557,8 +1579,8 @@ let define$1 = function (identifier, opts, func) {
  * @param {?string=null} goalscope Throw error unless the calling scope matches.
  * See assertScope above.
  */
-let defineVar = function (identifier, type, goalscope = null) {
-    let opts = {
+const defineVar = function (identifier, type, goalscope = null) {
+    const opts = {
         types: [type],
         scope: goalscope,
         returns: 'Nil'
@@ -1576,8 +1598,8 @@ let defineVar = function (identifier, type, goalscope = null) {
  * @param {?string=null} goalscope Throw error unless the calling scope matches.
  * See assertScope above.
  */
-let defineBoolean = function (identifier, goalscope = null) {
-    let opts = {
+const defineBoolean = function (identifier, goalscope = null) {
+    const opts = {
         types: '*',
         scope: goalscope,
         returns: 'Nil'
@@ -1646,16 +1668,16 @@ define$1('choose', {
     scope: 'no-config',
     returns: '*'
 }, (args, songIterator, scope, argErr) => {
-    let nonNilArgs = args.filter(arg => arg.type !== 'Nil');
+    const nonNilArgs = args.filter(arg => arg.type !== 'Nil');
     if (nonNilArgs.length) {
-        let index = Math.floor(Math.random() * nonNilArgs.length);
+        const index = Math.floor(Math.random() * nonNilArgs.length);
         return nonNilArgs[index];
     }
     else {
         return new PlaybackNilValue();
     }
 });
-let anchorOrNumberToChordAndRoot = function (arg, songIterator) {
+const anchorOrNumberToChordAndRoot = function (arg, songIterator) {
     let anchorChord, root;
     if (arg.type === 'number') {
         anchorChord = getAnchorChord(null, songIterator, 1);
@@ -1672,7 +1694,7 @@ define$1('progression', {
     scope: 'no-config',
     returns: 'boolean'
 }, (args, songIterator, scope, argErr) => {
-    for (let i in args) {
+    for (const i in args) {
         if (args[0].type !== 'number' && args[0].type !== 'anchor') {
             argErr(`Arguments of "progression" must be numbers or anchors`);
         }
@@ -1696,10 +1718,10 @@ define$1('in-scale', {
         || args[1].type !== 'number' && args[1].type !== 'anchor') {
         argErr(`Arguments of "in-scale" must be numbers or anchors`);
     }
-    let [, note] = anchorOrNumberToChordAndRoot(args[0], songIterator);
-    let [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1], songIterator);
-    let goalScaleName = chordToScaleName(goalChord);
-    let goalScale = tonal$1.Scale.notes(goalTonic, goalScaleName);
+    const [, note] = anchorOrNumberToChordAndRoot(args[0], songIterator);
+    const [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1], songIterator);
+    const goalScaleName = chordToScaleName(goalChord);
+    const goalScale = tonal$1.Scale.notes(goalTonic, goalScaleName);
     return new PlaybackBooleanValue(goalScale.includes(note));
 });
 define$1('beat-defined', {
@@ -1707,7 +1729,7 @@ define$1('beat-defined', {
     scope: 'no-config',
     returns: 'boolean'
 }, (args, songIterator, scope, argErr) => {
-    let measure = songIterator.getRelative(0);
+    const measure = songIterator.getRelative(0);
     if (!measure)
         return new PlaybackBooleanValue(false);
     const index = args[0].value;
@@ -1733,20 +1755,20 @@ define$1('chance', {
  * Otherwise, return the value itself.
  * @private
  */ // @TODO: if this is needed elsewhere, put it somewhere useful.
-class FunctionCall {
+class FunctionCall extends ASTNodeBase {
     /**
      * @constructor
      * @param {string} identifier The name of the function. Ideally it should
      * match the name of one of the functions in function_data.js
      */
     constructor(identifier, args) {
+        super();
         this.identifier = identifier;
         this.definition = definitions.get(identifier);
         this.args = args;
-        this.scope = null;
     }
     init(scope) {
-        this.scope = scope;
+        super.init(scope);
         if (!this.definition) {
             throw new FunctionNameError(this.identifier, this.scope);
         }
@@ -1767,7 +1789,7 @@ class FunctionCall {
     execute(songIterator) {
         if (!this.scope)
             throw new Error('function not initialized :(');
-        let evaluatedArgs = this.args.map(arg => {
+        const evaluatedArgs = this.args.map(arg => {
             if (arg.execute) {
                 return arg.execute(songIterator);
             }
@@ -1775,7 +1797,7 @@ class FunctionCall {
                 return arg;
             }
         });
-        let returnValue = this.definition.execute(evaluatedArgs, songIterator, this.scope);
+        const returnValue = this.definition.execute(evaluatedArgs, songIterator, this.scope);
         if (returnValue === undefined) {
             throw new Error(`Function "${this.identifier}" can return undefined`);
         }
@@ -1823,13 +1845,13 @@ class PatternExpressionGroup extends Scope {
     execute(songIterator, callerIsTrack = false) {
         this.inherit();
         let beats = null;
-        for (let function_call of this.functionCalls) {
-            let return_value = function_call.execute(songIterator);
-            if (return_value instanceof NoteSet) {
+        for (const functionCall of this.functionCalls) {
+            const returnValue = functionCall.execute(songIterator);
+            if (returnValue instanceof NoteSet) {
                 if (beats) {
                     throw new TooManyBeatsError(this);
                 }
-                beats = return_value;
+                beats = returnValue;
             }
         }
         if (callerIsTrack && this.vars.get('private').value === true) {
@@ -1877,25 +1899,25 @@ class PatternStatement extends PatternExpressionGroup {
     }
     execute(songIterator, callerIsTrack = false) {
         if (this.condition) {
-            let condition_value;
+            let conditionValue;
             if (this.condition.execute) {
-                condition_value = this.condition.execute(songIterator);
+                conditionValue = this.condition.execute(songIterator);
             }
             else {
-                condition_value = this.condition;
+                conditionValue = this.condition;
             }
-            if (condition_value.toBoolean() === false)
+            if (conditionValue.toBoolean() === false)
                 return null;
         }
         return super.execute(songIterator, callerIsTrack);
     }
 }
-class PatternCall {
+class PatternCall extends ASTNodeBase {
     constructor(opts) {
+        super();
         this.import = opts.import || null;
         this.track = opts.track || null;
         this.pattern = opts.pattern;
-        this.scope = null;
         this.patternStatement = null;
         this.prettyprintname = (this.import || 'this') + '.' +
             (this.track || 'this') + '.' +
@@ -1905,7 +1927,7 @@ class PatternCall {
         return this.patternStatement.getChance();
     }
     init(scope) {
-        this.scope = scope;
+        super.init(scope);
     }
     link(ASTs, parentStyle, parentTrack) {
         let ast;
@@ -1914,7 +1936,7 @@ class PatternCall {
         }
         else {
             // get path name of style
-            let importPath = parentStyle.importedStyles.get(this.import);
+            const importPath = parentStyle.importedStyles.get(this.import);
             ast = ASTs.get(importPath);
             if (!ast)
                 throw new NoSuchStyleError(this.import, this);
@@ -1928,7 +1950,7 @@ class PatternCall {
             if (!track)
                 throw new NoSuchTrackError(this.import || 'this', this.track || 'this', this);
         }
-        let patternStatement = track.patterns.get(this.pattern);
+        const patternStatement = track.patterns.get(this.pattern);
         if (!patternStatement)
             throw new NoSuchPatternError(this.import || 'this', this.track || 'this', this.pattern, this);
         this.patternStatement = patternStatement;
@@ -1938,12 +1960,13 @@ class PatternCall {
         return this.patternStatement.execute(songIterator);
     }
 }
-class JoinedPatternExpression {
+class JoinedPatternExpression extends ASTNodeBase {
     constructor(patterns) {
+        super();
         this.patterns = patterns;
     }
     init(scope) {
-        this.scope = scope;
+        super.init(scope);
         this.patterns.forEach(pattern => {
             if (pattern.init)
                 pattern.init(scope);
@@ -1955,7 +1978,7 @@ class JoinedPatternExpression {
         });
     }
     execute(songIterator) {
-        let noteSets = [];
+        const noteSets = [];
         for (let pattern of this.patterns) {
             if (pattern.execute) {
                 pattern = pattern.execute(songIterator);
@@ -2005,38 +2028,38 @@ class TrackStatement extends Scope {
         });
     }
     link(ASTs, parentStyle) {
-        for (let patternCall of this.patternCalls) {
+        for (const patternCall of this.patternCalls) {
             patternCall.link(ASTs, parentStyle, this);
             this.patterns.set(patternCall.prettyprintname, patternCall);
         }
-        for (let [, pattern] of this.patterns) {
+        for (const [, pattern] of this.patterns) {
             pattern.link(ASTs, parentStyle, this);
         }
     }
     execute(songIterator) {
         this.inherit();
         console.log(`executing TrackStatement "${this.name}"`);
-        this.functionCalls.forEach(function_call => {
-            function_call.execute(songIterator);
+        this.functionCalls.forEach(functionCall => {
+            functionCall.execute(songIterator);
         });
         // weighted random picking
         // https://stackoverflow.com/a/4463613/1784306
         // I don't really understand the above explanation, this is probs wrong
         let totalWeight = 0;
-        let weightedOptions = [];
-        for (let [patternname, pattern] of this.patterns) {
+        const weightedOptions = [];
+        for (const [patternname, pattern] of this.patterns) {
             console.log(`- pattern "${patternname}":`);
             // true = I'm the instrument so if you're private return Nil
-            let result = pattern.execute(songIterator, true);
+            const result = pattern.execute(songIterator, true);
             console.log('  - Result:', result);
             // @TODO: handle multi-measure patterns (via locks?)
             if (result) {
-                for (let note of result) {
+                for (const note of result) {
                     if (note.pitch === AwaitingDrum) {
                         throw new DrumBeatInMelodicBeatGroupError(pattern);
                     }
                 }
-                let chance = pattern.getChance();
+                const chance = pattern.getChance();
                 weightedOptions.push({
                     noteSet: result,
                     lower: totalWeight,
@@ -2046,8 +2069,8 @@ class TrackStatement extends Scope {
             }
         }
         // binary search would make sense here if I expected more items
-        let goal = Math.random() * totalWeight;
-        for (let option of weightedOptions) {
+        const goal = Math.random() * totalWeight;
+        for (const option of weightedOptions) {
             if (option.lower <= goal && goal <= option.upper) {
                 console.log('  - Final result:', option.noteSet);
                 return option.noteSet;
@@ -2057,8 +2080,9 @@ class TrackStatement extends Scope {
         return null;
     }
 }
-class TrackCall {
+class TrackCall extends ASTNodeBase {
     constructor(opts) {
+        super();
         this.import = opts.import;
         this.track = opts.track;
         this.trackStatement = null; // will be set by the loader.
@@ -2085,7 +2109,7 @@ class GlobalScope extends Scope {
         this.importedStyles = new Map();
         this.trackCalls = [];
         this.dependencies = [];
-        for (let statement of this.statements) {
+        for (const statement of this.statements) {
             if (statement instanceof MetaStatement
                 || statement instanceof OptionsStatement) {
                 // @TODO: make sure there's exactly 1 meta block
@@ -2108,42 +2132,43 @@ class GlobalScope extends Scope {
         this.tracks.forEach(statement => statement.init(this));
     }
     link(ASTs) {
-        for (let trackCall of this.trackCalls) {
+        for (const trackCall of this.trackCalls) {
             // get path name of style
-            let importPath = this.importedStyles.get(trackCall.import);
-            let ast = ASTs.get(importPath);
+            const importPath = this.importedStyles.get(trackCall.import);
+            const ast = ASTs.get(importPath);
             if (!ast)
                 throw new NoSuchStyleError(trackCall.import, this);
-            let trackStatement = ast.tracks.get(trackCall.track);
+            const trackStatement = ast.tracks.get(trackCall.track);
             if (!trackStatement)
                 throw new NoSuchTrackError(trackCall.import, trackCall.track, this);
             //trackCall.trackStatement = trackStatement;
             this.tracks.set(`${trackCall.import}.${trackCall.track}`, trackStatement);
         }
-        for (let [, track] of this.tracks) {
+        for (const [, track] of this.tracks) {
             track.link(ASTs, this);
         }
     }
     execute(songIterator) {
-        let trackNoteMap = new Map();
-        for (let [, track] of this.tracks) {
-            let trackNotes = track.execute(songIterator);
+        const trackNoteMap = new Map();
+        for (const [, track] of this.tracks) {
+            const trackNotes = track.execute(songIterator);
             if (trackNotes)
                 trackNoteMap.set(track.instrument, trackNotes);
         }
         return trackNoteMap;
     }
     getInstruments() {
-        let instruments = new Set();
-        for (let [, track] of this.tracks) {
+        const instruments = new Set();
+        for (const [, track] of this.tracks) {
             instruments.add(track.instrument);
         }
         return instruments;
     }
 }
 
-class BooleanOperator {
+class BooleanOperator extends ASTNodeBase {
     constructor(...args) {
+        super();
         this.args = args;
     }
     link(ASTs, parentStyle, parentTrack) {
@@ -2153,13 +2178,13 @@ class BooleanOperator {
         });
     }
     init(scope) {
-        this.scope = scope;
+        super.init(scope);
         this.args.forEach(arg => {
             if (arg.init)
                 arg.init(scope);
         });
     }
-    resolve_args(songIterator) {
+    resolveArgs(songIterator) {
         return this.args.map(arg => {
             if (arg.execute) {
                 return arg.execute(songIterator);
@@ -2171,45 +2196,36 @@ class BooleanOperator {
     }
 }
 class BooleanNot extends BooleanOperator {
-    constructor(...args) {
-        super(...args);
-    }
     execute(songIterator) {
-        let args = this.resolve_args(songIterator);
+        const args = this.resolveArgs(songIterator);
         return new PlaybackBooleanValue(!args[0].toBoolean());
     }
 }
 class BooleanAnd extends BooleanOperator {
-    constructor(...args) {
-        super(...args);
-    }
     execute(songIterator) {
         // sorry no short-circuiting because this code is prettier
         // @TODO: add short-circuiting if this actually makes it too slow
-        let args = this.resolve_args(songIterator);
+        const args = this.resolveArgs(songIterator);
         return new PlaybackBooleanValue(args[0].toBoolean() && args[1].toBoolean());
     }
 }
 class BooleanOr extends BooleanOperator {
-    constructor(...args) {
-        super(...args);
-    }
     execute(songIterator) {
-        let args = this.resolve_args(songIterator);
+        const args = this.resolveArgs(songIterator);
         return new PlaybackBooleanValue(args[0].toBoolean() || args[1].toBoolean());
     }
 }
 
-class MelodicBeatLiteral {
+class MelodicBeatLiteral extends ASTNodeBase {
     constructor(opts) {
-        this.value = new PlaybackMelodicBeatValue(opts.time, opts.pitch, opts.octave);
-        this.scope = null;
+        super();
         this.parentMeasure = null;
         this.indexInMeasure = null;
         this.cachedAnchor = null; // used for STEP/ARPEGGIATE interpolation
+        this.value = new PlaybackMelodicBeatValue(opts.time, opts.pitch, opts.octave);
     }
     init(scope, parentMeasure, indexInMeasure) {
-        this.scope = scope;
+        super.init(scope);
         this.parentMeasure = parentMeasure;
         this.indexInMeasure = indexInMeasure;
     }
@@ -2222,11 +2238,11 @@ class MelodicBeatLiteral {
         }
     }
     handleInversion(songIterator, pitches) {
-        let tonicPC = songIterator.song.getTransposedKey();
-        let tonicNote = tonal$1.Note.from({ oct: this.getOctave() }, tonicPC);
-        let tonic = tonal$1.Note.midi(tonicNote);
-        let outPitches = [];
-        for (let pitchNote of pitches) {
+        const tonicPC = songIterator.song.getTransposedKey();
+        const tonicNote = tonal$1.Note.from({ oct: this.getOctave() }, tonicPC);
+        const tonic = tonal$1.Note.midi(tonicNote);
+        const outPitches = [];
+        for (const pitchNote of pitches) {
             let pitch = tonal$1.Note.midi(pitchNote);
             if (pitch - tonic >= 6)
                 pitch -= 12;
@@ -2235,17 +2251,17 @@ class MelodicBeatLiteral {
         return outPitches;
     }
     getAnchorData(songIterator) {
-        let anchorChord = getAnchorChord(this.value.pitch.anchor, songIterator, this.getTime());
-        let root = anchorChordToRoot(anchorChord, this.value.pitch.degree, this.getOctave());
+        const anchorChord = getAnchorChord(this.value.pitch.anchor, songIterator, this.getTime());
+        const root = anchorChordToRoot(anchorChord, this.value.pitch.degree, this.getOctave());
         return [anchorChord, root];
     }
     getPitches(songIterator) {
-        let [anchorChord, root] = this.getAnchorData(songIterator);
+        const [anchorChord, root] = this.getAnchorData(songIterator);
         let pitches;
         if (this.value.pitch.chord) {
             // this feels extremely incorrect
             // why would anyone need it to work this way
-            let anchorChordType = tonal$1.Chord.tokenize(anchorChord)[1];
+            const anchorChordType = tonal$1.Chord.tokenize(anchorChord)[1];
             pitches = tonal$1.Chord.notes(root, anchorChordType);
         }
         else {
@@ -2272,8 +2288,7 @@ class MelodicBeatLiteral {
         }
     }
     getDuration() {
-        let duration;
-        duration = this.parentMeasure.calculateDurationAfter(this.indexInMeasure);
+        const duration = this.parentMeasure.calculateDurationAfter(this.indexInMeasure);
         if (this.value.time.flag === 'STACCATO') {
             return Math.min(0.25, duration);
         }
@@ -2288,12 +2303,12 @@ class MelodicBeatLiteral {
         return volume;
     }
     execute(songIterator) {
-        let notes = new NoteSet();
-        let time = this.getTime(); // @TODO: this varies with rolling
-        let pitches = this.getPitches(songIterator);
-        let duration = this.getDuration(); // @TODO: this varies with rolling
-        let volume = this.getVolume();
-        for (let pitch of pitches) {
+        const notes = new NoteSet();
+        const time = this.getTime(); // @TODO: this varies with rolling
+        const pitches = this.getPitches(songIterator);
+        const duration = this.getDuration(); // @TODO: this varies with rolling
+        const volume = this.getVolume();
+        for (const pitch of pitches) {
             notes.push(new Note({
                 time: time,
                 pitch: pitch,
@@ -2320,9 +2335,7 @@ class DrumBeatLiteral {
         return this.value.time;
     }
     getDuration() {
-        let duration;
-        duration = this.parentMeasure.calculateDurationAfter(this.indexInMeasure);
-        return duration;
+        return this.parentMeasure.calculateDurationAfter(this.indexInMeasure);
     }
     getVolume() {
         let volume = this.scope.vars.get('volume').value;
@@ -2331,9 +2344,9 @@ class DrumBeatLiteral {
         return volume;
     }
     execute(songIterator) {
-        let time = this.getTime();
-        let duration = this.getDuration();
-        let volume = this.getVolume();
+        const time = this.getTime();
+        const duration = this.getDuration();
+        const volume = this.getVolume();
         return new NoteSet(new Note({
             time: time,
             pitch: AwaitingDrum,
@@ -2343,24 +2356,24 @@ class DrumBeatLiteral {
     }
 }
 
-class BeatGroupLiteral {
+class BeatGroupLiteral extends ASTNodeBase {
     constructor(measures) {
+        super();
         this.measures = measures;
-        this.scope = null;
     }
     init(scope) {
-        this.scope = scope;
+        super.init(scope);
         this.measures.forEach((measure, i) => measure.init(scope, this, i));
     }
     link() { return; }
     execute(songIterator) {
-        let joinedMeasures = new NoteSet();
+        const joinedMeasures = new NoteSet();
         for (let i = 0; i < this.measures.length; i++) {
-            let offset = i * 4; // @TODO: pull in actual meter somehow
-            let measureNotes = this.measures[i].execute(songIterator);
+            const offset = i * 4; // @TODO: pull in actual meter somehow
+            const measureNotes = this.measures[i].execute(songIterator);
             if (measureNotes === null)
                 return null; // lets a/s abort the beatgroup
-            for (let measureNote of measureNotes) {
+            for (const measureNote of measureNotes) {
                 measureNote.time += offset;
                 joinedMeasures.push(measureNote);
             }
@@ -2387,21 +2400,21 @@ class BeatGroupLiteral {
         return normalizeChordForTonal(nextMeasure && nextMeasure.beats[0].chord);
     }
 }
-class Measure {
+class Measure extends ASTNodeBase {
     constructor(beats) {
+        super();
         this.beats = beats;
         this.beatsPerMeasure = null;
-        this.scope = null;
     }
     calculateDurationAfter(beatIndex) {
-        let currentBeat = this.beats[beatIndex];
-        let currentBeatTime = currentBeat.getTime();
+        const currentBeat = this.beats[beatIndex];
+        const currentBeatTime = currentBeat.getTime();
         let nextBeatTime;
         if (beatIndex + 1 >= this.beats.length) {
             nextBeatTime = this.beatsPerMeasure + 1;
         }
         else {
-            let nextBeat = this.beats[beatIndex + 1];
+            const nextBeat = this.beats[beatIndex + 1];
             nextBeatTime = nextBeat.getTime();
         }
         return nextBeatTime - currentBeatTime;
@@ -2421,14 +2434,14 @@ class Measure {
     }
     execute(songIterator) {
         // clear cached notes (used for STEP/ARPEGGIATE interpolation)
-        for (let beat of this.beats) {
+        for (const beat of this.beats) {
             if (beat instanceof MelodicBeatLiteral)
                 beat.cachedAnchor = null;
         }
         // each beat returns a NoteSet since it could be a chord or whatever
-        let joined = new NoteSet();
-        for (let beat of this.beats) {
-            let notes = beat.execute(songIterator);
+        const joined = new NoteSet();
+        for (const beat of this.beats) {
+            const notes = beat.execute(songIterator);
             if (!notes)
                 return null; // lets a and s abort the beatgroup.
             joined.push(...notes);
@@ -2436,21 +2449,22 @@ class Measure {
         return joined;
     }
 }
-class DrumBeatGroupLiteral {
+class DrumBeatGroupLiteral extends ASTNodeBase {
     constructor(drum, beatGroup) {
+        super();
         this.drum = drum;
         this.beatGroup = beatGroup; // for now there's no diff in functionality...
         // @TODO make sure our beats are all drummy
     }
     init(scope) {
-        this.scope = scope;
+        super.init(scope);
         if (this.beatGroup.init)
             this.beatGroup.init(scope);
     }
     link() { return; } // @TODO: I think patterncalls are allowed here?
     execute(songIterator) {
-        let notes = this.beatGroup.execute(songIterator);
-        for (let note of notes) {
+        const notes = this.beatGroup.execute(songIterator);
+        for (const note of notes) {
             if (note.pitch === AwaitingDrum) {
                 note.pitch = this.drum; // @TODO: convert to number?
             }
@@ -2671,11 +2685,6 @@ function parse(data) {
 }
 
 class PlaybackStyle {
-    /**
-     * Set the main ast (the one that plays all its instruments by default).
-     * @param {ast.GlobalScope} main the main ast
-     * @param {Map.<string: ast.GlobalScope>} asts A map of asts by their path
-     */
     constructor(mainPath) {
         this.mainPath = mainPath;
         this.ASTs = new Map();
@@ -2684,11 +2693,10 @@ class PlaybackStyle {
     /**
      * Parse each file, pull its dependencies, put it all in a cache, rinse and
      * repeat.
-     * @private
      */
-    _loadDependencies() {
+    loadDependencies() {
         return __awaiter(this, void 0, void 0, function* () {
-            let pendingDependencies = [this.mainPath];
+            const pendingDependencies = [this.mainPath];
             let dependencyPath;
             // @TODO: verify that dependencies have compatible time signature to main
             while (dependencyPath = pendingDependencies.pop()) {
@@ -2699,10 +2707,10 @@ class PlaybackStyle {
                 catch (e) {
                     throw new Error(`Couldn't locate imported style "${dependencyPath}".`);
                 }
-                let ast = yield parse(rawfile);
+                const ast = yield parse(rawfile);
                 this.ASTs.set(dependencyPath, ast);
                 ast.init();
-                for (let newDependency of ast.dependencies) {
+                for (const newDependency of ast.dependencies) {
                     if (!this.ASTs.has(newDependency)) {
                         pendingDependencies.push(newDependency);
                     }
@@ -2711,7 +2719,7 @@ class PlaybackStyle {
             this.main = this.ASTs.get(this.mainPath);
         });
     }
-    _link() {
+    link() {
         this.main.link(this.ASTs);
     }
     /**
@@ -2720,46 +2728,46 @@ class PlaybackStyle {
      */
     init() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this._loadDependencies();
-            this._link();
+            yield this.loadDependencies();
+            this.link();
             this.initialized = true;
         });
     }
     /**
      * Compile a song into a set of MIDI-like note instructions.
      * @param {Song} song A Playback Song (notochord????)
-     * @returns {NoteSet.<Note>} An array-like object containing MIDI-like note
-     * instructions.
+     * @returns {Map<string, NoteSet>} A map of instrument names to array-like
+     * objects containing MIDI-like note instructions.
      */
     compile(song) {
         if (!this.initialized) {
             throw new Error('PlayBack style must be initialized before compiling');
         }
-        let songIterator = song[Symbol.iterator]();
-        let instruments = this.getInstruments();
-        let notes = new Map();
-        let beatsPerMeasure = this.main.vars.get('time-signature')[0];
+        const songIterator = song[Symbol.iterator]();
+        const instruments = this.getInstruments();
+        const notes = new Map();
+        const beatsPerMeasure = this.main.vars.get('time-signature')[0];
         let totalPastBeats = 0;
-        for (let instrument of instruments)
+        for (const instrument of instruments)
             notes.set(instrument, new NoteSet());
         let nextValue;
         while (nextValue = songIterator.next(), nextValue.done == false) {
-            let thisMeasureTracks = this.main.execute(songIterator);
-            for (let [instrument, thisMeasureNotes] of thisMeasureTracks) {
-                for (let note of thisMeasureNotes) {
+            const thisMeasureTracks = this.main.execute(songIterator);
+            for (const [instrument, thisMeasureNotes] of thisMeasureTracks) {
+                for (const note of thisMeasureNotes) {
                     note.time += totalPastBeats;
                     if (this.main.vars.get('swing')) {
-                        let int_part = Math.floor(note.time);
-                        let float_part = note.time - int_part;
-                        if (float_part <= 0.5) {
-                            float_part *= 2;
-                            float_part = (2 / 3) * float_part;
+                        const intPart = Math.floor(note.time);
+                        let floatPart = note.time - intPart;
+                        if (floatPart <= 0.5) {
+                            floatPart *= 2;
+                            floatPart = (2 / 3) * floatPart;
                         }
                         else {
-                            float_part = 2 * (float_part - 0.5);
-                            float_part = (2 / 3) + ((1 / 3) * float_part);
+                            floatPart = 2 * (floatPart - 0.5);
+                            floatPart = (2 / 3) + ((1 / 3) * floatPart);
                         }
-                        note.time = int_part + float_part;
+                        note.time = intPart + floatPart;
                     }
                 }
                 notes.get(instrument).push(...thisMeasureNotes);
@@ -3960,22 +3968,22 @@ class Player {
      * @param {AudioContext=} context If you pass it an AudioContext it'll use
      * it. Otherwise it'll make its own.
      */
-    constructor(context) {
+    constructor(context = new AudioContext({ latencyHint: "playback" })) {
         this.style = null;
-        this.context = context || new AudioContext({ latencyHint: "playback" });
+        this.context = context;
         this.initialized = false;
         window.player = this;
     }
     setStyle(style) {
         return __awaiter(this, void 0, void 0, function* () {
             this.style = style;
-            if (!style._initialized) {
+            if (!style.initialized) {
                 yield style.init();
             }
             this.initialized = false;
             this.soundfonts = new Map();
-            let promises = [];
-            for (let instrument of style.getInstruments()) {
+            const promises = [];
+            for (const instrument of style.getInstruments()) {
                 let sfpromise;
                 if (instrument.startsWith('http://') || instrument.startsWith('https://')) {
                     // Soundfont has a bug where you can't just pass it a URL
@@ -4009,14 +4017,14 @@ class Player {
         if (this.context.state == 'suspended') {
             this.context.resume();
         }
-        let compiledSong = this.style.compile(song);
-        let tempoCoef = 0.4; // WHATEVER IDC HOW ANYTHING WORKS
-        let startTime = this.context.currentTime + 1;
-        for (let [instrument, notes] of compiledSong) {
-            let soundfont = this.soundfonts.get(instrument);
-            for (let note of notes) {
-                let start = startTime + (tempoCoef * note.time);
-                let dur = tempoCoef * note.duration - 0.05;
+        const compiledSong = this.style.compile(song);
+        const tempoCoef = 0.4; // WHATEVER IDC HOW ANYTHING WORKS
+        const startTime = this.context.currentTime + 1;
+        for (const [instrument, notes] of compiledSong) {
+            const soundfont = this.soundfonts.get(instrument);
+            for (const note of notes) {
+                const start = startTime + (tempoCoef * note.time);
+                const dur = tempoCoef * note.duration - 0.05;
                 soundfont.play(note.midi, start, {
                     duration: dur,
                     gain: note.volume

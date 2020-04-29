@@ -9,17 +9,17 @@ export abstract class PlaybackValueBase {
 
 export class PlaybackNilValue implements PlaybackValueBase {
   public type: 'Nil' = 'Nil';
-  public value: null = null;
-  public toBoolean() { return false; }
-  public toOutputString() { return 'Nil'; }
+  public value = null;
+  public toBoolean(): boolean { return false; }
+  public toOutputString(): string { return 'Nil'; }
 }
 
 export class PlaybackStringValue implements PlaybackValueBase {
   public type: 'string' = 'string';
   public value: string;
-  constructor(value: string) { this.value = value; }
-  public toBoolean() { return this.value !== ''; }
-  public toOutputString() {
+  public constructor(value: string) { this.value = value; }
+  public toBoolean(): boolean { return this.value !== ''; }
+  public toOutputString(): string {
     // @TODO: store raw value from tokenizer? (which may not always exist for programmatically-generated strings)
     // At least this is consistent...
     return `"${this.value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
@@ -29,26 +29,26 @@ export class PlaybackStringValue implements PlaybackValueBase {
 export class PlaybackNumberValue implements PlaybackValueBase {
   public type: 'number' = 'number';
   public value: number;
-  constructor(value: number) { this.value = value; }
-  public toInteger() { return Math.floor(this.value); }
-  public toBoolean() { return this.value !== 0; }
-  public toOutputString() { return this.value.toString(); }
+  public constructor(value: number) { this.value = value; }
+  public toInteger(): number { return Math.floor(this.value); }
+  public toBoolean(): boolean { return this.value !== 0; }
+  public toOutputString(): string { return this.value.toString(); }
 }
 
 export class PlaybackBooleanValue implements PlaybackValueBase {
   public type: 'boolean' = 'boolean';
   public value: boolean;
-  constructor(value: boolean) { this.value = value; }
-  public toBoolean() { return this.value; }
-  public toOutputString() { return this.value ? 'true' : 'false'; }
+  public constructor(value: boolean) { this.value = value; }
+  public toBoolean(): boolean { return this.value; }
+  public toOutputString(): string { return this.value ? 'true' : 'false'; }
 }
 
 export class PlaybackTimeSignatureValue implements PlaybackValueBase {
   public type: 'time_signature' = 'time_signature';
   public value: [number, number];
-  constructor(value: [number, number]) { this.value = value; }
-  public toBoolean() { return true; }
-  public toOutputString() { return `${this.value[0]} / ${this.value[1]}`; }
+  public constructor(value: [number, number]) { this.value = value; }
+  public toBoolean(): boolean { return true; }
+  public toOutputString(): string { return `${this.value[0]} / ${this.value[1]}`; }
 }
 
 export { PlaybackMelodicBeatValue, PlaybackDrumBeatValue, PlaybackAnchorValue };

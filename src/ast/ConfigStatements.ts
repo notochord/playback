@@ -1,42 +1,43 @@
-import Scope from './Scope';
+import {Scope, ASTNodeBase} from './ASTNodeBase';
 import FunctionCall from './FunctionCall';
 import GlobalScope from './GlobalScope';
 
 export class MetaStatement extends Scope {
   public functionCalls: FunctionCall[];
 
-  constructor(functionCalls: FunctionCall[]) {
+  public constructor(functionCalls: FunctionCall[]) {
     super();
     this.name = '@meta';
     this.type = '@meta';
     this.functionCalls = functionCalls;
   }
-  init(scope: GlobalScope) {
-    this.scope = scope;
+  public init(scope: GlobalScope): void {
+    super.init(scope);
     
     // nothing in here can be dynamic so resolve these at compile time
-    for(let functionCall of this.functionCalls) {
+    for(const functionCall of this.functionCalls) {
       functionCall.init(this);
       functionCall.execute();
     }
     
     scope.metadata = this.vars;
   }
+  public execute(): null { return null; }
 }
 
 export class OptionsStatement extends Scope {
   public functionCalls: FunctionCall[];
 
-  constructor(functionCalls) {
+  public constructor(functionCalls) {
     super();
     this.name = '@options';
     this.type = '@options';
     this.functionCalls = functionCalls;
   }
-  init(scope: GlobalScope) {
+  public init(scope: GlobalScope): void {
     
     // nothing in here /should/ be dynamic so resolve these at compile time
-    for(let functionCall of this.functionCalls) {
+    for(const functionCall of this.functionCalls) {
       functionCall.init(this);
       functionCall.execute();
     }
@@ -46,13 +47,15 @@ export class OptionsStatement extends Scope {
     // vise-versa
     scope.vars = new Map([...scope.vars, ...this.vars]);
   }
+  public execute(): null { return null; }
 }
 
-export class ImportStatement {
+export class ImportStatement extends ASTNodeBase {
   public path: string;
   public identifier: string;
 
-  constructor(path, identifier) {
+  public constructor(path: string, identifier: string) {
+    super();
     this.path = path;
     this.identifier = identifier;
   }

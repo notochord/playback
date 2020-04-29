@@ -1,0 +1,33 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true
+  },
+  "globals": {
+    "globalThis": false
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2017,
+    "sourceType": "module"
+  },
+  "plugins": [
+    "@typescript-eslint/eslint-plugin"
+  ],
+  "rules": {
+    "no-cond-assign": "off",
+    "no-empty": ["error", { "allowEmptyCatch": true }],
+    "@typescript-eslint/ban-ts-ignore": "off",
+    "@typescript-eslint/explicit-member-accessibility": "error",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-unused-vars": ["warn", { "args": "none" }],
+    "@typescript-eslint/no-use-before-define": "off",
+    "indent": "off",
+    "@typescript-eslint/indent": ["error", 2]
+  }
+}

@@ -16,7 +16,7 @@ import {BeatGroupLiteral, Measure, DrumBeatGroupLiteral} from './BeatGroups.js';
 import {MelodicBeatLiteral, DrumBeatLiteral} from './BeatLiterals.js';
 
 export {
-  /* global meta stuff */
+  /* meta stuff */
   GlobalScope,
   MetaStatement, OptionsStatement, ImportStatement,
   
