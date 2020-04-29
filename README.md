@@ -7,11 +7,46 @@ library that can play a given set of chords in that style. It's a big part of
 [Notochord](https://notochord.github.io/notochord/demo/), a lead-sheet editor
 that is currently under construction.
 
-## User Guide (this should move)
+It's written in TypeScript with a parser written in
+[nearley](https://github.com/kach/nearley).
 
-I recommend the file extension `.play` for styles, because how awesome is that?
+## Documentation (this should move)
 
-More to come.
+### API
+
+Playback is built to work with [notochord-song](https://github.com/notochord/notochord-song)
+songs. The package exports two constructors:
+
+- `Player`, which handles playing the song.
+  - `new Player()` or `new Player(AudioContext)`
+  - `player.setStyle(PlaybackStyle): Promise`
+  - `player.play(mySong)` - takes a notochord-song. Don't call this until
+    `setStyle` has finished
+- `PlaybackStyle`, which represents a style
+  - `new PlaybackStyle(pathToStyle)` - takes a string relative filepath or URL
+    (see the [resolution algorithm](https://github.com/notochord/playback/blob/master/src/loader/loader.js))
+
+```javascript
+import Song from 'notochord-song';
+import { Player, PlaybackStyle } from 'playback';
+
+const mySong = new Song(/* serialized song, see notochord-song docs */);
+
+const player = new Player();
+const style = new PlaybackStyle('./styles/swing.play');
+
+player.setStyle(style)
+  .then(() => {
+    // note that browsers may prevent playing audio if the user hasn't initiated it
+    player.play(mySong);
+  });
+```
+
+### How to write a style
+
+For the documentation on how to write a style, see
+[https://github.com/notochord/playback/tree/master/docs/styles](). I recommend
+the file extension `.play` for styles, because how awesome is that?
 
 ## Inspiration
 
@@ -30,11 +65,12 @@ So I set off to create my very own language to define a playback style. The end.
 
 ## Navigating this repository
 
-- `dist/playback.js` - the finished product
+- `dist/` - the finished product, compiled to diferent kinds of JS as needed
 - `src/` - the unbundled source code
-  - `index.js` - this doesn't do much except tie all the other bits together.
-  - `loader/` - the loader loads files from the filesystem all promise-like.
-    I'll probably remove the whole directory but forget to update the readme.
+  - `playback.ts` - this doesn't do much except tie all the other bits together.
+  - `loader/` - the loader loads files from the filesystem and/or via http
+    request, per a resolution algorithm laid out in a comment at the top of that
+    file. It's real hacky and probably needs to change significantly.
   - `lexer/` - the lexer takes a .play file as a string and figures out where
     one token ends and another begins. See
     [Wikipedia](https://en.wikipedia.org/wiki/Lexical_analysis) for a better
@@ -46,10 +82,13 @@ So I set off to create my very own language to define a playback style. The end.
     there might be a compilation step here but it doesn't so there's not.)
     - `grammar.ne` - the definition of the language's grammar. It's written in
       Nearley's BNF-like syntax.
-    - `parser.js` - ties everything nicely together in a promise-y API so you
+    - `grammar.js` - ignore this, it's compiled from the `.ne` file.
+    - `parser.ts` - ties everything nicely together in a promise-y API so you
       don't have to talk to nearley at all.
   - `ast/` - the definitions for the nodes of the AST. This is where you'll
     find the code for what a style is actually doing when you're playing it.
+  - `values/` - a bunch of classes that represent different kinds of values in
+    Playback, like strings, numbers, etc.
 - `styles/` - some styles. I might move these to their own repo later
 - `test/` - Most directories in `src/` have their tests defined locally, but
   they're bundled together here. (run with `npm test` or `npm test -- -v` for
@@ -59,7 +98,7 @@ So I set off to create my very own language to define a playback style. The end.
 
 - `npm test` - run the test suite
 - `npm run build` - compile and bundle
-- `npm run playgrouns` - open the playground
+- `npm run playground` - open the playground
 
 ## Credits
 
