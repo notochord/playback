@@ -23,7 +23,7 @@ songs. The package exports two constructors:
   - `player.play(mySong)` - takes a notochord-song. Don't call this until
     `setStyle` has finished
 - `PlaybackStyle`, which represents a style
-  - `new PlaybackStyle(pathToStyle)` - takes a string relative filepath or URL
+  - `new PlaybackStyle(pathToStyle)` or `new PlaybackStyle(styleAsText)` - takes a string that is either a style in plaintext, a relative filepath, or a URL
     (see the [resolution algorithm](https://github.com/notochord/playback/blob/master/src/loader/loader.js))
 
 ```javascript

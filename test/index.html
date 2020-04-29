@@ -1,26 +1,104 @@
 <html>
     <head>
         <title>Playback Browser Test</title>
+        <style>
+            body {
+                display: flex;
+                box-sizing: border-box;
+                align-items: stretch;
+                margin: 0;
+                height: 100vh;
+            }
+
+            .col {
+                flex: 1;
+                padding: 5px;
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            h2 {
+                margin: 0;
+                text-align: center;
+            }
+            textarea, pre {
+                flex: 1;
+            }
+            #output {
+                overflow: auto;
+            }
+        </style>
     </head>
     <body>
-        <button id="play" disabled type="button">Play</button>
+        <div class="col">
+            <h2>Style</h2>
+            <textarea id="style"></textarea>
+        </div>
+        <div class="col">
+            <h2>Song</h2>
+            <textarea id="song"></textarea>
+        </div>
+        <div class="col">
+            <button id="compile" type="button">Compile style</button>
+            <button id="play" disabled type="button">Play song</button>
+            <pre id="output"></pre>
+        </div>
         <script type="module">
             import Song from '../node_modules/notochord-song/dist/notochord-song.web.mjs';
-            import blueSkiesSerialized from '../node_modules/notochord-song/blueSkies.mjs';
             import { PlaybackStyle, Player } from '../dist/playback.web.mjs';
 
-            let blueSkies = new Song(blueSkiesSerialized);
+            const styleTextarea = document.querySelector('#style');
+            const songTextarea = document.querySelector('#song');
+            let compileButton = document.querySelector('#compile');
+            let playButton = document.querySelector('#play');
+            let pre = document.querySelector('#output');
 
-            let button = document.querySelector('#play');
+            const log = (message) => pre.textContent += message + '\n';
 
-            let player = new Player();
-            let style = new PlaybackStyle('../styles/swing.play');
-            player.setStyle(style).then( () => {
-                button.removeAttribute('disabled');
+            styleTextarea.addEventListener('input', () => {
+                playButton.disabled = true;
             });
 
-            button.addEventListener('click', () => {
-                player.play(blueSkies);
+            fetch('../styles/swing.play')
+                .then(r => r.text())
+                .then((styleValue) => {
+                    styleTextarea.value = styleValue;
+                });
+
+            // this is soooo hacky
+            fetch('../node_modules/notochord-song/blueSkies.mjs')
+                .then(r => r.text())
+                .then((songSerialized) => {
+                    const [, songObject] = songSerialized.split('export default ');
+                    const strinppedSemicolon = songObject.substring(0, songObject.length - 1);
+                    songTextarea.value = strinppedSemicolon;
+                });
+            
+            let style = null;
+
+            let player = new Player();
+            compileButton.addEventListener('click', () => {
+                playButton.disabled = true;
+                try {
+                    style = new PlaybackStyle(styleTextarea.value);
+                    player.setStyle(style)
+                        .then(() => {
+                            playButton.disabled = false;
+                        })
+                        .catch(log);
+                } catch (e) {
+                    log(e);
+                }
+            })
+
+            playButton.addEventListener('click', () => {
+                const song = new Song(eval('(' + songTextarea.value + ')'));
+                try {
+                    player.play(song);
+                } catch (e) {
+                    log(e);
+                }
             });
         </script>
     </body>

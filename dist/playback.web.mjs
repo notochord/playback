@@ -34,9 +34,11 @@ function __awaiter(thisArg, _arguments, P, generator) {
  * Load a file.
  *
  * * Style locator algorithm:
- * 1. If the path begins with http:// or https://, look at that URL
- * 2. If the path begins with . or / look in the filesystem or at a relative URL
- * 3. Otherwise, look in the styles folder in this repo (which will move to its
+ * 1. If the path starts with an @ symbol (preceeded by optional whitespace),
+ *    return the path as file content.
+ * 2. If the path begins with http:// or https://, look at that URL
+ * 3. If the path begins with . or / look in the filesystem or at a relative URL
+ * 4. Otherwise, look in the styles folder in this repo (which will move to its
  *    own repo eventually). For these built-in styles, the .play file extension
  *    is not required.
  *
@@ -45,6 +47,9 @@ function __awaiter(thisArg, _arguments, P, generator) {
  */
 function load(stylePath) {
     return __awaiter(this, void 0, void 0, function* () {
+        if (stylePath.match(/^\s*@/)) {
+            return stylePath;
+        }
         const isHTTP = stylePath.startsWith('http://') || stylePath.startsWith('https://');
         const isRelative = stylePath.startsWith('.') || stylePath.startsWith('/');
         if (typeof process === 'undefined') {
@@ -64,10 +69,10 @@ function load(stylePath) {
                 // @ts-ignore
                 const http = yield import(stylePath.startsWith('https://') ? 'https' : 'http');
                 return new Promise((resolve, reject) => {
-                    http.get(stylePath, res => {
+                    http.get(stylePath, (res) => {
                         let body = '';
                         res.setEncoding('utf8');
-                        res.on('data', data => body += data);
+                        res.on('data', (data) => body += data);
                         res.on('end', () => resolve(body));
                         res.on('error', reject);
                     });
