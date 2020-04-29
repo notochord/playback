@@ -98,18 +98,28 @@ export class MelodicBeatLiteral extends ASTNodeBase {
   }
   public execute(songIterator: SongIterator): values.NoteSetValue {
     let notes = new values.NoteSetValue();
-    const time = this.getTime(); // @TODO: this varies with rolling
+    const time = this.getTime();
     const pitches = this.getPitches(songIterator);
-    const duration = this.getDuration(); // @TODO: this varies with rolling
+    const duration = this.getDuration();
     const volume = this.getVolume();
+    let timeOffset = 0;
+    let timeOffsetTotal = 0;
+    if (this.value.pitch.roll === 'ROLL_UP') {
+      timeOffset = 0.3 / pitches.length;
+    }
+    if (this.value.pitch.roll === 'ROLL_DOWN') {
+      timeOffset = -0.3 / pitches.length;
+      timeOffsetTotal = 0.3;
+    }
     
     for(const pitch of pitches) {
       notes = notes.push(new values.NoteValue({
-        time: time,
+        time: time + timeOffsetTotal,
         pitch: pitch,
-        duration: duration,
+        duration: Math.max(duration - timeOffsetTotal, 0.25),
         volume: volume
       }));
+      timeOffsetTotal += timeOffset;
     }
     
     return notes;

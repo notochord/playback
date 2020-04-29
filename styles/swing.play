@@ -51,7 +51,7 @@
 		)
 		volume (.3)
 	}
-	@pattern no3 if(not beat-defined(3)) <1:1c:4 2.5:1c:4>
+	@pattern no3 if(not beat-defined(3)) <1:1cr:4 2.5:1c:4>
 	
 }
 
