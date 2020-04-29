@@ -53,11 +53,11 @@ JoinedPatternExpression -> SEP_LIST_MIN2[PatternExpression_NoJoin, "&"] {% d => 
 # functions
 FunctionCallExpression -> Identifier _? "(" _? SPACED_LIST[FunctionCallArgument] _? ")" {% d => new ast.FunctionCall(d[0], d[4]) %}
                         | Identifier _? "(" ")" {% d => new ast.FunctionCall(d[0], []) %}
-FunctionCallArgument -> NumericExpression   {% d => new values.PlaybackNumberValue(d[0]) %}
-                      | StringLiteral       {% d => new values.PlaybackStringValue(d[0]) %}
-                      | BooleanLiteral      {% d => new values.PlaybackBooleanValue(d[0]) %}
+FunctionCallArgument -> NumericExpression   {% d => new values.NumberValue(d[0]) %}
+                      | StringLiteral       {% d => new values.StringValue(d[0]) %}
+                      | BooleanLiteral      {% d => new values.BooleanValue(d[0]) %}
                       | PatternExpression   {% id %}
-                      | BL_PP_Anchor        {% d => new values.PlaybackAnchorValue(d[0]) %}
+                      | BL_PP_Anchor        {% d => new values.AnchorValue(d[0]) %}
                       | "not" _ FunctionCallArgument {% d => new ast.BooleanNot(d[2]) %}
                       | FunctionCallArgument _ "and" _ FunctionCallArgument {% d => new ast.BooleanAnd(d[0], d[4]) %}
                       | FunctionCallArgument _ "or" _ FunctionCallArgument {% d => new ast.BooleanOr(d[0], d[4]) %}

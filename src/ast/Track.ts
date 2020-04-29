@@ -1,13 +1,11 @@
 import {
   DrumBeatInMelodicBeatGroupError
 } from './errors.js';
-import { AwaitingDrum } from '../MIDI/Note';
 import { Scope, ASTNodeBase } from './ASTNodeBase';
 import FunctionCall from './FunctionCall';
 import { PatternStatement, PatternCall } from './Pattern';
 import SongIterator from 'notochord-song/types/songiterator';
 import * as values from '../values/values';
-import { NoteSet } from '../MIDI/Note';
 import GlobalScope from './GlobalScope';
 
 export class TrackStatement extends Scope {
@@ -19,14 +17,14 @@ export class TrackStatement extends Scope {
   public patterns: Map<string, PatternStatement | PatternCall>;
   public patternCalls: PatternCall[];
 
-  public constructor(opts) {
+  public constructor(opts: any) {
     super();
     this.name = opts.identifier;
     this.type = '@track';
 
-    this.defaultVars.set('octave', new values.PlaybackNumberValue(4));
-    this.defaultVars.set('volume', new values.PlaybackNumberValue(1));
-    this.defaultVars.set('private', new values.PlaybackBooleanValue(false));
+    this.defaultVars.set('octave', new values.NumberValue(4));
+    this.defaultVars.set('volume', new values.NumberValue(1));
+    this.defaultVars.set('private', new values.BooleanValue(false));
     
     this.instrument = opts.instrument;
     this.identifier = opts.identifier;
@@ -59,7 +57,7 @@ export class TrackStatement extends Scope {
       pattern.link(ASTs, parentStyle, this);
     }
   }
-  public execute(songIterator: SongIterator): NoteSet | null {
+  public execute(songIterator: SongIterator): values.NoteSetValue | values.NilValue {
     this.inherit();
     console.log(`executing TrackStatement "${this.name}"`);
     
@@ -78,9 +76,9 @@ export class TrackStatement extends Scope {
       const result = pattern.execute(songIterator, true);
       console.log('  - Result:', result);
       // @TODO: handle multi-measure patterns (via locks?)
-      if(result) {
-        for(const note of (result as NoteSet)) {
-          if (note.pitch === AwaitingDrum) {
+      if(result.type === 'note_set') {
+        for(const note of result.value) {
+          if (note.pitch === 'AwaitingDrum') {
             throw new DrumBeatInMelodicBeatGroupError(pattern);
           }
         }
@@ -103,21 +101,21 @@ export class TrackStatement extends Scope {
       }
     }
     console.log('  - Final result:', null);
-    return null;
+    return new values.NilValue();
   }
 }
 export class TrackCall extends ASTNodeBase {
   public import: string;
   public track: string;
-  public trackStatement: TrackStatement;
+  public trackStatement: TrackStatement; // will be set by the loader.
 
-  public constructor(opts) {
+  public constructor(opts: any) {
     super();
     this.import = opts.import;
     this.track = opts.track;
-    this.trackStatement = null; // will be set by the loader.
   }
-  public execute(songIterator: SongIterator): void {
-    this.trackStatement.execute(songIterator);
+  public execute(songIterator: SongIterator): values.NilValue {
+    this.trackStatement.execute(songIterator); // @TODO: should we be doing something with this value?
+    return new values.NilValue();
   }
 }

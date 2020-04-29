@@ -1,9 +1,9 @@
 import { load } from '../loader/loader';
 import { parse } from '../parser/parser';
-import { NoteSet } from '../MIDI/Note';
 import GlobalScope from '../ast/GlobalScope';
 import Song from 'notochord-song/types/notochord-song';
-import * as values from '../values/values'
+import * as values from '../values/values';
+import { Note } from '../MIDI/Note';
 
 export default class PlaybackStyle {
   private mainPath: string;
@@ -60,38 +60,27 @@ export default class PlaybackStyle {
    * @returns {Map<string, NoteSet>} A map of instrument names to array-like
    * objects containing MIDI-like note instructions.
    */
-  public compile(song: Song): Map<string, NoteSet> {
+  public compile(song: Song): Map<string, Note[]> {
     if(!this.initialized) {
       throw new Error('PlayBack style must be initialized before compiling');
     }
     const songIterator = song[Symbol.iterator]();
     const instruments = this.getInstruments();
-    const notes = new Map<string, NoteSet>();
-    const beatsPerMeasure = (this.main.vars.get('time-signature') as values.PlaybackTimeSignatureValue).value[0];
-    let totalPastBeats = 0;
-    for(const instrument of instruments) notes.set(instrument, new NoteSet());
+    const notes = new Map<string, Note[]>();
+    const beatsPerMeasure = (this.main.vars.get('time-signature') as values.TimeSignatureValue).value[0];
+    let measureOffset = 0;
+    for(const instrument of instruments) notes.set(instrument, []);
     let nextValue;
     while(nextValue = songIterator.next(), nextValue.done === false) {
       const thisMeasureTracks = this.main.execute(songIterator);
-      for(const [instrument, thisMeasureNotes] of thisMeasureTracks) {
-        for(const note of thisMeasureNotes) {
-          note.time += totalPastBeats;
-          if(this.main.vars.get('swing')) {
-            const intPart = Math.floor(note.time);
-            let floatPart = note.time - intPart;
-            if(floatPart <= 0.5) {
-              floatPart *= 2;
-              floatPart = (2/3) * floatPart;
-            } else {
-              floatPart = 2 * (floatPart - 0.5);
-              floatPart = (2/3) + ((1/3) * floatPart);
-            }
-            note.time = intPart + floatPart;
-          }
-        }
-        notes.get(instrument)!.push(...thisMeasureNotes);
+      for(const [instrument, thisMeasureNotes] of thisMeasureTracks.value) {
+        notes.get(instrument)!.push(...thisMeasureNotes.value.map(noteValue => {
+          const note = new Note(noteValue, measureOffset);
+          if(this.main.vars.get('swing')!.value) note.swing();
+          return note;
+        }));
       }
-      totalPastBeats += beatsPerMeasure;
+      measureOffset += beatsPerMeasure;
     }
     
     return notes;

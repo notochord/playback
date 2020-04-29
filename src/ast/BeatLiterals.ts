@@ -1,28 +1,26 @@
 // @ts-ignore
 import tonal from '../lib/tonal.min.js';
-import { AwaitingDrum, Note, NoteSet } from '../MIDI/Note';
 import { ASTNodeBase, Scope } from './ASTNodeBase';
 import { Measure } from './BeatGroups';
 import { getAnchorChord, anchorChordToRoot } from './musicUtils';
-import { PlaybackMelodicBeatValue, PlaybackDrumBeatValue } from '../values/values';
+import * as values from '../values/values';
 import SongIterator from 'notochord-song/types/songiterator';
 
 export class MelodicBeatLiteral extends ASTNodeBase {
-  public value: PlaybackMelodicBeatValue;
+  public value: values.MelodicBeatValue;
   public parentMeasure: Measure;
   public indexInMeasure: number;
   public cachedAnchor: any = null; // used for STEP/ARPEGGIATE interpolation
 
-  public constructor(opts) {
+  public constructor(opts: any) {
     super();
-    this.value = new PlaybackMelodicBeatValue(opts.time, opts.pitch, opts.octave);
+    this.value = new values.MelodicBeatValue(opts.time, opts.pitch, opts.octave);
   }
   public init(scope: Scope, parentMeasure: Measure, indexInMeasure: number): void {
     super.init(scope);
     this.parentMeasure = parentMeasure;
     this.indexInMeasure = indexInMeasure;
   }
-  public link(): void {}
   public getTime(): number {
     if(this.value.time.time === 'auto') {
       return this.indexInMeasure + 1;
@@ -98,15 +96,15 @@ export class MelodicBeatLiteral extends ASTNodeBase {
     if(this.value.time.flag === 'ACCENTED') volume = Math.min(1, volume += .1);
     return volume;
   }
-  public execute(songIterator: SongIterator): NoteSet {
-    const notes = new NoteSet();
+  public execute(songIterator: SongIterator): values.NoteSetValue {
+    let notes = new values.NoteSetValue();
     const time = this.getTime(); // @TODO: this varies with rolling
     const pitches = this.getPitches(songIterator);
     const duration = this.getDuration(); // @TODO: this varies with rolling
     const volume = this.getVolume();
     
     for(const pitch of pitches) {
-      notes.push(new Note({
+      notes = notes.push(new values.NoteValue({
         time: time,
         pitch: pitch,
         duration: duration,
@@ -119,21 +117,20 @@ export class MelodicBeatLiteral extends ASTNodeBase {
 }
 
 export class DrumBeatLiteral extends ASTNodeBase {
-  public value: PlaybackDrumBeatValue;
+  public value: values.DrumBeatValue;
   public scope: Scope;
   public parentMeasure: Measure;
   public indexInMeasure: number;
 
-  public constructor(opts) {
+  public constructor(opts: any) {
     super();
-    this.value = new PlaybackDrumBeatValue(opts.time, opts.accented);
+    this.value = new values.DrumBeatValue(opts.time, opts.accented);
   }
   public init(scope: Scope, parentMeasure: Measure, indexInMeasure: number): void {
     super.init(scope);
     this.parentMeasure = parentMeasure;
     this.indexInMeasure = indexInMeasure;
   }
-  public link(): void {}
   public getTime(): number {
     return this.value.time;
   }
@@ -147,18 +144,18 @@ export class DrumBeatLiteral extends ASTNodeBase {
   }
   public isDynamic(): boolean { return false; }
   public getAnchorData(): string[] { return []; }
-  public execute(songIterator: SongIterator): NoteSet {
+  public execute(songIterator: SongIterator): values.NoteSetValue {
     const time = this.getTime();
     const duration = this.getDuration();
     const volume = this.getVolume();
     
-    return new NoteSet(
-      new Note({
+    return new values.NoteSetValue([
+      new values.NoteValue({
         time: time,
-        pitch: AwaitingDrum,
+        pitch: 'AwaitingDrum',
         duration: duration,
         volume: volume
       })
-    );
+    ]);
   }
 }

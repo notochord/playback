@@ -1,4 +1,3 @@
-import { NoteSet } from '../MIDI/Note';
 import {
   TooManyBeatsError,
   NoSuchStyleError,
@@ -23,8 +22,8 @@ export class PatternExpressionGroup extends Scope {
     this.type = 'PatternExpressionGroup';
     this.name = '@pattern(<anonymous>)';
     
-    this.defaultVars.set('private', new values.PlaybackBooleanValue(false));
-    this.defaultVars.set('chance', new values.PlaybackNumberValue(1));
+    this.defaultVars.set('private', new values.BooleanValue(false));
+    this.defaultVars.set('chance', new values.NumberValue(1));
     
     this.expressions = expressions;
     this.functionCalls = [];
@@ -54,33 +53,31 @@ export class PatternExpressionGroup extends Scope {
       expression.link!(ASTs, parentStyle, parentTrack);
     });
   }
-  public execute(songIterator: SongIterator, callerIsTrack = false): NoteSet | null {
+  public execute(songIterator: SongIterator, callerIsTrack = false): values.NoteSetValue | values.NilValue {
     this.inherit();
-    let beats: NoteSet | null = null;
+    let beats: values.NoteSetValue | values.NilValue = new values.NilValue();
     for(const functionCall of this.functionCalls) {
       const returnValue = functionCall.execute(songIterator);
-      if(returnValue instanceof NoteSet) {
-        if(beats) {
+      if(returnValue.type === 'note_set') {
+        if(beats.type === 'note_set') {
           throw new TooManyBeatsError(this);
         }
         beats = returnValue;
       }
     }
     if(callerIsTrack && this.vars.get('private')!.value === true) {
-      return null; // if it's private we can give up now
+      return new values.NilValue; // if it's private we can give up now
     }
-    for(let expression of this.nonFunctionCallExpressions) {
-      if(expression.execute) {
-        expression = expression.execute(songIterator);
-      }
-      if(expression instanceof NoteSet) {
-        if(beats) {
+    for(const expression of this.nonFunctionCallExpressions) {
+      const value = expression.execute(songIterator);
+      if(value.type === 'note_set') {
+        if(beats.type === 'note_set') {
           throw new TooManyBeatsError(this);
         }
-        beats = expression;
+        beats = value;
       }
     }
-    return beats
+    return beats;
   }
 }
 
@@ -111,7 +108,7 @@ export class PatternStatement extends PatternExpressionGroup {
     super.init(scope);
     if(this.condition && this.condition.init) this.condition.init(this);
   }
-  public execute(songIterator: SongIterator, callerIsTrack = false): NoteSet | null {
+  public execute(songIterator: SongIterator, callerIsTrack = false): values.NoteSetValue | values.NilValue {
     if(this.condition) {
       let conditionValue;
       if(this.condition.execute) {
@@ -119,7 +116,7 @@ export class PatternStatement extends PatternExpressionGroup {
       } else {
         conditionValue = this.condition;
       }
-      if((conditionValue as values.PlaybackValue).toBoolean() === false) return null;
+      if((conditionValue as values.PlaybackValue).toBoolean() === false) return new values.NilValue();
     }
     return super.execute(songIterator, callerIsTrack);
   }
@@ -175,7 +172,7 @@ export class PatternCall extends ASTNodeBase {
       this);
     this.patternStatement = patternStatement;
   }
-  public execute(songIterator: SongIterator): NoteSet | null {
+  public execute(songIterator: SongIterator): values.NoteSetValue | values.NilValue {
     // called patternStatement ignores private()
     return this.patternStatement!.execute(songIterator);
   }
@@ -199,20 +196,18 @@ export class JoinedPatternExpression extends ASTNodeBase {
       pattern.link!(ASTs, parentStyle, parentTrack);
     });
   }
-  public execute(songIterator: SongIterator): NoteSet | null {
-    const noteSets = [];
-    for(let pattern of this.patterns) {
-      if(pattern.execute) {
-        pattern = pattern.execute(songIterator);
-      }
-      if(pattern instanceof NoteSet) {
-        noteSets.push(pattern);
+  public execute(songIterator: SongIterator): values.NoteSetValue | values.NilValue {
+    let out = new values.NoteSetValue();
+    for(const pattern of this.patterns) {
+      const value = pattern.execute(songIterator);
+      if(value.type === 'note_set') {
+        out = out.concat(value)
       }
     }
-    if(noteSets.length) {
-      return (new NoteSet()).concat(...noteSets);
+    if(out.value.length) {
+      return out;
     } else {
-      return null;
+      return new values.NilValue();
     }
   }
 }

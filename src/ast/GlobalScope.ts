@@ -1,4 +1,3 @@
-import { NoteSet } from '../MIDI/Note';
 import { NoSuchStyleError, NoSuchTrackError } from './errors';
 import { Scope } from './ASTNodeBase';
 import { MetaStatement, OptionsStatement, ImportStatement } from './ConfigStatements';
@@ -28,8 +27,8 @@ export default class GlobalScope extends Scope {
   
   public init(): void {
     // set some default values
-    this.vars.set('time-signature', new values.PlaybackTimeSignatureValue([4, 4]));
-    this.vars.set('tempo', new values.PlaybackNumberValue(120));
+    this.vars.set('time-signature', new values.TimeSignatureValue([4, 4]));
+    this.vars.set('tempo', new values.NumberValue(120));
     
     this.tracks = new Map();
     this.metaStatements = [];
@@ -79,11 +78,11 @@ export default class GlobalScope extends Scope {
       track.link(ASTs, this);
     }
   }
-  public execute(songIterator: SongIterator): Map<string, NoteSet> {
-    const trackNoteMap = new Map<string, NoteSet>();
+  public execute(songIterator: SongIterator): values.TrackNoteMap {
+    const trackNoteMap = new values.TrackNoteMap();
     for(const [, track] of this.tracks) {
       const trackNotes = track.execute(songIterator);
-      if(trackNotes) trackNoteMap.set(track.instrument, trackNotes);
+      if(trackNotes.type === 'note_set') trackNoteMap.value.set(track.instrument, trackNotes);
     }
     return trackNoteMap;
   }

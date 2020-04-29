@@ -6,8 +6,8 @@ export abstract class ASTNodeBase {
   public init(parentScope: Scope, ...args: any[]): void {
     this.scope = parentScope;
   }
-  public abstract link(...args: any[]): void;
-  public abstract execute(songInterator: SongIterator): any;
+  public link(...args: any[]): void { return undefined; }
+  public abstract execute(songInterator: SongIterator): PlaybackValue;
 }
 
 /*

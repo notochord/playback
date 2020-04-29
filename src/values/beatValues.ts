@@ -1,18 +1,18 @@
-import { PlaybackValueBase } from './values';
+import { PlaybackValueBase } from './valueBase';
 
 type Anchor = 'KEY' | 'NEXT' | 'STEP' | 'ARPEGGIATE';
 const anchorReverseMap = { 'KEY': 'k', 'NEXT': 'n', 'STEP': 's', 'ARPEGGIATE': 'a' };
 
-export class PlaybackAnchorValue implements PlaybackValueBase {
+export class AnchorValue extends PlaybackValueBase {
   public type: 'anchor' = 'anchor';
   public value: Anchor;
-  public constructor(value: Anchor) { this.value = value; }
+  public constructor(value: Anchor) { super(); this.value = value; }
   public toBoolean(): boolean { return true; }
   public toOutputString(): string { return anchorReverseMap[this.value]; }
 }
 
-abstract class PlaybackBeatValue implements PlaybackValueBase {
-  public type = null;
+abstract class PlaybackBeatValue extends PlaybackValueBase {
+  public type: string;
   public value: any;
   public toBoolean(): boolean { return true; }
   public abstract toOutputString(): string;
@@ -30,18 +30,16 @@ type PitchPart = {
 
 type OctavePart = number | 'inherit';
 
-export class PlaybackMelodicBeatValue extends PlaybackBeatValue {
+export class MelodicBeatValue extends PlaybackBeatValue {
   public type: 'melodic_beat' = 'melodic_beat';
-  public value = {
-    time: null as TimePart,
-    pitch: null as PitchPart,
-    octave: null as OctavePart,
-  }
+  public value: {
+    time: TimePart;
+    pitch: PitchPart;
+    octave: OctavePart;
+  };
   public constructor(time: TimePart = { time: 'auto' }, pitch: PitchPart, octave: OctavePart = 'inherit') {
     super();
-    this.value.time = time;
-    this.value.pitch = pitch;
-    this.value.octave = octave;
+    this.value = { time, pitch, octave };
   }
   public toOutputString(): string {
     const timeFlag = this.time.flag ? (this.time.flag === 'ACCENTED' ? 'a' : 's') : '';
@@ -57,16 +55,15 @@ export class PlaybackMelodicBeatValue extends PlaybackBeatValue {
   public get octave(): OctavePart { return this.value.octave; }
 }
 
-export class PlaybackDrumBeatValue extends PlaybackBeatValue {
+export class DrumBeatValue extends PlaybackBeatValue {
   public type: 'drum_beat' = 'drum_beat';
-  public value = {
-    time: null as number,
-    accented: null as boolean,
-  }
+  public value: {
+    time: number;
+    accented: boolean;
+  };
   public constructor(time: number, accented = false) {
     super();
-    this.value.time = time;
-    this.value.accented = accented;
+    this.value = { time, accented };
   }
   public toOutputString(): string {
     return `${this.time}${this.accented ? 'a' : ''}`;

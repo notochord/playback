@@ -1,7 +1,6 @@
 import {
   MelodicBeatInDrumBeatGroupError
 } from './errors';
-import { AwaitingDrum, NoteSet } from '../MIDI/Note';
 import { MelodicBeatLiteral, DrumBeatLiteral } from './BeatLiterals';
 import { Scope, ASTNodeBase } from './ASTNodeBase';
 import SongIterator from 'notochord-song/types/songiterator';
@@ -20,16 +19,15 @@ export class BeatGroupLiteral extends ASTNodeBase {
     super.init(scope)
     this.measures.forEach((measure, i) => measure.init(scope, this, i));
   }
-  public link(): void {return;}
-  public execute(songIterator: SongIterator): NoteSet | null {
-    const joinedMeasures = new NoteSet();
+  public execute(songIterator: SongIterator): values.NoteSetValue | values.NilValue {
+    let joinedMeasures = new values.NoteSetValue();
     for(let i = 0; i < this.measures.length; i++) {
       const offset = i * 4; // @TODO: pull in actual meter somehow
       const measureNotes = this.measures[i].execute(songIterator);
-      if(measureNotes === null) return null; // lets a/s abort the beatgroup
-      for(const measureNote of measureNotes as NoteSet) {
+      if(measureNotes.type === 'Nil') return new values.NilValue(); // lets a/s abort the beatgroup
+      for(const measureNote of (measureNotes as values.NoteSetValue).value) {
         measureNote.time += offset;
-        joinedMeasures.push(measureNote);
+        joinedMeasures = joinedMeasures.push(measureNote);
       }
     }
     return joinedMeasures;
@@ -86,28 +84,26 @@ export class Measure extends ASTNodeBase {
       songIterator
     );
   }
-  public link(): void {}
   public init(scope: Scope, parentBeatGroup: BeatGroupLiteral, indexInBeatGroup: number): void {
     super.init(scope);
     this.parentBeatGroup = parentBeatGroup;
     this.indexInBeatGroup = indexInBeatGroup;
-    this.beatsPerMeasure = (this.scope.vars.get('time-signature') as values.PlaybackTimeSignatureValue).value[0];
+    this.beatsPerMeasure = (this.scope.vars.get('time-signature') as values.TimeSignatureValue).value[0];
     // @TODO does this need more math?
     this.beats.forEach((beat: MelodicBeatLiteral | DrumBeatLiteral, i: number) => {
       beat.init(scope, this, i);
     });
   }
-  public execute(songIterator: SongIterator): NoteSet | null {
+  public execute(songIterator: SongIterator): values.NoteSetValue | values.NilValue {
     // clear cached notes (used for STEP/ARPEGGIATE interpolation)
     for(const beat of this.beats) {
       if(beat instanceof MelodicBeatLiteral) beat.cachedAnchor = null;
     }
     // each beat returns a NoteSet since it could be a chord or whatever
-    const joined = new NoteSet();
+    let joined = new values.NoteSetValue;
     for(const beat of this.beats) {
       const notes = beat.execute(songIterator);
-      if(!notes) return null; // lets a and s abort the beatgroup.
-      joined.push(...notes);
+      joined = joined.concat(notes);
     }
     return joined;
   }
@@ -128,11 +124,11 @@ export class DrumBeatGroupLiteral extends ASTNodeBase {
     if(this.beatGroup.init) this.beatGroup.init(scope);
   }
   public link(): void {return;} // @TODO: I think patterncalls are allowed here?
-  public execute(songIterator: SongIterator): NoteSet | null {
+  public execute(songIterator: SongIterator): values.NoteSetValue | values.NilValue {
     const notes = this.beatGroup.execute(songIterator);
-    if (notes === null) return null;
-    for(const note of notes) {
-      if(note.pitch === AwaitingDrum) {
+    if (notes.type === 'Nil') return new values.NilValue();
+    for(const note of notes.value) {
+      if(note.pitch === 'AwaitingDrum') {
         note.pitch = this.drum; // @TODO: convert to number?
       } else {
         throw new MelodicBeatInDrumBeatGroupError(this.scope);

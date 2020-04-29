@@ -1,4 +1,4 @@
-import * as FunctionData from './FunctionData';
+import * as FunctionData from '../values/functionData';
 import { FunctionNameError } from './errors';
 import SongIterator from 'notochord-song/types/songiterator';
 import * as values from '../values/values';

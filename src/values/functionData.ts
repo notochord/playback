@@ -1,11 +1,11 @@
 // @ts-ignore
 import tonal from '../lib/tonal.min.js';
-import { normalizeChordForTonal, getAnchorChord, anchorChordToRoot, chordToScaleName } from './musicUtils';
-import * as values from '../values/values';
-import { FunctionArgumentsError, FunctionScopeError } from './errors';
-import FunctionCall from './FunctionCall';
+import { normalizeChordForTonal, getAnchorChord, anchorChordToRoot, chordToScaleName } from '../ast/musicUtils';
+import * as values from './values';
+import { FunctionArgumentsError, FunctionScopeError } from '../ast/errors';
+import FunctionCall from '../ast/FunctionCall';
 import SongIterator from 'notochord-song/types/songiterator';
-import { Scope } from './ASTNodeBase';
+import { Scope } from '../ast/ASTNodeBase';
 
 interface DefineOpts {
   types?: ArgType[] | '*';
@@ -149,7 +149,7 @@ const defineVar = function(identifier: string, type: ArgType, goalscope: GoalSco
   };
   define(identifier, opts, (args, songIterator, scope, argErr) => {
     scope.vars.set(identifier, args[0]);
-    return new values.PlaybackNilValue();
+    return new values.NilValue();
   })
 }
 
@@ -172,9 +172,9 @@ const defineBoolean = function(identifier: string, goalscope: GoalScope = 'no-me
       assertArgTypes(identifier, args, ['boolean'], scope);
       scope.vars.set(identifier, args[0]);
     } else {
-      scope.vars.set(identifier, new values.PlaybackBooleanValue(true));
+      scope.vars.set(identifier, new values.BooleanValue(true));
     }
-    return new values.PlaybackNilValue;
+    return new values.NilValue;
   })
 }
 
@@ -194,13 +194,13 @@ define('time-signature',
     returns: 'Nil'
   },
   (args, songIterator, scope, argErr) => {
-    const value1 = (args[0] as values.PlaybackNumberValue).value;
-    const value2 = (args[1] as values.PlaybackNumberValue).value;
+    const value1 = (args[0] as values.NumberValue).value;
+    const value2 = (args[1] as values.NumberValue).value;
     if(!Number.isInteger(Math.log2(value1))) {
       argErr(`Argument 2 of "time-signature" must be a power of 2`);
     }
-    scope.vars.set('time-signature', new values.PlaybackTimeSignatureValue([value1, value2]));
-    return new values.PlaybackNilValue();
+    scope.vars.set('time-signature', new values.TimeSignatureValue([value1, value2]));
+    return new values.NilValue();
   });
 defineBoolean('swing', 'options');
 
@@ -212,12 +212,12 @@ define('volume',
     returns: 'Nil'
   },
   (args, songIterator, scope, argErr) => {
-    const { value } = (args[0] as values.PlaybackNumberValue);
+    const { value } = (args[0] as values.NumberValue);
     if(value < 0 || value > 1) {
       argErr(`Argument 1 of "volume" must be in range 0-1 (inclusive)`);
     }
     scope.vars.set('volume', args[0]);
-    return new values.PlaybackNilValue();
+    return new values.NilValue();
   });
 defineBoolean('invertible', 'no-meta');
 define('octave',
@@ -227,12 +227,12 @@ define('octave',
     returns: 'Nil'
   },
   (args, songIterator, scope, argErr) => {
-    const { value } = (args[0] as values.PlaybackNumberValue);
+    const { value } = (args[0] as values.NumberValue);
     if(!Number.isInteger(value) || value < 0 || value > 9) {
       argErr(`Argument 1 of "octave" must be an integer 0-9`);
     }
     scope.vars.set('octave', args[0]);
-    return new values.PlaybackNilValue();
+    return new values.NilValue();
   });
 
 /*** anywhere but config functions (strictly dynamic functions) ***/
@@ -248,11 +248,11 @@ define('choose',
       const index = Math.floor(Math.random() * nonNilArgs.length);
       return nonNilArgs[index];
     } else {
-      return new values.PlaybackNilValue();
+      return new values.NilValue();
     }
   });
 
-const anchorOrNumberToChordAndRoot = function(arg: values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator: SongIterator): [string, string] {
+const anchorOrNumberToChordAndRoot = function(arg: values.NumberValue | values.AnchorValue, songIterator: SongIterator): [string, string] {
   let anchorChord: string, root: string;
   if(arg.type === 'number') {
     anchorChord = getAnchorChord(
@@ -277,15 +277,15 @@ define('progression',
       if(args[0].type !== 'number' && args[0].type !== 'anchor') {
         argErr(`Arguments of "progression" must be numbers or anchors`);
       }
-      const [,goal] = anchorOrNumberToChordAndRoot(args[0] as values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator);
+      const [,goal] = anchorOrNumberToChordAndRoot(args[0] as values.NumberValue | values.AnchorValue, songIterator);
       const actualMeasure = songIterator.getRelative(Number(i));
-      if(!actualMeasure) return new values.PlaybackBooleanValue(false);
+      if(!actualMeasure) return new values.BooleanValue(false);
       const actualChord = normalizeChordForTonal(actualMeasure.beats[0].chord);
       const actual = anchorChordToRoot(
         actualChord, 1, 4);
-      if(actual !== goal) return new values.PlaybackBooleanValue(false);
+      if(actual !== goal) return new values.BooleanValue(false);
     }
-    return new values.PlaybackBooleanValue(true);
+    return new values.BooleanValue(true);
   });
 define('in-scale',
   {
@@ -298,11 +298,11 @@ define('in-scale',
       || args[1].type !== 'number' && args[1].type !== 'anchor') {
       argErr(`Arguments of "in-scale" must be numbers or anchors`);
     }
-    const [,note] = anchorOrNumberToChordAndRoot(args[0] as values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator);
-    const [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1] as values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator);
+    const [,note] = anchorOrNumberToChordAndRoot(args[0] as values.NumberValue | values.AnchorValue, songIterator);
+    const [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1] as values.NumberValue | values.AnchorValue, songIterator);
     const goalScaleName = chordToScaleName(goalChord);
     const goalScale = tonal.Scale.notes(goalTonic, goalScaleName);
-    return new values.PlaybackBooleanValue(goalScale.includes(note));
+    return new values.BooleanValue(goalScale.includes(note));
   });
 define('beat-defined',
   {
@@ -312,9 +312,9 @@ define('beat-defined',
   },
   (args, songIterator, scope, argErr) => {
     const measure = songIterator.getRelative(0);
-    if(!measure) return new values.PlaybackBooleanValue(false);
-    const index = (args[0] as values.PlaybackNumberValue).value;
-    return new values.PlaybackBooleanValue(measure.beats[index].chord !== null);
+    if(!measure) return new values.BooleanValue(false);
+    const index = (args[0] as values.NumberValue).value;
+    return new values.BooleanValue(measure.beats[index].chord !== null);
   });
 
 /*** pattern-only functions ***/
@@ -327,11 +327,11 @@ define('chance',
     returns: 'Nil'
   },
   (args, songIterator, scope, argErr) => {
-    if((args[0] as values.PlaybackNumberValue).value < 0 || (args[0] as values.PlaybackNumberValue).value > 1) {
+    if((args[0] as values.NumberValue).value < 0 || (args[0] as values.NumberValue).value > 1) {
       argErr(`Argument 1 of "chance" must be in range 0-1 (inclusive)`);
     }
     scope.vars.set('chance', args[0]);
-    return new values.PlaybackNilValue();
+    return new values.NilValue();
   });
 
 export { definitions };

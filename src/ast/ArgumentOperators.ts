@@ -24,34 +24,30 @@ abstract class BooleanOperator extends ASTNodeBase {
   }
   protected resolveArgs(songIterator: SongIterator): values.PlaybackValue[] {
     return this.args.map(arg => {
-      if(arg.execute) {
-        return arg.execute(songIterator);
-      } else {
-        return arg;
-      }
+      return arg.execute(songIterator);
     });
   }
 }
 
 export class BooleanNot extends BooleanOperator {
-  public execute(songIterator: SongIterator): values.PlaybackBooleanValue {
+  public execute(songIterator: SongIterator): values.BooleanValue {
     const args = this.resolveArgs(songIterator);
-    return new values.PlaybackBooleanValue(!args[0].toBoolean());
+    return new values.BooleanValue(!args[0].toBoolean());
   }
 }
 
 export class BooleanAnd extends BooleanOperator {
-  public execute(songIterator: SongIterator): values.PlaybackBooleanValue {
+  public execute(songIterator: SongIterator): values.BooleanValue {
     // sorry no short-circuiting because this code is prettier
     // @TODO: add short-circuiting if this actually makes it too slow
     const args = this.resolveArgs(songIterator);
-    return new values.PlaybackBooleanValue(args[0].toBoolean() && args[1].toBoolean());
+    return new values.BooleanValue(args[0].toBoolean() && args[1].toBoolean());
   }
 }
 
 export class BooleanOr extends BooleanOperator {
-  public execute(songIterator: SongIterator): values.PlaybackBooleanValue {
+  public execute(songIterator: SongIterator): values.BooleanValue {
     const args = this.resolveArgs(songIterator);
-    return new values.PlaybackBooleanValue(args[0].toBoolean() || args[1].toBoolean());
+    return new values.BooleanValue(args[0].toBoolean() || args[1].toBoolean());
   }
 }

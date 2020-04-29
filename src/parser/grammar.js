@@ -2,9 +2,9 @@
 // http://github.com/Hardmath123/nearley
 function id(x) { return x[0]; }
 
-import lexer from '../lexer/lexer' ;
-import * as ast from '../ast/ast_nodes';
-import * as values from '../values/values';
+   import lexer from '../lexer/lexer' ;
+   import * as ast from '../ast/ast_nodes';
+   import * as values from '../values/values';
 let Lexer = lexer;
 let ParserRules = [
     {"name": "main$macrocall$2", "symbols": ["TopLevelStatement"]},
@@ -70,11 +70,11 @@ let ParserRules = [
     {"name": "FunctionCallExpression$macrocall$1", "symbols": ["FunctionCallExpression$macrocall$2", "FunctionCallExpression$macrocall$1$ebnf$1"], "postprocess": d => d[0].concat(d[1])},
     {"name": "FunctionCallExpression", "symbols": ["Identifier", "_?", {"literal":"("}, "_?", "FunctionCallExpression$macrocall$1", "_?", {"literal":")"}], "postprocess": d => new ast.FunctionCall(d[0], d[4])},
     {"name": "FunctionCallExpression", "symbols": ["Identifier", "_?", {"literal":"("}, {"literal":")"}], "postprocess": d => new ast.FunctionCall(d[0], [])},
-    {"name": "FunctionCallArgument", "symbols": ["NumericExpression"], "postprocess": d => new values.PlaybackNumberValue(d[0])},
-    {"name": "FunctionCallArgument", "symbols": ["StringLiteral"], "postprocess": d => new values.PlaybackStringValue(d[0])},
-    {"name": "FunctionCallArgument", "symbols": ["BooleanLiteral"], "postprocess": d => new values.PlaybackBooleanValue(d[0])},
+    {"name": "FunctionCallArgument", "symbols": ["NumericExpression"], "postprocess": d => new values.NumberValue(d[0])},
+    {"name": "FunctionCallArgument", "symbols": ["StringLiteral"], "postprocess": d => new values.StringValue(d[0])},
+    {"name": "FunctionCallArgument", "symbols": ["BooleanLiteral"], "postprocess": d => new values.BooleanValue(d[0])},
     {"name": "FunctionCallArgument", "symbols": ["PatternExpression"], "postprocess": id},
-    {"name": "FunctionCallArgument", "symbols": ["BL_PP_Anchor"], "postprocess": d => new values.PlaybackAnchorValue(d[0])},
+    {"name": "FunctionCallArgument", "symbols": ["BL_PP_Anchor"], "postprocess": d => new values.AnchorValue(d[0])},
     {"name": "FunctionCallArgument", "symbols": [{"literal":"not"}, "_", "FunctionCallArgument"], "postprocess": d => new ast.BooleanNot(d[2])},
     {"name": "FunctionCallArgument", "symbols": ["FunctionCallArgument", "_", {"literal":"and"}, "_", "FunctionCallArgument"], "postprocess": d => new ast.BooleanAnd(d[0], d[4])},
     {"name": "FunctionCallArgument", "symbols": ["FunctionCallArgument", "_", {"literal":"or"}, "_", "FunctionCallArgument"], "postprocess": d => new ast.BooleanOr(d[0], d[4])},

@@ -10,7 +10,7 @@ export function normalizeChordForTonal(chord = ''): string {
 
 type Anchor = 'KEY' | 'NEXT' | 'STEP' | 'ARPEGGIATE';
 export function getAnchorChord(anchor: Anchor | null | undefined, songIterator: SongIterator, currentTime: number): string {
-  let anchorChord: string = '';
+  let anchorChord = '';
   switch(anchor) {
     case 'KEY': {
       anchorChord = songIterator.song.getTransposedKey();
@@ -25,8 +25,8 @@ export function getAnchorChord(anchor: Anchor | null | undefined, songIterator: 
       }
       break;
     }
-    case 'STEP':
-    case 'ARPEGGIATE': /* {
+    /* case 'STEP':
+    case 'ARPEGGIATE': {
       let prev = songIterator.getRelative(0)[0]; //???
       if(!this.parentMeasure) console.log('tttttttt', this);
       let next = this.parentMeasure.getNextStaticBeatRoot(

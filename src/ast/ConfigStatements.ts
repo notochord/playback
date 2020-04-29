@@ -1,6 +1,7 @@
 import { Scope, ASTNodeBase } from './ASTNodeBase';
 import FunctionCall from './FunctionCall';
 import GlobalScope from './GlobalScope';
+import * as values from '../values/values'
 
 export class MetaStatement extends Scope {
   public functionCalls: FunctionCall[];
@@ -11,7 +12,6 @@ export class MetaStatement extends Scope {
     this.type = '@meta';
     this.functionCalls = functionCalls;
   }
-  public link(): void {}
   public init(scope: GlobalScope): void {
     super.init(scope);
     
@@ -23,7 +23,7 @@ export class MetaStatement extends Scope {
     
     scope.metadata = this.vars;
   }
-  public execute(): null { return null; }
+  public execute(): values.NilValue { return new values.NilValue(); }
 }
 
 export class OptionsStatement extends Scope {
@@ -35,7 +35,6 @@ export class OptionsStatement extends Scope {
     this.type = '@options';
     this.functionCalls = functionCalls;
   }
-  public link(): void {}
   public init(scope: GlobalScope): void {
     
     // nothing in here /should/ be dynamic so resolve these at compile time
@@ -49,7 +48,7 @@ export class OptionsStatement extends Scope {
     // vise-versa
     scope.vars = new Map([...scope.vars, ...this.vars]);
   }
-  public execute(): null { return null; }
+  public execute(): values.NilValue { return new values.NilValue(); }
 }
 
 export class ImportStatement extends ASTNodeBase {
@@ -62,6 +61,5 @@ export class ImportStatement extends ASTNodeBase {
     this.identifier = identifier;
   }
 
-  public link(): void {}
-  public execute(): void {}
+  public execute(): values.NilValue { return new values.NilValue(); }
 }

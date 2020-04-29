@@ -1,3 +1,4 @@
+// @ts-ignore
 import drumJson from './drums.json.js';
 // @ts-ignore
 import * as _Tonal from 'tonal';
@@ -21,12 +22,6 @@ for(const midi in drumJson) {
   DRUM_MAP.set(name, midi);
 }
 
-/**
- * Special pitch value meaning the note will be set later by a DrumBeatGroup
- */
-const AwaitingDrum = Symbol('AwaitingDrum');
-export { AwaitingDrum };
-
 export class Note {
   public time: number; // The note's time, in beats.
   public pitch: string | symbol; // A string representing the pitch and octave of the note (e.g. A4)
@@ -40,8 +35,8 @@ export class Note {
    * @param {number} opts.duraion The note's duration, in beats.
    * @param {number} opts.volume The note's volume, as a float 0-1 (inclusive).
    */
-  public constructor(opts) {
-    this.time = opts.time;
+  public constructor(opts: any, measureOffset: number) {
+    this.time = opts.time + measureOffset;
     this.pitch = opts.pitch;
     this.duration = opts.duration;
     this.volume = opts.volume;
@@ -51,8 +46,9 @@ export class Note {
    * @type {number}
    */
   public get midi(): string {
-    if(this.pitch === AwaitingDrum) {
-      return null;
+    // Special pitch value meaning the note will be set later by a DrumBeatGroup
+    if(this.pitch === 'AwaitingDrum') {
+      return '';
     } else {
       const drumValue = DRUM_MAP.get(normalizeDrumName(this.pitch as string));
       if(drumValue) {
@@ -69,11 +65,17 @@ export class Note {
   public get velocity(): number {
     return Math.floor(this.volume * 127);
   }
-}
 
-export class NoteSet extends Array {
-  public constructor(...args) {
-    super();
-    this.push(...args);
+  public swing(): void {
+    const intPart = Math.floor(this.time);
+    let floatPart = this.time - intPart;
+    if(floatPart <= 0.5) {
+      floatPart *= 2;
+      floatPart = (2/3) * floatPart;
+    } else {
+      floatPart = 2 * (floatPart - 0.5);
+      floatPart = (2/3) + ((1/3) * floatPart);
+    }
+    this.time = intPart + floatPart;
   }
 }
