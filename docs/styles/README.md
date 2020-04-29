@@ -4,8 +4,6 @@ A style is a text file that describes how to play a song in a musical style. We
 recommend the file extension `.play`, but you can use any file extension you
 like (see the API documentation) (TODO link)
 
-[Demo?](https://notochord.github.io/playback/test/);
-
 ## Overview
 
 A .play file will look something like this:
