@@ -6,7 +6,7 @@
   "type": "module",
   "types": "types/playback.d.ts",
   "scripts": {
-    "playground": "npx http-server -o test/playground.html",
+    "playground": "npx http-server -o test/index.html",
     "test": "TS_NODE_IGNORE=\"/node_modules|(ts$)/\" npx ts-mocha -p test/tsconfig.json test/*.ts",
     "build-grammar": "npx nearleyc src/parser/grammar.ne -o src/parser/grammar.js",
     "build": "npx rollup -c; # npm run build-declarations",
