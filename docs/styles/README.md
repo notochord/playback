@@ -4,8 +4,6 @@ A style is a text file that describes how to play a song in a musical style. We
 recommend the file extension `.play`, but you can use any file extension you
 like (see the API documentation) (TODO link)
 
-[Demo?](https://notochord.github.io/playback/test/);
-
 ## Overview
 
 A .play file will look something like this:
@@ -321,10 +319,10 @@ makes it possible to do tuplets:
 
 After the number, there are 2 flags allowed:
 
-| Flag | Meaning |
-| ---- | ------- |
-| `s`  | Staccato (by default, notes are sustained until the next note) |
-| `a`  | Accented (volume boost) |
+| Flag | Example | Meaning |
+| ---- | ------- | ------- |
+| `s`  | `1s:1`  | Staccato (by default, notes are sustained until the next note) |
+| `a`  | `1a:1`  | Accented (volume boost) |
 
 (TODO: it feels valid for a note to be both accented and staccato)
 
@@ -332,31 +330,37 @@ If the number is omitted, a singleton flag is allowed.
 
 #### Note/chord part
 
-##### Single-note
-
-The note part by default describes a note relative to the chord on the current
-beat. This can be changed by using an "anchor":
+The note part allows you to express a note or chord relative to what's going on
+in the song. There are several options for whhat you want to "anchor" a note
+relatively to:
 
 | Anchor | Notes relative to |
 | ------ | ----------------- |
-| (none) | Chord in current beat of measure |
-| `k`    | Key of the song |
-| `n`    | Chord in first beat of the next measure |
+| (none) | The current chord in the song |
+| `k`    | The key of the song |
+| `n`    | The chord in first beat of the next measure |
+| `a`    | Arpeggiate automatically between the previous and next beats |
+| `s`    | Move stepwise between the previous and next beats |
 
-A number is required if there's no anchor. If there's an anchor and the number
-is omitted, it's implied to be the 1 of that chord. If there is a number, the
-note is that many scale degrees above the root of the anchoring chord (in the
-chord's scale, not the scale of the song's key.) For example:
+##### Single-note
+
+For single-note note parts, a number is required if there's no anchor. If
+there's an anchor and the number is omitted, it's implied to be the 1 of that
+chord. If there is a number, the note is that many scale degrees above the root
+of the anchoring chord (in the chord's scale, not the scale of the song's key.)
+For example:
 
 ```
-< :1 >   // Root of the current chord
-< :5 >   // 5th of the current chord
+< :1 >   // Root of the current chord of the song
+< :5 >   // 5th of the current chord of the song
 < :k >   // Root of the key of the song
 < :k1 >  // Root of the key of the song
 < :k5 >  // 5th in the scale of the song's key
 < :n >   // Root of the first chord in the next measure
 < :n5 >  // 5th of the first chord in the next measure
 ```
+
+(TODO: add examples with `s` and `a`)
 
 (TODO: `s` and `a` are not anchors and must not be combined with a number nor
 with `c` -- or are passing chords fine? idc)
@@ -375,6 +379,16 @@ The `c` flag may be followed by one of the following:
 | ---- | ------- |
 | `r`  | Roll the chord upwards |
 | `rd`  | Roll the chord downwards |
+
+```
+< :c >   // Play the current chord of the song
+< :5c >  // Play the chord that is a 5th above the current chord of the song
+< :kc >  // Play the chord of the root of the key of the song
+< :k1c > // Play the chord of the root of the key of the song
+< :k5 >  // Play the chord that is a 5th above the root of the song's key
+< :nc >  // Play the chord of the root of the first chord in the next measure
+< :n5c > // Play the chord that is a 5th above the first chord in the next measure
+```
 
 #### Octave part
 

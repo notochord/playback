@@ -3,11 +3,14 @@
   "version": "0.0.2",
   "description": "Chord player that can load different styles",
   "main": "dist/playback.js",
+  "type": "module",
+  "types": "types/playback.d.ts",
   "scripts": {
-    "test": "node test/test.bundle.js",
-    "build-grammar": "nearleyc src/parser/grammar.ne -o src/parser/grammar.js",
-    "build": "node_modules/.bin/webpack",
-    "build-watch": "node_modules/.bin/webpack --watch"
+    "playground": "npx http-server -o test/playground.html",
+    "test": "TS_NODE_IGNORE=\"/node_modules|(ts$)/\" npx ts-mocha -p test/tsconfig.json test/*.ts",
+    "build-grammar": "npx nearleyc src/parser/grammar.ne -o src/parser/grammar.js",
+    "build": "npx rollup -c; # npm run build-declarations",
+    "build-declarations": "npx tsc -d --emitDeclarationOnly --declarationDir types/"
   },
   "repository": {
     "type": "git",
@@ -20,12 +23,25 @@
   },
   "homepage": "https://github.com/notochord/playback#readme",
   "devDependencies": {
+    "@types/chai": "^4.2.0",
+    "@types/mocha": "^5.2.7",
+    "chai": "^4.2.0",
+    "http-server": "^0.12.1",
     "jsdoc": "^3.5.5",
-    "on-build-webpack": "^0.1.0",
-    "webpack": "^4.10.2",
-    "webpack-cli": "^2.1.4"
+    "mocha": "^6.1.4",
+    "nearley": "2.13.0",
+    "rollup": "^1.17.0",
+    "rollup-plugin-alias": "^1.5.2",
+    "rollup-plugin-banner": "^0.2.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-terser": "^5.1.1",
+    "rollup-plugin-typescript": "^1.0.1",
+    "ts-mocha": "^7.0.0",
+    "ts-node": "^8.3.0",
+    "tslib": "^1.10.0",
+    "typescript": "^3.5.3"
   },
   "dependencies": {
-    "notochord-song": "git+https://github.com/notochord/notochord-song.git#0.1.2"
+    "notochord-song": "git+https://github.com/notochord/notochord-song.git#1.1.0"
   }
 }

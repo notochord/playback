@@ -5,11 +5,12 @@
     <body>
         <button id="play" disabled type="button">Play</button>
         <script type="module">
-            import Song from '../node_modules/notochord-song/dist/notochord-song.web.mjs';
-            import blueSkiesSerialized from '../node_modules/notochord-song/blueSkies.mjs';
-            import { PlaybackStyle, Player } from '../dist/playback.web.mjs';
+            import Song from '../node_modules/notochord-song/src/index.js';
+            import { PlaybackStyle, Player } from '../src/index.js';
 
-            let blueSkies = new Song(blueSkiesSerialized);
+            import BLUE_SKIES from '../node_modules/notochord-song/blueSkies.mjs';
+
+            let blueSkies = new Song(BLUE_SKIES);
 
             let button = document.querySelector('#play');
 
