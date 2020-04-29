@@ -46,6 +46,6 @@
     "typescript": "^3.5.3"
   },
   "peerDependencies": {
-    "notochord-song": "git+https://github.com/notochord/notochord-song.git#1.1.0"
+    "notochord-song": "git+https://github.com/notochord/notochord-song.git#2.0.0"
   }
 }
