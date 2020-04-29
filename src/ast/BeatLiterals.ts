@@ -1,5 +1,6 @@
+// @ts-ignore
 import tonal from '../lib/tonal.min.js';
-import {AwaitingDrum, Note, NoteSet} from '../MIDI/Note';
+import { AwaitingDrum, Note, NoteSet } from '../MIDI/Note';
 import { ASTNodeBase, Scope } from './ASTNodeBase';
 import { Measure } from './BeatGroups';
 import { getAnchorChord, anchorChordToRoot } from './musicUtils';
@@ -8,8 +9,8 @@ import SongIterator from 'notochord-song/types/songiterator';
 
 export class MelodicBeatLiteral extends ASTNodeBase {
   public value: PlaybackMelodicBeatValue;
-  public parentMeasure: Measure = null;
-  public indexInMeasure: number = null;
+  public parentMeasure: Measure;
+  public indexInMeasure: number;
   public cachedAnchor: any = null; // used for STEP/ARPEGGIATE interpolation
 
   public constructor(opts) {
@@ -21,6 +22,7 @@ export class MelodicBeatLiteral extends ASTNodeBase {
     this.parentMeasure = parentMeasure;
     this.indexInMeasure = indexInMeasure;
   }
+  public link(): void {}
   public getTime(): number {
     if(this.value.time.time === 'auto') {
       return this.indexInMeasure + 1;
@@ -30,7 +32,7 @@ export class MelodicBeatLiteral extends ASTNodeBase {
   }
   public handleInversion(songIterator: SongIterator, pitches: string[]): string[] {
     const tonicPC = songIterator.song.getTransposedKey();
-    const tonicNote = tonal.Note.from({oct: this.getOctave()}, tonicPC);
+    const tonicNote = tonal.Note.from({ oct: this.getOctave() }, tonicPC);
     const tonic = tonal.Note.midi(tonicNote);
     const outPitches = [];
     for(const pitchNote of pitches) {
@@ -74,11 +76,11 @@ export class MelodicBeatLiteral extends ASTNodeBase {
    * @returns {boolean}
    */
   public isDynamic(): boolean {
-    return ['STEP', 'ARPEGGIATE'].includes(this.value.pitch.anchor);
+    return (['STEP', 'ARPEGGIATE'] as (string | undefined)[]).includes(this.value.pitch.anchor);
   }
   public getOctave(): number {
     if(this.value.octave === 'inherit') {
-      return this.scope.vars.get('octave').value as number;
+      return this.scope.vars.get('octave')!.value as number;
     } else {
       return this.value.octave;
     }
@@ -92,7 +94,7 @@ export class MelodicBeatLiteral extends ASTNodeBase {
     }
   }
   public getVolume(): number {
-    let volume = this.scope.vars.get('volume').value as number;
+    let volume = this.scope.vars.get('volume')!.value as number;
     if(this.value.time.flag === 'ACCENTED') volume = Math.min(1, volume += .1);
     return volume;
   }
@@ -116,23 +118,22 @@ export class MelodicBeatLiteral extends ASTNodeBase {
   }
 }
 
-export class DrumBeatLiteral {
+export class DrumBeatLiteral extends ASTNodeBase {
   public value: PlaybackDrumBeatValue;
   public scope: Scope;
   public parentMeasure: Measure;
   public indexInMeasure: number;
 
   public constructor(opts) {
+    super();
     this.value = new PlaybackDrumBeatValue(opts.time, opts.accented);
-    this.scope = null;
-    this.parentMeasure = null;
-    this.indexInMeasure = null;
   }
   public init(scope: Scope, parentMeasure: Measure, indexInMeasure: number): void {
-    this.scope = scope;
+    super.init(scope);
     this.parentMeasure = parentMeasure;
     this.indexInMeasure = indexInMeasure;
   }
+  public link(): void {}
   public getTime(): number {
     return this.value.time;
   }
@@ -140,10 +141,12 @@ export class DrumBeatLiteral {
     return this.parentMeasure.calculateDurationAfter(this.indexInMeasure);
   }
   public getVolume(): number {
-    let volume = this.scope.vars.get('volume').value as number;
+    let volume = this.scope.vars.get('volume')!.value as number;
     if(this.value.accented) volume = Math.min(1, volume += .1);
     return volume;
   }
+  public isDynamic(): boolean { return false; }
+  public getAnchorData(): string[] { return []; }
   public execute(songIterator: SongIterator): NoteSet {
     const time = this.getTime();
     const duration = this.getDuration();

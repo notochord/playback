@@ -23,7 +23,7 @@ export default moo.states({
     },
     number: /(?:\d*\.)?\d+/,
     brackets: ['{', '}', '(', ')'],
-    left_angle: {match: '<', push: 'beat'},
+    left_angle: { match: '<', push: 'beat' },
     operators: ['&', '+', '-', '*', '/', '.']
   },
   beat: {
@@ -31,7 +31,7 @@ export default moo.states({
     beat_colon: ':',
     beat_number: /(?:\d*\.)?\d+/,
     beat_flag: /[a-zA-Z]/,
-    beat_right_angle: {match: '>', pop: true},
+    beat_right_angle: { match: '>', pop: true },
     beat_operators: ['|', '+', '-', '*', '/']
   }
 });

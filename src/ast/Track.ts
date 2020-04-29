@@ -1,13 +1,14 @@
 import {
   DrumBeatInMelodicBeatGroupError
 } from './errors.js';
-import {AwaitingDrum} from '../MIDI/Note';
-import {Scope, ASTNodeBase} from './ASTNodeBase';
+import { AwaitingDrum } from '../MIDI/Note';
+import { Scope, ASTNodeBase } from './ASTNodeBase';
 import FunctionCall from './FunctionCall';
-import {PatternStatement, PatternCall} from './Pattern';
+import { PatternStatement, PatternCall } from './Pattern';
 import SongIterator from 'notochord-song/types/songiterator';
 import * as values from '../values/values';
-import {NoteSet} from '../MIDI/Note';
+import { NoteSet } from '../MIDI/Note';
+import GlobalScope from './GlobalScope';
 
 export class TrackStatement extends Scope {
   public instrument: string;
@@ -48,17 +49,17 @@ export class TrackStatement extends Scope {
       }
     });
   }
-  public link(ASTs, parentStyle): void {
+  public link(ASTs: Map<string, GlobalScope>, parentStyle: GlobalScope): void {
     for(const patternCall of this.patternCalls) {
       patternCall.link(ASTs, parentStyle, this);
-      this.patterns.set(patternCall.prettyprintname, patternCall);
+      this.patterns.set(patternCall.name, patternCall);
     }
     
     for(const [, pattern] of this.patterns) {
       pattern.link(ASTs, parentStyle, this);
     }
   }
-  public execute(songIterator: SongIterator): null {
+  public execute(songIterator: SongIterator): NoteSet | null {
     this.inherit();
     console.log(`executing TrackStatement "${this.name}"`);
     

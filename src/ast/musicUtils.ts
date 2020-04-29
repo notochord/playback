@@ -1,4 +1,5 @@
 import SongIterator from 'notochord-song/types/songiterator';
+// @ts-ignore
 import tonal from '../lib/tonal.min.js';
 
 export function normalizeChordForTonal(chord = ''): string {
@@ -8,8 +9,8 @@ export function normalizeChordForTonal(chord = ''): string {
 }
 
 type Anchor = 'KEY' | 'NEXT' | 'STEP' | 'ARPEGGIATE';
-export function getAnchorChord(anchor: Anchor, songIterator: SongIterator, currentTime: number): string {
-  let anchorChord: string;
+export function getAnchorChord(anchor: Anchor | null | undefined, songIterator: SongIterator, currentTime: number): string {
+  let anchorChord: string = '';
   switch(anchor) {
     case 'KEY': {
       anchorChord = songIterator.song.getTransposedKey();
@@ -25,16 +26,14 @@ export function getAnchorChord(anchor: Anchor, songIterator: SongIterator, curre
       break;
     }
     case 'STEP':
-    case 'ARPEGGIATE': {
-      /*
+    case 'ARPEGGIATE': /* {
       let prev = songIterator.getRelative(0)[0]; //???
       if(!this.parentMeasure) console.log('tttttttt', this);
       let next = this.parentMeasure.getNextStaticBeatRoot(
         this.indexInMeasure,
         songIterator
-      );*/
-      break;
-    }
+      );
+    } */
     default: {
       // crawl backward through this measure to get the last set beat
       let lastSetBeat = Math.floor(currentTime);
@@ -56,14 +55,14 @@ export function anchorChordToRoot(anchorChord: string, degree: number, octave: n
   const anchorScaleName = chordToScaleName(anchorChord);
   const scalePCs = tonal.Scale.notes(anchorTonic, anchorScaleName);
   const rootPC = scalePCs[degree - 1];
-  return tonal.Note.from({oct: octave}, rootPC);
+  return tonal.Note.from({ oct: octave }, rootPC);
 }
 
 export function chordToScaleName(chord: string): string {
   const chordType = tonal.Chord.tokenize(chord)[1];
 
   // @TODO: make this more robust
-  const names = tonal.Chord.props(chordType).names;
+  const names: string[] = tonal.Chord.props(chordType).names;
   if(names.includes('dim')) return 'diminished';
   if(names.includes('aug')) return 'augmented';
   if(names.includes('Major')) return 'major';

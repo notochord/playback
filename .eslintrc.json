@@ -20,6 +20,7 @@
     "@typescript-eslint/eslint-plugin"
   ],
   "rules": {
+    "eqeqeq": "error",
     "no-cond-assign": "off",
     "no-empty": ["error", { "allowEmptyCatch": true }],
     "@typescript-eslint/ban-ts-ignore": "off",
@@ -28,6 +29,7 @@
     "@typescript-eslint/no-unused-vars": ["warn", { "args": "none" }],
     "@typescript-eslint/no-use-before-define": "off",
     "indent": "off",
-    "@typescript-eslint/indent": ["error", 2]
+    "@typescript-eslint/indent": ["error", 2],
+    "object-curly-spacing": ["warn", "always"]
   }
 }

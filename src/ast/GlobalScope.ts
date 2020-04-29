@@ -1,8 +1,8 @@
-import {NoteSet} from '../MIDI/Note';
-import {NoSuchStyleError, NoSuchTrackError} from './errors';
-import {Scope} from './ASTNodeBase';
-import {MetaStatement, OptionsStatement, ImportStatement} from './ConfigStatements';
-import {TrackStatement, TrackCall} from './Track';
+import { NoteSet } from '../MIDI/Note';
+import { NoSuchStyleError, NoSuchTrackError } from './errors';
+import { Scope } from './ASTNodeBase';
+import { MetaStatement, OptionsStatement, ImportStatement } from './ConfigStatements';
+import { TrackStatement, TrackCall } from './Track';
 import * as values from '../values/values';
 import SongIterator from 'notochord-song/types/songiterator';
 
@@ -59,10 +59,10 @@ export default class GlobalScope extends Scope {
     
     this.tracks.forEach(statement => statement.init(this));
   }
-  public link(ASTs): void {
+  public link(ASTs: Map<string, GlobalScope>): void {
     for(const trackCall of this.trackCalls) {
       // get path name of style
-      const importPath = this.importedStyles.get(trackCall.import);
+      const importPath = this.importedStyles.get(trackCall.import)!;
       
       const ast = ASTs.get(importPath);
       if(!ast) throw new NoSuchStyleError(trackCall.import, this);

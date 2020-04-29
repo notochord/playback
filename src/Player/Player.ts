@@ -14,7 +14,7 @@ export default class Player {
    * @param {AudioContext=} context If you pass it an AudioContext it'll use
    * it. Otherwise it'll make its own.
    */
-  public constructor(context: AudioContext = new AudioContext({latencyHint: "playback"})) {
+  public constructor(context: AudioContext = new AudioContext({ latencyHint: "playback" })) {
     this.style = null;
     this.context = context;
     this.initialized = false;
@@ -37,8 +37,8 @@ export default class Player {
           isSoundfontUrl: () => true,
           nameToUrl: () => instrument
         });
-      } else if(instrument == 'percussion') {
-        sfpromise = Soundfont.instrument(this.context, instrument, {soundfont: 'FluidR3_GM'});
+      } else if(instrument === 'percussion') {
+        sfpromise = Soundfont.instrument(this.context, instrument, { soundfont: 'FluidR3_GM' });
       } else {
         sfpromise = Soundfont.instrument(this.context, instrument);
       }
@@ -59,7 +59,7 @@ export default class Player {
       throw new Error('A style hasn\'t finished loading');
     }
 
-    if(this.context.state == 'suspended') {
+    if(this.context.state === 'suspended') {
       this.context.resume();
     }
 

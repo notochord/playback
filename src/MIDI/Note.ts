@@ -25,7 +25,7 @@ for(const midi in drumJson) {
  * Special pitch value meaning the note will be set later by a DrumBeatGroup
  */
 const AwaitingDrum = Symbol('AwaitingDrum');
-export {AwaitingDrum};
+export { AwaitingDrum };
 
 export class Note {
   public time: number; // The note's time, in beats.

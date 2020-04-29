@@ -1,4 +1,4 @@
-import {Scope, ASTNodeBase} from './ASTNodeBase';
+import { Scope, ASTNodeBase } from './ASTNodeBase';
 import FunctionCall from './FunctionCall';
 import GlobalScope from './GlobalScope';
 
@@ -11,6 +11,7 @@ export class MetaStatement extends Scope {
     this.type = '@meta';
     this.functionCalls = functionCalls;
   }
+  public link(): void {}
   public init(scope: GlobalScope): void {
     super.init(scope);
     
@@ -28,12 +29,13 @@ export class MetaStatement extends Scope {
 export class OptionsStatement extends Scope {
   public functionCalls: FunctionCall[];
 
-  public constructor(functionCalls) {
+  public constructor(functionCalls: FunctionCall[]) {
     super();
     this.name = '@options';
     this.type = '@options';
     this.functionCalls = functionCalls;
   }
+  public link(): void {}
   public init(scope: GlobalScope): void {
     
     // nothing in here /should/ be dynamic so resolve these at compile time
@@ -59,4 +61,7 @@ export class ImportStatement extends ASTNodeBase {
     this.path = path;
     this.identifier = identifier;
   }
+
+  public link(): void {}
+  public execute(): void {}
 }

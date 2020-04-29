@@ -47,5 +47,5 @@
   },
   "peerDependencies": {
     "notochord-song": "git+https://github.com/notochord/notochord-song.git#1.1.0"
-  },
+  }
 }

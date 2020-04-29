@@ -1,7 +1,8 @@
+// @ts-ignore
 import tonal from '../lib/tonal.min.js';
 import { normalizeChordForTonal, getAnchorChord, anchorChordToRoot, chordToScaleName } from './musicUtils';
 import * as values from '../values/values';
-import {FunctionArgumentsError, FunctionScopeError} from './errors';
+import { FunctionArgumentsError, FunctionScopeError } from './errors';
 import FunctionCall from './FunctionCall';
 import SongIterator from 'notochord-song/types/songiterator';
 import { Scope } from './ASTNodeBase';
@@ -32,15 +33,15 @@ type ArgType = values.PlaybackValue['type'] | '*';
  * @param {Scope} scope The scope, for error logging.
  */
 export function assertArgTypes(identifier: string, args: values.PlaybackValue[], types: ArgType[] | '*', scope: Scope): void {
-  if(types == '*') return;
-  if(args.length != types.length) {
+  if(types === '*') return;
+  if(args.length !== types.length) {
     throw new FunctionArgumentsError(`"${identifier}" requires ${types.length} arguments.`, args, scope);
   }
   for(const i in args) {
-    if(types[i] == '*') continue;
+    if(types[i] === '*') continue;
     const arg = args[i];
     if(arg instanceof FunctionCall) {
-      if(arg.returns == '*') {
+      if(arg.returns === '*') {
         continue; // what's the correct functionality here? cry?
       } else {
         if(arg.returns !== types[i]) {
@@ -71,26 +72,26 @@ type GoalScope = 'meta' | 'options' | 'no-config' | 'pattern' | 'no-meta';
  * @param {Scope} scope The calling scope.
  */
 export function assertScope(identifier: string, goalscope: GoalScope = 'no-meta', scope: Scope): void {
-  if(goalscope == 'meta') {
-    if(scope.type != '@meta') {
+  if(goalscope === 'meta') {
+    if(scope.type !== '@meta') {
       throw new FunctionScopeError(`Function "${identifier}" must only be called within a @meta block."`, scope);
     }
-  } else if(goalscope == 'options') {
-    if(scope.type != '@options') {
+  } else if(goalscope === 'options') {
+    if(scope.type !== '@options') {
       throw new FunctionScopeError(`Function "${identifier}" must only be called within an @options block."`, scope);
     }
-  } else if(goalscope == 'no-config') {
+  } else if(goalscope === 'no-config') {
     // ensure that config blocks can be resolved at compile time
-    if(scope.type == '@meta' || scope.type == '@options') {
+    if(scope.type === '@meta' || scope.type === '@options') {
       throw new FunctionScopeError(`Function "${identifier}" must not be called within a @meta or @options block."`, scope);
     }
-  } else if(goalscope == 'pattern') { 
-    if(scope.type != 'PatternExpressionGroup') {
+  } else if(goalscope === 'pattern') { 
+    if(scope.type !== 'PatternExpressionGroup') {
       throw new FunctionScopeError(`Function "${identifier}" must only be called within a @pattern block."`, scope);
     }
     // @TODO: what about @pattern foo private() -- makes no sense but yea
-  } else if(goalscope == 'no-meta') { 
-    if(scope.type == '@meta') {
+  } else if(goalscope === 'no-meta') { 
+    if(scope.type === '@meta') {
       throw new FunctionScopeError(`Function "${identifier}" must not be called within a @meta block."`, scope);
     }
   }
@@ -140,7 +141,7 @@ const define = function(identifier: string, opts: DefineOpts, func: (args: value
  * @param {?string=null} goalscope Throw error unless the calling scope matches.
  * See assertScope above.
  */
-const defineVar = function(identifier, type, goalscope = null): void {
+const defineVar = function(identifier: string, type: ArgType, goalscope: GoalScope = 'no-meta'): void {
   const opts: DefineOpts = {
     types: [type],
     scope: goalscope,
@@ -160,7 +161,7 @@ const defineVar = function(identifier, type, goalscope = null): void {
  * @param {?string=null} goalscope Throw error unless the calling scope matches.
  * See assertScope above.
  */
-const defineBoolean = function(identifier: string, goalscope = null): void {
+const defineBoolean = function(identifier: string, goalscope: GoalScope = 'no-meta'): void {
   const opts: DefineOpts = {
     types: '*',
     scope: goalscope,
@@ -282,7 +283,7 @@ define('progression',
       const actualChord = normalizeChordForTonal(actualMeasure.beats[0].chord);
       const actual = anchorChordToRoot(
         actualChord, 1, 4);
-      if(actual != goal) return new values.PlaybackBooleanValue(false);
+      if(actual !== goal) return new values.PlaybackBooleanValue(false);
     }
     return new values.PlaybackBooleanValue(true);
   });
@@ -333,4 +334,4 @@ define('chance',
     return new values.PlaybackNilValue();
   });
 
-export {definitions};
+export { definitions };

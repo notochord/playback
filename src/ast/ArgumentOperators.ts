@@ -1,15 +1,17 @@
 import { ASTNodeBase, Scope } from './ASTNodeBase';
 import * as values from '../values/values';
 import SongIterator from 'notochord-song/types/songiterator';
+import GlobalScope from './GlobalScope';
+import { TrackStatement } from './Track';
 
 abstract class BooleanOperator extends ASTNodeBase {
-  public args: any[];
+  public args: ASTNodeBase[];
 
-  public constructor(...args) {
+  public constructor(...args: ASTNodeBase[]) {
     super();
     this.args = args;
   }
-  public link(ASTs, parentStyle, parentTrack): void {
+  public link(ASTs: Map<string, GlobalScope>, parentStyle: GlobalScope, parentTrack: TrackStatement): void {
     this.args.forEach(arg => {
       if(arg.link) arg.link(ASTs, parentStyle, parentTrack);
     });

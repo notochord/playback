@@ -1,7 +1,7 @@
 import { PlaybackValueBase } from './values';
 
 type Anchor = 'KEY' | 'NEXT' | 'STEP' | 'ARPEGGIATE';
-const anchorReverseMap = {'KEY': 'k', 'NEXT': 'n', 'STEP': 's', 'ARPEGGIATE': 'a'};
+const anchorReverseMap = { 'KEY': 'k', 'NEXT': 'n', 'STEP': 's', 'ARPEGGIATE': 'a' };
 
 export class PlaybackAnchorValue implements PlaybackValueBase {
   public type: 'anchor' = 'anchor';
@@ -37,7 +37,7 @@ export class PlaybackMelodicBeatValue extends PlaybackBeatValue {
     pitch: null as PitchPart,
     octave: null as OctavePart,
   }
-  public constructor(time: TimePart = {time: 'auto'}, pitch: PitchPart, octave: OctavePart = 'inherit') {
+  public constructor(time: TimePart = { time: 'auto' }, pitch: PitchPart, octave: OctavePart = 'inherit') {
     super();
     this.value.time = time;
     this.value.pitch = pitch;

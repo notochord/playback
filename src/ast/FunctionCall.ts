@@ -1,8 +1,10 @@
 import * as FunctionData from './FunctionData';
-import {FunctionNameError} from './errors';
+import { FunctionNameError } from './errors';
 import SongIterator from 'notochord-song/types/songiterator';
 import * as values from '../values/values';
-import {ASTNodeBase, Scope} from './ASTNodeBase';
+import { ASTNodeBase, Scope } from './ASTNodeBase';
+import GlobalScope from './GlobalScope';
+import { TrackStatement } from './Track';
 
 /**
  * If the value is a FunctionCall, call it and return the returned value.
@@ -23,7 +25,7 @@ export default class FunctionCall extends ASTNodeBase {
   public constructor(identifier: string, args: values.PlaybackValue[]) {
     super();
     this.identifier = identifier;
-    this.definition = FunctionData.definitions.get(identifier);
+    this.definition = FunctionData.definitions.get(identifier)!;
     this.args = args;
   }
   public init(scope: Scope): void {
@@ -38,9 +40,9 @@ export default class FunctionCall extends ASTNodeBase {
       if(arg.init) arg.init(scope);
     });
     
-    FunctionData.assertArgTypes(this.identifier, this.args, this.definition.types, this.scope);
+    FunctionData.assertArgTypes(this.identifier, this.args, this.definition.types!, this.scope);
   }
-  public link(ASTs, parentStyle, parentTrack): void {
+  public link(ASTs: Map<string, GlobalScope>, parentStyle: GlobalScope, parentTrack: TrackStatement): void {
     this.args.forEach(arg => {
       if(arg.link) arg.link(ASTs, parentStyle, parentTrack);
     });
@@ -56,7 +58,7 @@ export default class FunctionCall extends ASTNodeBase {
     });
     const returnValue = this.definition.execute(
       evaluatedArgs,
-      songIterator,
+      songIterator!, // functions will know if they don't need songIterator...
       this.scope);
     if(returnValue === undefined) {
       throw new Error(`Function "${this.identifier}" can return undefined`);

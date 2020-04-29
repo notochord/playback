@@ -3,7 +3,8 @@
     "target": "es6",
     "module": "es6",
     "removeComments": false,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
+    "strictNullChecks": true
   },
   "files": [
     "src/playback.ts",

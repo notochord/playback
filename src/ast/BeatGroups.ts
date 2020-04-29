@@ -1,11 +1,12 @@
 import {
   MelodicBeatInDrumBeatGroupError
 } from './errors';
-import {AwaitingDrum, NoteSet} from '../MIDI/Note';
-import {MelodicBeatLiteral} from './BeatLiterals';
-import {Scope, ASTNodeBase} from './ASTNodeBase';
+import { AwaitingDrum, NoteSet } from '../MIDI/Note';
+import { MelodicBeatLiteral, DrumBeatLiteral } from './BeatLiterals';
+import { Scope, ASTNodeBase } from './ASTNodeBase';
 import SongIterator from 'notochord-song/types/songiterator';
 import { normalizeChordForTonal } from './musicUtils';
+import * as values from '../values/values';
 
 export class BeatGroupLiteral extends ASTNodeBase {
   public measures: Measure[];
@@ -55,15 +56,15 @@ export class BeatGroupLiteral extends ASTNodeBase {
 }
 
 export class Measure extends ASTNodeBase {
-  public beats: MelodicBeatLiteral[] | DrumBeatGroupLiteral[];
+  public beats: MelodicBeatLiteral[] | DrumBeatLiteral[];
   public beatsPerMeasure: number;
   public parentBeatGroup: BeatGroupLiteral;
   public indexInBeatGroup: number;
 
-  public constructor(beats: MelodicBeatLiteral[] | DrumBeatGroupLiteral[]) {
+  public constructor(beats: MelodicBeatLiteral[] | DrumBeatLiteral[]) {
     super();
     this.beats = beats;
-    this.beatsPerMeasure = null;
+    this.beatsPerMeasure = 0;
   }
   public calculateDurationAfter(beatIndex: number): number {
     const currentBeat = this.beats[beatIndex];
@@ -85,13 +86,14 @@ export class Measure extends ASTNodeBase {
       songIterator
     );
   }
+  public link(): void {}
   public init(scope: Scope, parentBeatGroup: BeatGroupLiteral, indexInBeatGroup: number): void {
-    this.scope = scope;
+    super.init(scope);
     this.parentBeatGroup = parentBeatGroup;
     this.indexInBeatGroup = indexInBeatGroup;
-    this.beatsPerMeasure = this.scope.vars.get('time-signature')[0];
+    this.beatsPerMeasure = (this.scope.vars.get('time-signature') as values.PlaybackTimeSignatureValue).value[0];
     // @TODO does this need more math?
-    this.beats.forEach((beat, i) => {
+    this.beats.forEach((beat: MelodicBeatLiteral | DrumBeatLiteral, i: number) => {
       beat.init(scope, this, i);
     });
   }
@@ -115,7 +117,7 @@ export class DrumBeatGroupLiteral extends ASTNodeBase {
   public beatGroup: BeatGroupLiteral;
   public drum: string;
 
-  public constructor(drum, beatGroup) {
+  public constructor(drum: string, beatGroup: BeatGroupLiteral) {
     super();
     this.drum = drum;
     this.beatGroup = beatGroup; // for now there's no diff in functionality...
@@ -128,6 +130,7 @@ export class DrumBeatGroupLiteral extends ASTNodeBase {
   public link(): void {return;} // @TODO: I think patterncalls are allowed here?
   public execute(songIterator: SongIterator): NoteSet | null {
     const notes = this.beatGroup.execute(songIterator);
+    if (notes === null) return null;
     for(const note of notes) {
       if(note.pitch === AwaitingDrum) {
         note.pitch = this.drum; // @TODO: convert to number?

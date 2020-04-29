@@ -1,8 +1,9 @@
-import {load} from '../loader/loader';
-import {parse} from '../parser/parser';
-import {NoteSet} from '../MIDI/Note';
+import { load } from '../loader/loader';
+import { parse } from '../parser/parser';
+import { NoteSet } from '../MIDI/Note';
 import GlobalScope from '../ast/GlobalScope';
 import Song from 'notochord-song/types/notochord-song';
+import * as values from '../values/values'
 
 export default class PlaybackStyle {
   private mainPath: string;
@@ -21,7 +22,7 @@ export default class PlaybackStyle {
    */
   private async loadDependencies(): Promise<void> {
     const pendingDependencies = [this.mainPath];
-    let dependencyPath: string;
+    let dependencyPath: string | undefined;
     // @TODO: verify that dependencies have compatible time signature to main
     while(dependencyPath = pendingDependencies.pop()) {
       let rawfile: string;
@@ -39,7 +40,7 @@ export default class PlaybackStyle {
         }
       }
     }
-    this.main = this.ASTs.get(this.mainPath);
+    this.main = this.ASTs.get(this.mainPath)!;
   }
   private link(): void {
     this.main.link(this.ASTs);
@@ -66,11 +67,11 @@ export default class PlaybackStyle {
     const songIterator = song[Symbol.iterator]();
     const instruments = this.getInstruments();
     const notes = new Map<string, NoteSet>();
-    const beatsPerMeasure = this.main.vars.get('time-signature')[0];
+    const beatsPerMeasure = (this.main.vars.get('time-signature') as values.PlaybackTimeSignatureValue).value[0];
     let totalPastBeats = 0;
     for(const instrument of instruments) notes.set(instrument, new NoteSet());
     let nextValue;
-    while(nextValue = songIterator.next(), nextValue.done == false) {
+    while(nextValue = songIterator.next(), nextValue.done === false) {
       const thisMeasureTracks = this.main.execute(songIterator);
       for(const [instrument, thisMeasureNotes] of thisMeasureTracks) {
         for(const note of thisMeasureNotes) {
@@ -88,7 +89,7 @@ export default class PlaybackStyle {
             note.time = intPart + floatPart;
           }
         }
-        notes.get(instrument).push(...thisMeasureNotes);
+        notes.get(instrument)!.push(...thisMeasureNotes);
       }
       totalPastBeats += beatsPerMeasure;
     }
