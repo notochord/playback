@@ -1,4 +1,3 @@
-import {Nil, cast_bool} from './type_utils';
 import {NoteSet} from '../MIDI/Note';
 import {
   TooManyBeatsError,
@@ -8,6 +7,7 @@ import {
 } from './errors.js';
 import Scope from './Scope.js';
 import FunctionCall from './FunctionCall.js';
+import * as values from '../values/values';
 import SongIterator from 'notochord-song/types/songiterator';
 
 export class PatternExpressionGroup extends Scope {
@@ -21,8 +21,8 @@ export class PatternExpressionGroup extends Scope {
     this.type = 'PatternExpressionGroup';
     this.name = '@pattern(<anonymous>)';
     
-    this.defaultVars.set('private', false);
-    this.defaultVars.set('chance', 1);
+    this.defaultVars.set('private', new values.PlaybackBooleanValue(false));
+    this.defaultVars.set('chance', new values.PlaybackNumberValue(1));
     
     this.expressions = expressions;
     this.functionCalls = [];
@@ -52,27 +52,27 @@ export class PatternExpressionGroup extends Scope {
       expression.link(ASTs, parentStyle, parentTrack);
     });
   }
-  execute(songIterator, callerIsTrack = false) {
+  execute(songIterator: SongIterator, callerIsTrack = false): NoteSet | null {
     this.inherit();
-    let beats: NoteSet | symbol = Nil;
+    let beats: NoteSet = null;
     for(let function_call of this.functionCalls) {
       let return_value = function_call.execute(songIterator);
       if(return_value instanceof NoteSet) {
-        if(beats !== Nil) {
+        if(beats) {
           throw new TooManyBeatsError(this);
         }
         beats = return_value;
       }
     }
-    if(callerIsTrack && this.vars.get('private') === true) {
-      return Nil; // if it's private we can give up now
+    if(callerIsTrack && this.vars.get('private').value === true) {
+      return null; // if it's private we can give up now
     }
     for(let expression of this.nonFunctionCallExpressions) {
       if(expression.execute) {
         expression = expression.execute(songIterator);
       }
       if(expression instanceof NoteSet) {
-        if(beats !== Nil) {
+        if(beats) {
           throw new TooManyBeatsError(this);
         }
         beats = expression;
@@ -97,7 +97,7 @@ export class PatternStatement extends PatternExpressionGroup {
     this.condition = (opts.condition !== undefined) ? opts.condition : null;
   }
   getChance() {
-    return this.vars.get('chance');
+    return this.vars.get('chance').value as number;
   }
   link(ASTs, parentStyle, parentTrack) {
     super.link(ASTs, parentStyle, parentTrack);
@@ -117,7 +117,7 @@ export class PatternStatement extends PatternExpressionGroup {
       } else {
         condition_value = this.condition;
       }
-      if(cast_bool(condition_value) === false) return Nil;
+      if((condition_value as values.PlaybackValue).toBoolean() === false) return null;
     }
     return super.execute(songIterator, callerIsTrack);
   }
@@ -142,7 +142,7 @@ export class PatternCall {
       this.pattern;
   }
   getChance() {
-    return this.patternStatement.getChance()();
+    return this.patternStatement.getChance();
   }
   init(scope) {
     this.scope = scope;
@@ -212,7 +212,7 @@ export class JoinedPatternExpression {
     if(noteSets.length) {
       return (new NoteSet()).concat(...noteSets);
     } else {
-      return Nil;
+      return null;
     }
   }
 }

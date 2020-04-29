@@ -1,15 +1,6 @@
-import {Nil, cast_bool} from './type_utils';
 import Scope from './Scope';
+import * as values from '../values/values';
 import SongIterator from 'notochord-song/types/songiterator';
-
-type Anchor = 'KEY' | 'NEXT' | 'STEP' | 'ARPEGGIATE';
-export class AnchorArgument {
-  public anchor: Anchor;
-
-  constructor(anchor: Anchor) {
-    this.anchor = anchor;
-  }
-}
 
 class BooleanOperator {
   public args: any[];
@@ -29,7 +20,7 @@ class BooleanOperator {
       if(arg.init) arg.init(scope);
     });
   }
-  resolve_args(songIterator: SongIterator) {
+  resolve_args(songIterator: SongIterator): values.PlaybackValue[] {
     return this.args.map(arg => {
       if(arg.execute) {
         return arg.execute(songIterator);
@@ -46,7 +37,7 @@ export class BooleanNot extends BooleanOperator {
   }
   execute(songIterator: SongIterator) {
     let args = this.resolve_args(songIterator);
-    return !cast_bool(args[0]);
+    return new values.PlaybackBooleanValue(!args[0].toBoolean());
   }
 }
 export class BooleanAnd extends BooleanOperator {
@@ -57,7 +48,7 @@ export class BooleanAnd extends BooleanOperator {
     // sorry no short-circuiting because this code is prettier
     // @TODO: add short-circuiting if this actually makes it too slow
     let args = this.resolve_args(songIterator);
-    return cast_bool(args[0]) && cast_bool(args[1]);
+    return new values.PlaybackBooleanValue(args[0].toBoolean() && args[1].toBoolean());
   }
 }
 export class BooleanOr extends BooleanOperator {
@@ -66,6 +57,6 @@ export class BooleanOr extends BooleanOperator {
   }
   execute(songIterator: SongIterator) {
     let args = this.resolve_args(songIterator);
-    return cast_bool(args[0]) || cast_bool(args[1]);
+    return new values.PlaybackBooleanValue(args[0].toBoolean() || args[1].toBoolean());
   }
 }

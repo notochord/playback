@@ -1,4 +1,3 @@
-import {Nil} from './type_utils';
 import {
   DrumBeatInMelodicBeatGroupError
 } from './errors.js';
@@ -7,6 +6,7 @@ import Scope from './Scope';
 import FunctionCall from './FunctionCall';
 import {PatternStatement, PatternCall} from './Pattern';
 import SongIterator from 'notochord-song/types/songiterator';
+import * as values from '../values/values';
 import {NoteSet} from '../MIDI/Note';
 
 export class TrackStatement extends Scope {
@@ -23,9 +23,9 @@ export class TrackStatement extends Scope {
     this.name = opts.identifier;
     this.type = '@track';
 
-    this.defaultVars.set('octave', 4);
-    this.defaultVars.set('volume', 1);
-    this.defaultVars.set('private', false);
+    this.defaultVars.set('octave', new values.PlaybackNumberValue(4));
+    this.defaultVars.set('volume', new values.PlaybackNumberValue(1));
+    this.defaultVars.set('private', new values.PlaybackBooleanValue(false));
     
     this.instrument = opts.instrument;
     this.identifier = opts.identifier;
@@ -77,7 +77,7 @@ export class TrackStatement extends Scope {
       let result = pattern.execute(songIterator, true);
       console.log('  - Result:', result);
       // @TODO: handle multi-measure patterns (via locks?)
-      if(result !== Nil) {
+      if(result) {
         for(let note of (result as NoteSet)) {
           if (note.pitch === AwaitingDrum) {
             throw new DrumBeatInMelodicBeatGroupError(pattern);
@@ -101,8 +101,8 @@ export class TrackStatement extends Scope {
         return option.noteSet;
       }
     }
-    console.log('  - Final result:', Nil);
-    return Nil;
+    console.log('  - Final result:', null);
+    return null;
   }
 }
 export class TrackCall {

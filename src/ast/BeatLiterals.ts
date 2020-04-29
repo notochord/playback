@@ -1,83 +1,38 @@
-//import {Nil} from './type_utils.js';
 import tonal from '../lib/tonal.min.js';
 import {AwaitingDrum, Note, NoteSet} from '../MIDI/Note';
 import Scope from './Scope';
 import { Measure } from './BeatGroups';
+import { getAnchorChord, anchorChordToRoot } from './music_utils';
+import { PlaybackMelodicBeatValue, PlaybackDrumBeatValue } from '../values/values';
 import SongIterator from 'notochord-song/types/songiterator';
 
-type TimePart = {
-  time: 'auto' | number;
-  flag?: 'STACCATO' | 'ACCENTED'
-};
-type PitchPart = {
-  degree: number;
-  anchor?: 'KEY' | 'NEXT' | 'STEP' | 'ARPEGGIATE';
-  roll?: 'ROLL_UP' | 'ROLL_DOWN';
-  chord: boolean; // actually undefined | true but ts doesn't need to know that
-};
-
 export class MelodicBeatLiteral {
-  public time: TimePart;
-  public pitch: PitchPart;
-  public octave: number | 'inherit';
+  public value: PlaybackMelodicBeatValue;
   public scope: Scope;
   public parentMeasure: Measure;
   public indexInMeasure: number;
   public cachedAnchor: any;
 
   constructor(opts) {
-    this.time = opts.time || {time: 'auto'};
-    this.pitch = opts.pitch;
-    this.octave = opts.octave || 'inherit';
+    this.value = new PlaybackMelodicBeatValue(opts.time, opts.pitch, opts.octave);
     this.scope = null;
     this.parentMeasure = null;
     this.indexInMeasure = null;
     this.cachedAnchor = null; // used for STEP/ARPEGGIATE interpolation
   }
-  init(scope, parentMeasure, indexInMeasure) {
+  init(scope: Scope, parentMeasure: Measure, indexInMeasure: number) {
     this.scope = scope;
     this.parentMeasure = parentMeasure;
     this.indexInMeasure = indexInMeasure;
   }
   getTime() {
-    if(this.time.time === 'auto') {
+    if(this.value.time.time === 'auto') {
       return this.indexInMeasure + 1;
     } else {
-      return this.time.time;
+      return this.value.time.time;
     }
   }
-  /**
-   * Normalize a chord into a form tonal can handle
-   * @param {string} [chord='']
-   * @return {string}
-   */
-  static normalizeChord(chord = '') {
-    return chord
-      .replace(/-/g, '_') // tonal uses _ over - for minor7
-      .replace(/minor|min/g, 'm'); // tonal is surprisingly bad at identifying minor chords??
-  }
-  static chordToScaleName(chord) {
-    let chordType = tonal.Chord.tokenize(chord)[1];
-
-    // @TODO: make this more robust
-    let names = tonal.Chord.props(chordType).names;
-    if(names.includes('dim')) return 'diminished';
-    if(names.includes('aug')) return 'augmented';
-    if(names.includes('Major')) return 'major';
-    if(names.includes('minor')) return 'minor';
-    if(names.includes('minor7')) return 'dorian';
-    if(names.includes('Dominant')) return 'mixolydian';
-    // if none of the above match, do our best to find the closest fit
-    let closestScale = 'major'
-    names.forEach(name => {
-      if(name.startsWith('dim')) closestScale = 'diminished';
-      if(name.startsWith('aug')) closestScale = 'augmented';
-      if(name.startsWith('M')) closestScale = 'major';
-      if(name.startsWith('m')) closestScale = 'minor';
-    });
-    return closestScale;
-  }
-  handleInversion(songIterator, pitches) {
+  handleInversion(songIterator: SongIterator, pitches: string[]) {
     let tonicPC = songIterator.song.getTransposedKey();
     let tonicNote = tonal.Note.from({oct: this.getOctave()}, tonicPC);
     let tonic = tonal.Note.midi(tonicNote);
@@ -89,67 +44,21 @@ export class MelodicBeatLiteral {
     }
     return outPitches;
   }
-  static getAnchorChord(anchor, songIterator: SongIterator, currentTime) {
-    let anchorChord;
-    switch(anchor) {
-      case 'KEY': {
-        anchorChord = songIterator.song.getTransposedKey();
-      }
-      case 'NEXT': {
-        let nextMeasure = songIterator.getRelative(1);
-        if(nextMeasure) {
-          anchorChord = nextMeasure.beats[0].chord;
-        } else {
-          anchorChord = songIterator.song.getTransposedKey();
-        }
-      }
-      case 'STEP':
-      case 'ARPEGGIATE': {
-        /*
-        let prev = songIterator.getRelative(0)[0]; //???
-        if(!this.parentMeasure) console.log('tttttttt', this);
-        let next = this.parentMeasure.getNextStaticBeatRoot(
-          this.indexInMeasure,
-          songIterator
-        );*/
-
-      }
-      default: {
-        // crawl backward through this measure to get the last set beat
-        let lastSetBeat = Math.floor(currentTime);
-        let iteratorMeasure = songIterator.getRelative(0);
-        if(!iteratorMeasure) break;
-        do {
-          const beat = iteratorMeasure.beats[lastSetBeat]
-          anchorChord = beat && beat.chord;
-          lastSetBeat--;
-        } while(!anchorChord);
-      }
-    }
-    return this.normalizeChord(anchorChord);
-  }
-  static anchorChordToRoot(anchorChord, degree, octave) {
-    let anchorTonic = tonal.Chord.tokenize(anchorChord)[0];
-    let anchorScaleName = this.chordToScaleName(anchorChord);
-    let scalePCs = tonal.Scale.notes(anchorTonic, anchorScaleName);
-    let rootPC = scalePCs[degree - 1];
-    return tonal.Note.from({oct: octave}, rootPC);
-  }
-  getAnchorData(songIterator) {
-    let anchorChord = MelodicBeatLiteral.getAnchorChord(
-      this.pitch.anchor, songIterator, this.getTime()
+  getAnchorData(songIterator: SongIterator) {
+    let anchorChord = getAnchorChord(
+      this.value.pitch.anchor, songIterator, this.getTime()
     );
 
-    let root = MelodicBeatLiteral.anchorChordToRoot(
-      anchorChord, this.pitch.degree, this.getOctave()
+    let root = anchorChordToRoot(
+      anchorChord, this.value.pitch.degree, this.getOctave()
     );
     return [anchorChord, root];
   }
   getPitches(songIterator: SongIterator) {
     let [anchorChord, root] = this.getAnchorData(songIterator);
 
-    let pitches;
-    if(this.pitch.chord) {
+    let pitches: string[];
+    if(this.value.pitch.chord) {
       // this feels extremely incorrect
       // why would anyone need it to work this way
       let anchorChordType = tonal.Chord.tokenize(anchorChord)[1];
@@ -169,30 +78,30 @@ export class MelodicBeatLiteral {
    * @returns {boolean}
    */
   isDynamic() {
-    return ['STEP', 'ARPEGGIATE'].includes(this.pitch.anchor);
+    return ['STEP', 'ARPEGGIATE'].includes(this.value.pitch.anchor);
   }
   getOctave() {
-    if(this.octave === 'inherit') {
-      return this.scope.vars.get('octave');
+    if(this.value.octave === 'inherit') {
+      return this.scope.vars.get('octave').value as number;
     } else {
-      return this.octave;
+      return this.value.octave;
     }
   }
   getDuration() {
     let duration;
     duration = this.parentMeasure.calculateDurationAfter(this.indexInMeasure);
-    if(this.time.flag === 'STACCATO') {
+    if(this.value.time.flag === 'STACCATO') {
       return Math.min(0.25, duration);
     } else {
       return duration;
     }
   }
   getVolume() {
-    let volume = this.scope.vars.get('volume');
-    if(this.time.flag === 'ACCENTED') volume = Math.min(1, volume += .1);
+    let volume = this.scope.vars.get('volume').value as number;
+    if(this.value.time.flag === 'ACCENTED') volume = Math.min(1, volume += .1);
     return volume;
   }
-  execute(songIterator) {
+  execute(songIterator: SongIterator) {
     let notes = new NoteSet();
     let time = this.getTime(); // @TODO: this varies with rolling
     let pitches = this.getPitches(songIterator);
@@ -213,26 +122,24 @@ export class MelodicBeatLiteral {
 }
 
 export class DrumBeatLiteral {
-  public time: number;
-  public accented: boolean;
+  public value: PlaybackDrumBeatValue;
   public scope: Scope;
   public parentMeasure: Measure;
   public indexInMeasure: number;
 
   constructor(opts) {
-    this.time = opts.time;
-    this.accented = opts.accented || false;
+    this.value = new PlaybackDrumBeatValue(opts.time, opts.accented);
     this.scope = null;
     this.parentMeasure = null;
     this.indexInMeasure = null;
   }
-  init(scope, parentMeasure, indexInMeasure) {
+  init(scope: Scope, parentMeasure: Measure, indexInMeasure: number) {
     this.scope = scope;
     this.parentMeasure = parentMeasure;
     this.indexInMeasure = indexInMeasure;
   }
   getTime() {
-    return this.time;
+    return this.value.time;
   }
   getDuration() {
     let duration;
@@ -240,8 +147,8 @@ export class DrumBeatLiteral {
     return duration;
   }
   getVolume() {
-    let volume = this.scope.vars.get('volume');
-    if(this.accented) volume = Math.min(1, volume += .1);
+    let volume = this.scope.vars.get('volume').value as number;
+    if(this.value.accented) volume = Math.min(1, volume += .1);
     return volume;
   }
   execute(songIterator) {

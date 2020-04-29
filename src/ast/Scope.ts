@@ -1,10 +1,12 @@
+import { PlaybackValue } from '../values/values';
+
 /*
  * In Playback styles, basically any pair of curly brackets defines a scope
  * which inherits settings from its parent scope but can overwrite them.
  */
 export default class Scope {
-  public defaultVars: Map<string, any>;
-  public vars: Map<string, any>;
+  public defaultVars: Map<string, PlaybackValue>;
+  public vars: Map<string, PlaybackValue>;
   public name: string;
   public type: string;
   public scope: Scope;

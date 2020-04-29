@@ -1,14 +1,8 @@
 import * as function_data from './function_data';
 import {FunctionNameError} from './errors';
 import SongIterator from 'notochord-song/types/songiterator';
+import * as values from '../values/values';
 import Scope from './Scope';
-
-type FunctionDefinition = {
-  types: (Function|string)[] | '*';
-  scope: 'meta' | 'options' | 'no-config' | 'pattern' | 'no-meta';
-  returns: string | Function | symbol;
-  execute: (args: any[], songIterator: SongIterator, scope: Scope) => any;
-};
 
 /**
  * If the value is a FunctionCall, call it and return the returned value.
@@ -17,7 +11,7 @@ type FunctionDefinition = {
  */ // @TODO: if this is needed elsewhere, put it somewhere useful.
 export default class FunctionCall {
   public identifier: string;
-  public definition: FunctionDefinition;
+  public definition: function_data.IFunctionDefinition;
   public args: any[];
   public scope: Scope;
   public returns: string | Function | symbol;
@@ -27,7 +21,7 @@ export default class FunctionCall {
    * @param {string} identifier The name of the function. Ideally it should
    * match the name of one of the functions in function_data.js
    */
-  constructor(identifier, args) {
+  constructor(identifier: string, args: values.PlaybackValue[]) {
     this.identifier = identifier;
     this.definition = function_data.definitions.get(identifier);
     this.args = args;

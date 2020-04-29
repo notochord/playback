@@ -995,16 +995,6 @@ var lexer = moo.states({
     }
 });
 
-let Nil = Symbol('Nil');
-let cast_bool = function (arg) {
-    if (arg === Nil || arg === false) {
-        return false;
-    }
-    else {
-        return true;
-    }
-};
-
 // does this have to be an Error? idc
 class PlaybackError extends Error {
     constructor(message, scope) {
@@ -1044,8 +1034,8 @@ class FunctionScopeError extends PlaybackError {
     }
 }
 class FunctionArgumentsError extends PlaybackError {
-    constructor(message, scope) {
-        super(message, scope);
+    constructor(message, args, scope) {
+        super(`${message} (got ${args.map(a => a.toOutputString()).join(', ')})`, scope);
     }
 }
 /* Pattern-related errors */
@@ -1267,230 +1257,184 @@ class NoteSet extends Array {
 let tonal$1 = {};
 (function(n){function t(n){"string"!=typeof n&&(n="");var t=T.exec(n);return t?[t[1].toUpperCase(),t[2].replace(/x/g,"##"),t[3],t[4]]:null}function r(n,t){return n=Math.round(n),(!0===t?G:I)[n%12]+(Math.floor(n/12)-1)}function e(n,t){for(var r=[];t--;r[t]=t+n);return r}function m(n,t){for(var r=[];t--;r[t]=n-t);return r}function i(n,t){return null===n||null===t?[]:n<t?e(n,t-n+1):m(n,n-t+1)}function u(n,t){var r=t.length,e=(n%r+r)%r;return t.slice(e,r).concat(t.slice(0,e))}function o(n){return Mn(n.map(R)).sort(function(n,t){return an(n)>an(t)})}function P(n){return o(n).filter(function(n,t,r){return 0===t||n!==r[t-1]})}function M(n){return "string"!=typeof n?An:_n[n]||(_n[n]=xn(n))}function a(n){var t=(n+1)%7;return t<0?7+t:t}function l(n,t){if(1===arguments.length)return function(t){return l(n,t)};var r=Kn(n),e=Qn(t);if(null===r||null===e)return null;var m=1===r.length?[r[0]+e[0]]:[r[0]+e[0],r[1]+e[1]];return mn(Un(m[0],m[1]))}function c(n,t){if(1===arguments.length)return function(t){return c(n,t)};var r=Kn(n);return null===r?null:mn(Un(r[0]+t))}function s(n,t){if(1===arguments.length)return function(t){return s(n,t)};var r=Kn(n),e=Kn(t);return null===e||null===r?null:e[0]-r[0]}function f(n,t){return 1===arguments.length?function(t){return l(t,n)}:l(t,n)}function d(n,t,r){var e=Qn(n),m=Qn(t);if(null===e||null===m)return null;var i=[e[0]+r*m[0],e[1]+r*m[1]];return Dn(Wn(i))}function p(n,t){return 1===arguments.length?function(t){return p(n,t)}:d(n,t,1)}function b(n,t){return 1===arguments.length?function(t){return p(n,t)}:d(n,t,-1)}function h(n,t){if(1===arguments.length)return function(t){return h(n,t)};var r=Kn(n),e=Kn(t);if(null===r||null===e||r.length!==e.length)return null;var m=1===r.length?[e[0]-r[0],-Math.floor(7*(e[0]-r[0])/12)]:[e[0]-r[0],e[1]-r[1]];return Dn(Wn(m))}function v(n,t){if(1===arguments.length)return function(t){return v(n,t)};var r=L(n),e=L(t);return null!==r.midi&&null!==e.midi?e.midi-r.midi:null!==r.chroma&&null!==e.chroma?(e.chroma-r.chroma+12)%12:null}function A(n){if(y(n))return n;if(!Array.isArray(n))return "";var t=[0,0,0,0,0,0,0,0,0,0,0,0];return n.map(nt).forEach(function(n){t[n]=1;}),t.join("")}function g(n){return et=et||i(2048,4095).map(function(n){return n.toString(2)}),"number"==typeof n?et.filter(function(t){return rt(t)===n}):et.slice()}function j(n,t){t=!1!==t;var r=A(n).split("");return Mn(r.map(function(n,e){var m=u(e,r);return t&&"0"===m[0]?null:m.join("")}))}function y(n){return mt.test(n)}function O(n){return y(n)?Mn(n.split("").map(function(n,t){return "1"===n?it[t]:null})):[]}function x(n,t){return 1===arguments.length?function(t){return x(n,t)}:A(n)===A(t)}function _(n,t){return arguments.length>1?_(n)(t):(n=tt(n),function(t){return (t=tt(t))!==n&&(t&n)===t})}function z(n,t){return arguments.length>1?z(n)(t):(n=tt(n),function(t){return (t=tt(t))!==n&&(t|n)===t})}function q(n,t){return arguments.length>1?q(n)(t):(n=A(n),function(t){return "1"===n[nt(t)]})}function k(n,t){return 1===arguments.length?function(t){return k(n,t)}:t.filter(q(n))}function S(n,t){var r=D(n);return t=t||r[1],pt(t).map(l(r[0]))}function w(n){var t=D(n);return void 0!==Mt(t[1])}function D(n){if("string"!=typeof n)return ["",""];var t=n.indexOf(" "),r=R(n.substring(0,t))||R(n)||"",e=""!==r?n.substring(r.length+1):n;return [r,e.length?e:""]}function E(n,t){var r=C(n);return t=t||r[1],xt(t).intervals.map(l(r[0]))}function C(n){var r=t(n);return ""===r[0]?["",n]:"A"===r[0]&&"ug"===r[3]?["","aug"]:St.test(r[2])?[r[0]+r[1],r[2]+r[3]]:[r[0]+r[1]+r[2],r[3]]}var $="C C# Db D D# Eb E F F# Gb G G# Ab A A# Bb B".split(" "),F=function(n){return "string"!=typeof n?$.slice():$.filter(function(t){var r=t[1]||" ";return -1!==n.indexOf(r)})},G=F(" #"),I=F(" b"),T=/^([a-gA-G]?)(#{1,}|b{1,}|x{1,}|)(-?\d*)\s*(.*)$/,B=Object.freeze({pc:null,name:null,step:null,alt:null,oct:null,octStr:null,chroma:null,midi:null,freq:null}),N=[0,2,4,5,7,9,11],L=function(n,t){return void 0===t&&(t={}),function(r){return t[r]||(t[r]=n(r))}}(function(n){var r=t(n);if(""===r[0]||""!==r[3])return B;var e=r[0],m=r[1],i=r[2],u={letter:e,acc:m,octStr:i};return u.pc=u.letter+u.acc,u.name=u.pc+i,u.step=(u.letter.charCodeAt(0)+3)%7,u.alt="b"===u.acc[0]?-u.acc.length:u.acc.length,u.oct=i.length?+i:null,u.chroma=(N[u.step]+u.alt+120)%12,u.midi=null!==u.oct?N[u.step]+u.alt+12*(u.oct+1):null,u.freq=J(u.midi),Object.freeze(u)}),R=function(n){return L(n).name},U=function(n){return L(n).pc},H=function(n){return L(n).midi||+n||null},J=function(n,t){return void 0===t&&(t=440),"number"==typeof n?Math.pow(2,(n-69)/12)*t:null},K=function(n){return L(n).freq||J(n)},Q=Math.log(2),V=Math.log(440),W=function(n){var t=12*(Math.log(n)-V)/Q+69;return Math.round(100*t)/100},X=function(n){return L(n).chroma},Y=function(n){return L(n).oct},Z=function(n){return "CDEFGAB"[n]},nn=function(n,t){return Array(t+1).join(n)},tn=function(n,t){return "number"!=typeof n?"":t(n)},rn=function(n){return tn(n,function(n){return n<0?nn("b",-n):nn("#",n)})},en=function(n,t){void 0===n&&(n={}),void 0===t&&(t=null);var r=t?Object.assign({},L(t),n):n,e=r.step,m=r.alt,i=r.oct,u=Z(e);if(!u)return null;var o=u+rn(m);return i||0===i?o+i:o},mn=en,un=function(n,t){var e=L(n),m=e.alt,i=e.chroma,u=e.midi;if(null===i)return null;var o=!1===t?m<0:m>0;return null===u?U(r(i,o)):r(u,o)},on=function(n){return un(n,!1)},Pn=Object.freeze({names:F,tokenize:t,props:L,name:R,pc:U,midi:H,midiToFreq:J,freq:K,freqToMidi:W,chroma:X,oct:Y,stepToLetter:Z,altToAcc:rn,from:en,build:mn,fromMidi:r,simplify:un,enharmonic:on}),Mn=function(n){return n.filter(function(n){return 0===n||n})},an=function(n){var t=H(n);return null!==t?t:H(n+"-100")},ln=function(n,t){void 0===t&&(t=Math.random);for(var r,e,m=n.length;m;)r=t()*m--|0,e=n[m],n[m]=n[r],n[r]=e;return n},cn=function(n){return 0===n.length?[[]]:cn(n.slice(1)).reduce(function(t,r){return t.concat(n.map(function(t,e){var m=r.slice();return m.splice(e,0,n[0]),m}))},[])},sn=Object.freeze({range:i,rotate:u,compact:Mn,sort:o,unique:P,shuffle:ln,permutations:cn}),fn=new RegExp("^([-+]?\\d+)(d{1,4}|m|M|P|A{1,4})|(AA|A|P|M|m|d|dd)([-+]?\\d+)$"),dn=[0,2,4,5,7,9,11],pn=[0,1,2,3,4,5,6,5,4,3,2,1],bn="1P 2m 2M 3m 3M 4P 5P 6m 6M 7m 7M 8P".split(" "),hn=function(n){return "string"!=typeof n?bn.slice():bn.filter(function(t){return -1!==n.indexOf(t[1])})},vn=function(n){var t=fn.exec(n);return null===t?null:t[1]?[t[1],t[2]]:[t[4],t[3]]},An=Object.freeze({name:null,num:null,q:null,step:null,alt:null,dir:null,type:null,simple:null,semitones:null,chroma:null}),gn=function(n,t){return Array(Math.abs(t)+1).join(n)},jn=function(n,t){return "M"===t&&"M"===n?0:"P"===t&&"P"===n?0:"m"===t&&"M"===n?-1:/^A+$/.test(t)?t.length:/^d+$/.test(t)?"P"===n?-t.length:-t.length-1:null},yn=function(n,t){return 0===t?"M"===n?"M":"P":-1===t&&"M"===n?"m":t>0?gn("A",t):t<0?gn("d","P"===n?t:t+1):null},On=function(n){return (Math.abs(n)-1)%7},xn=function(n){var t=vn(n);if(null===t)return An;var r={num:+t[0],q:t[1]};return r.step=On(r.num),r.type="PMMPPMM"[r.step],"M"===r.type&&"P"===r.q?An:(r.name=""+r.num+r.q,r.dir=r.num<0?-1:1,r.simple=8===r.num||-8===r.num?r.num:r.dir*(r.step+1),r.alt=jn(r.type,r.q),r.oct=Math.floor((Math.abs(r.num)-1)/7),r.semitones=r.dir*(dn[r.step]+r.alt+12*r.oct),r.chroma=(r.dir*(dn[r.step]+r.alt)%12+12)%12,Object.freeze(r))},_n={},zn=function(n){return M(n).num},qn=function(n){return M(n).name},kn=function(n){return M(n).semitones},Sn=function(n){return M(n).chroma},wn=function(n){return "string"==typeof n&&(n=M(n).chroma),"number"==typeof n?pn[n%12]:null},Dn=function(n){void 0===n&&(n={});var t=n.num,r=n.step,e=n.alt,m=n.oct;void 0===m&&(m=1);var i=n.dir;if(void 0!==r&&(t=r+1+7*m),void 0===t)return null;var u=i<0?"-":"",o="PMMPPMM"[On(t)];return u+t+yn(o,e)},En=function(n){var t=M(n);return t===An?null:t.simple+t.q},Cn=function(n){var t=M(n);if(t===An)return null;var r=(7-t.step)%7,e="P"===t.type?-t.alt:-(t.alt+1);return Dn({step:r,alt:e,oct:t.oct,dir:t.dir})},$n=[1,2,2,3,3,4,5,5,6,6,7,7],Fn="P m M m M P d P m M m M".split(" "),Gn=function(n){var t=n<0?-1:1,r=Math.abs(n),e=r%12,m=Math.floor(r/12);return t*($n[e]+7*m)+Fn[e]},In=Object.freeze({names:hn,tokenize:vn,props:M,num:zn,name:qn,semitones:kn,chroma:Sn,ic:wn,build:Dn,simplify:En,invert:Cn,fromSemitones:Gn}),Tn=[0,2,4,-1,1,3,5],Bn=function(n){return Math.floor(7*n/12)},Nn=Tn.map(Bn),Ln=function(n){var t=n.step,r=n.alt,e=n.oct,m=n.dir;void 0===m&&(m=1);var i=Tn[t]+7*r;return null===e?[m*i]:[m*i,m*(e-Nn[t]-4*r)]},Rn=[3,0,4,1,5,2,6],Un=function(n,t,r){var e=Rn[a(n)],m=Math.floor((n+1)/7);return void 0===t?{step:e,alt:m,dir:r}:{step:e,alt:m,oct:t+4*m+Nn[e],dir:r}},Hn=function(n,t){return void 0===t&&(t={}),function(r){return t[r]||(t[r]=n(r))}},Jn=function(n){return Hn(function(t){var r=n(t);return null===r.name?null:Ln(r)})},Kn=Jn(L),Qn=Jn(M),Vn=function(n){return 7*n[0]+12*n[1]<0},Wn=function(n){return Vn(n)?Un(-n[0],-n[1],-1):Un(n[0],n[1],1)},Xn=Object.freeze({transpose:l,trFifths:c,fifths:s,transposeBy:f,addIntervals:d,add:p,subtract:b,interval:h,semitones:v}),Yn={chromatic:["1P 2m 2M 3m 3M 4P 4A 5P 6m 6M 7m 7M"],lydian:["1P 2M 3M 4A 5P 6M 7M"],major:["1P 2M 3M 4P 5P 6M 7M",["ionian"]],mixolydian:["1P 2M 3M 4P 5P 6M 7m",["dominant"]],dorian:["1P 2M 3m 4P 5P 6M 7m"],aeolian:["1P 2M 3m 4P 5P 6m 7m",["minor"]],phrygian:["1P 2m 3m 4P 5P 6m 7m"],locrian:["1P 2m 3m 4P 5d 6m 7m"],altered:["1P 2m 3m 3M 5d 6m 7m",["super locrian","diminished whole tone","pomeroy"]],iwato:["1P 2m 4P 5d 7m"],hirajoshi:["1P 2M 3m 5P 6m"],kumoijoshi:["1P 2m 4P 5P 6m"],pelog:["1P 2m 3m 5P 6m"],prometheus:["1P 2M 3M 4A 6M 7m"],ritusen:["1P 2M 4P 5P 6M"],scriabin:["1P 2m 3M 5P 6M"],piongio:["1P 2M 4P 5P 6M 7m"],augmented:["1P 2A 3M 5P 5A 7M"],neopolitan:["1P 2m 3m 4P 5P 6m 7M"],diminished:["1P 2M 3m 4P 5d 6m 6M 7M"],egyptian:["1P 2M 4P 5P 7m"],oriental:["1P 2m 3M 4P 5d 6M 7m"],spanish:["1P 2m 3M 4P 5P 6m 7m",["phrygian major"]],flamenco:["1P 2m 3m 3M 4A 5P 7m"],balinese:["1P 2m 3m 4P 5P 6m 7M"],persian:["1P 2m 3M 4P 5d 6m 7M"],bebop:["1P 2M 3M 4P 5P 6M 7m 7M"],enigmatic:["1P 2m 3M 5d 6m 7m 7M"],ichikosucho:["1P 2M 3M 4P 5d 5P 6M 7M"],"melodic minor":["1P 2M 3m 4P 5P 6M 7M"],"melodic minor second mode":["1P 2m 3m 4P 5P 6M 7m"],"lydian augmented":["1P 2M 3M 4A 5A 6M 7M"],"lydian dominant":["1P 2M 3M 4A 5P 6M 7m",["lydian b7"]],"melodic minor fifth mode":["1P 2M 3M 4P 5P 6m 7m",["hindu","mixolydian b6M"]],"locrian #2":["1P 2M 3m 4P 5d 6m 7m"],"locrian major":["1P 2M 3M 4P 5d 6m 7m",["arabian"]],"major pentatonic":["1P 2M 3M 5P 6M",["pentatonic"]],"lydian pentatonic":["1P 3M 4A 5P 7M",["chinese"]],"mixolydian pentatonic":["1P 3M 4P 5P 7m",["indian"]],"locrian pentatonic":["1P 3m 4P 5d 7m",["minor seven flat five pentatonic"]],"minor pentatonic":["1P 3m 4P 5P 7m"],"minor six pentatonic":["1P 3m 4P 5P 6M"],"minor hexatonic":["1P 2M 3m 4P 5P 7M"],"flat three pentatonic":["1P 2M 3m 5P 6M",["kumoi"]],"flat six pentatonic":["1P 2M 3M 5P 6m"],"major flat two pentatonic":["1P 2m 3M 5P 6M"],"whole tone pentatonic":["1P 3M 5d 6m 7m"],"ionian pentatonic":["1P 3M 4P 5P 7M"],"lydian #5P pentatonic":["1P 3M 4A 5A 7M"],"lydian dominant pentatonic":["1P 3M 4A 5P 7m"],"minor #7M pentatonic":["1P 3m 4P 5P 7M"],"super locrian pentatonic":["1P 3m 4d 5d 7m"],"in-sen":["1P 2m 4P 5P 7m"],"vietnamese 1":["1P 3m 4P 5P 6m"],"vietnamese 2":["1P 3m 4P 5P 7m"],"prometheus neopolitan":["1P 2m 3M 4A 6M 7m"],"major blues":["1P 2M 3m 3M 5P 6M"],"minor blues":["1P 3m 4P 5d 5P 7m",["blues"]],"composite blues":["1P 2M 3m 3M 4P 5d 5P 6M 7m"],"augmented heptatonic":["1P 2A 3M 4P 5P 5A 7M"],"dorian #4":["1P 2M 3m 4A 5P 6M 7m"],"lydian diminished":["1P 2M 3m 4A 5P 6M 7M"],"whole tone":["1P 2M 3M 4A 5A 7m"],"leading whole tone":["1P 2M 3M 4A 5A 7m 7M"],"harmonic minor":["1P 2M 3m 4P 5P 6m 7M"],"lydian minor":["1P 2M 3M 4A 5P 6m 7m"],"neopolitan minor":["1P 2m 3m 4P 5P 6m 7M"],"neopolitan major":["1P 2m 3m 4P 5P 6M 7M",["dorian b2"]],"neopolitan major pentatonic":["1P 3M 4P 5d 7m"],"romanian minor":["1P 2M 3m 5d 5P 6M 7m"],"double harmonic lydian":["1P 2m 3M 4A 5P 6m 7M"],"harmonic major":["1P 2M 3M 4P 5P 6m 7M"],"double harmonic major":["1P 2m 3M 4P 5P 6m 7M",["gypsy"]],"hungarian minor":["1P 2M 3m 4A 5P 6m 7M"],"hungarian major":["1P 2A 3M 4A 5P 6M 7m"],"spanish heptatonic":["1P 2m 3m 3M 4P 5P 6m 7m"],"todi raga":["1P 2m 3m 4A 5P 6m 7M"],"malkos raga":["1P 3m 4P 6m 7m"],"kafi raga":["1P 3m 3M 4P 5P 6M 7m 7M"],"purvi raga":["1P 2m 3M 4P 4A 5P 6m 7M"],"bebop dominant":["1P 2M 3M 4P 5P 6M 7m 7M"],"bebop minor":["1P 2M 3m 3M 4P 5P 6M 7m"],"bebop major":["1P 2M 3M 4P 5P 5A 6M 7M"],"bebop locrian":["1P 2m 3m 4P 5d 5P 6m 7m"],"minor bebop":["1P 2M 3m 4P 5P 6m 7m 7M"],"mystery #1":["1P 2m 3M 5d 6m 7m"],"minor six diminished":["1P 2M 3m 4P 5P 6m 6M 7M"],"ionian augmented":["1P 2M 3M 4P 5A 6M 7M"],"lydian #9":["1P 2m 3M 4A 5P 6M 7M"],"six tone symmetric":["1P 2m 3M 4P 5A 6M"]},Zn={M:["1P 3M 5P",["Major",""]],M13:["1P 3M 5P 7M 9M 13M",["maj13","Maj13"]],M6:["1P 3M 5P 13M",["6"]],M69:["1P 3M 5P 6M 9M",["69"]],M7add13:["1P 3M 5P 6M 7M 9M"],M7b5:["1P 3M 5d 7M"],M7b6:["1P 3M 6m 7M"],M7b9:["1P 3M 5P 7M 9m"],M7sus4:["1P 4P 5P 7M"],M9:["1P 3M 5P 7M 9M",["maj9","Maj9"]],M9b5:["1P 3M 5d 7M 9M"],M9sus4:["1P 4P 5P 7M 9M"],Madd9:["1P 3M 5P 9M",["2","add9","add2"]],Maj7:["1P 3M 5P 7M",["maj7","M7"]],Mb5:["1P 3M 5d"],Mb6:["1P 3M 13m"],Msus2:["1P 2M 5P",["add9no3","sus2"]],Msus4:["1P 4P 5P",["sus","sus4"]],Maddb9:["1P 3M 5P 9m"],m:["1P 3m 5P"],m11:["1P 3m 5P 7m 9M 11P",["_11"]],m11b5:["1P 3m 7m 12d 2M 4P",["h11","_11b5"]],m13:["1P 3m 5P 7m 9M 11P 13M",["_13"]],m6:["1P 3m 4P 5P 13M",["_6"]],m69:["1P 3m 5P 6M 9M",["_69"]],m7:["1P 3m 5P 7m",["minor7","_","_7"]],m7add11:["1P 3m 5P 7m 11P",["m7add4"]],m7b5:["1P 3m 5d 7m",["half-diminished","h7","_7b5"]],m9:["1P 3m 5P 7m 9M",["_9"]],m9b5:["1P 3m 7m 12d 2M",["h9","-9b5"]],mMaj7:["1P 3m 5P 7M",["mM7","_M7"]],mMaj7b6:["1P 3m 5P 6m 7M",["mM7b6"]],mM9:["1P 3m 5P 7M 9M",["mMaj9","-M9"]],mM9b6:["1P 3m 5P 6m 7M 9M",["mMaj9b6"]],mb6M7:["1P 3m 6m 7M"],mb6b9:["1P 3m 6m 9m"],o:["1P 3m 5d",["mb5","dim"]],o7:["1P 3m 5d 13M",["diminished","m6b5","dim7"]],o7M7:["1P 3m 5d 6M 7M"],oM7:["1P 3m 5d 7M"],sus24:["1P 2M 4P 5P",["sus4add9"]],madd4:["1P 3m 4P 5P"],madd9:["1P 3m 5P 9M"],4:["1P 4P 7m 10m",["quartal"]],5:["1P 5P"],7:["1P 3M 5P 7m",["Dominant","Dom"]],9:["1P 3M 5P 7m 9M",["79"]],11:["1P 5P 7m 9M 11P"],13:["1P 3M 5P 7m 9M 13M",["13_"]],64:["5P 8P 10M"],"M#5":["1P 3M 5A",["augmented","maj#5","Maj#5","+","aug"]],"M#5add9":["1P 3M 5A 9M",["+add9"]],"M13#11":["1P 3M 5P 7M 9M 11A 13M",["maj13#11","Maj13#11","M13+4","M13#4"]],"M6#11":["1P 3M 5P 6M 11A",["M6b5","6#11","6b5"]],"M69#11":["1P 3M 5P 6M 9M 11A"],"M7#11":["1P 3M 5P 7M 11A",["maj7#11","Maj7#11","M7+4","M7#4"]],"M7#5":["1P 3M 5A 7M",["maj7#5","Maj7#5","maj9#5","M7+"]],"M7#5sus4":["1P 4P 5A 7M"],"M7#9#11":["1P 3M 5P 7M 9A 11A"],"M9#11":["1P 3M 5P 7M 9M 11A",["maj9#11","Maj9#11","M9+4","M9#4"]],"M9#5":["1P 3M 5A 7M 9M",["Maj9#5"]],"M9#5sus4":["1P 4P 5A 7M 9M"],"11b9":["1P 5P 7m 9m 11P"],"13#11":["1P 3M 5P 7m 9M 11A 13M",["13+4","13#4"]],"13#9":["1P 3M 5P 7m 9A 13M",["13#9_"]],"13#9#11":["1P 3M 5P 7m 9A 11A 13M"],"13b5":["1P 3M 5d 6M 7m 9M"],"13b9":["1P 3M 5P 7m 9m 13M"],"13b9#11":["1P 3M 5P 7m 9m 11A 13M"],"13no5":["1P 3M 7m 9M 13M"],"13sus4":["1P 4P 5P 7m 9M 13M",["13sus"]],"69#11":["1P 3M 5P 6M 9M 11A"],"7#11":["1P 3M 5P 7m 11A",["7+4","7#4","7#11_","7#4_"]],"7#11b13":["1P 3M 5P 7m 11A 13m",["7b5b13"]],"7#5":["1P 3M 5A 7m",["+7","7aug","aug7"]],"7#5#9":["1P 3M 5A 7m 9A",["7alt","7#5#9_","7#9b13_"]],"7#5b9":["1P 3M 5A 7m 9m"],"7#5b9#11":["1P 3M 5A 7m 9m 11A"],"7#5sus4":["1P 4P 5A 7m"],"7#9":["1P 3M 5P 7m 9A",["7#9_"]],"7#9#11":["1P 3M 5P 7m 9A 11A",["7b5#9"]],"7#9#11b13":["1P 3M 5P 7m 9A 11A 13m"],"7#9b13":["1P 3M 5P 7m 9A 13m"],"7add6":["1P 3M 5P 7m 13M",["67","7add13"]],"7b13":["1P 3M 7m 13m"],"7b5":["1P 3M 5d 7m"],"7b6":["1P 3M 5P 6m 7m"],"7b9":["1P 3M 5P 7m 9m"],"7b9#11":["1P 3M 5P 7m 9m 11A",["7b5b9"]],"7b9#9":["1P 3M 5P 7m 9m 9A"],"7b9b13":["1P 3M 5P 7m 9m 13m"],"7b9b13#11":["1P 3M 5P 7m 9m 11A 13m",["7b9#11b13","7b5b9b13"]],"7no5":["1P 3M 7m"],"7sus4":["1P 4P 5P 7m",["7sus"]],"7sus4b9":["1P 4P 5P 7m 9m",["susb9","7susb9","7b9sus","7b9sus4","phryg"]],"7sus4b9b13":["1P 4P 5P 7m 9m 13m",["7b9b13sus4"]],"9#11":["1P 3M 5P 7m 9M 11A",["9+4","9#4","9#11_","9#4_"]],"9#11b13":["1P 3M 5P 7m 9M 11A 13m",["9b5b13"]],"9#5":["1P 3M 5A 7m 9M",["9+"]],"9#5#11":["1P 3M 5A 7m 9M 11A"],"9b13":["1P 3M 7m 9M 13m"],"9b5":["1P 3M 5d 7m 9M"],"9no5":["1P 3M 7m 9M"],"9sus4":["1P 4P 5P 7m 9M",["9sus"]],"m#5":["1P 3m 5A",["m+","mb6"]],"m11A 5":["1P 3m 6m 7m 9M 11P"],"m7#5":["1P 3m 6m 7m"],"m9#5":["1P 3m 6m 7m 9M"],"+add#9":["1P 3M 5A 9A"]},nt=function(n){return X(n)||Sn(n)||0},tt=function(n){return parseInt(A(n),2)},rt=function(n){return n.replace(/0/g,"").length},et=null,mt=/^[01]{12}$/,it="1P 2m 2M 3m 3M 4P 5d 5P 6m 6M 7m 7M".split(" "),ut=Object.freeze({chroma:A,chromas:g,modes:j,isChroma:y,intervals:O,isEqual:x,isSubsetOf:_,isSupersetOf:z,includes:q,filter:k}),ot=function(n){var t=Object.keys(n).sort(),r=[],e=[],m=function(n,t,m){r[n]=t,e[m]=e[m]||[],e[m].push(n);};t.forEach(function(t){var r=n[t][0].split(" "),e=n[t][1],i=A(r);m(t,r,i),e&&e.forEach(function(n){return m(n,r,i)});});var i=Object.keys(r).sort(),u=function(n){return r[n]};return u.names=function(n){return "string"==typeof n?(e[n]||[]).slice():(!0===n?i:t).slice()},u},Pt=function(n,t){var r=function(r){return n(r)||t(r)};return r.names=function(r){return n.names(r).concat(t.names(r))},r},Mt=ot(Yn),at=ot(Zn),lt=Pt(Mt,at),ct=Object.freeze({dictionary:ot,combine:Pt,scale:Mt,chord:at,pcset:lt}),st=Object.freeze({name:null,intervals:[],names:[],chroma:null,setnum:null}),ft=function(n,t){return function(r){return t[r]||(t[r]=n(r))}}(function(n){var t=Mt(n);if(!t)return st;var r={intervals:t,name:n};return r.chroma=A(t),r.setnum=parseInt(r.chroma,2),r.names=Mt.names(r.chroma),Object.freeze(r)},{}),dt=Mt.names,pt=function(n){var t=D(n);return ft(t[1]).intervals},bt=function(n){var t=pt(n),r=S(n);return j(t).map(function(n,e){var m=Mt.names(n)[0];if(m)return [r[e]||t[e],m]}).filter(function(n){return n})},ht=function(n){var t=_(pt(n));return at.names().filter(function(n){return t(at(n))})},vt=function(n){var t=Mn(n.map(U));if(!t.length)return t;var r=t[0],e=P(t);return u(e.indexOf(r),e)},At=function(n){if(!pt(n).length)return [];var t=z(pt(n));return Mt.names().filter(function(n){return t(Mt(n))})},gt=function(n){var t=_(pt(n));return Mt.names().filter(function(n){return t(Mt(n))})},jt=Object.freeze({props:ft,names:dt,intervals:pt,notes:S,exists:w,tokenize:D,modeNames:bt,chords:ht,toScale:vt,supersets:At,subsets:gt}),yt=at.names,Ot=Object.freeze({name:null,names:[],intervals:[],chroma:null,setnum:null}),xt=function(n,t){return void 0===t&&(t={}),function(r){return t[r]||(t[r]=n(r))}}(function(n){var t=at(n);if(!t)return Ot;var r={intervals:t,name:n};return r.chroma=A(t),r.setnum=parseInt(r.chroma,2),r.names=at.names(r.chroma),r}),_t=function(n){return xt(C(n)[1]).intervals},zt=function(n){return void 0!==at(C(n)[1])},qt=function(n){if(!_t(n).length)return [];var t=z(_t(n));return at.names().filter(function(n){return t(at(n))})},kt=function(n){var t=_(_t(n));return at.names().filter(function(n){return t(at(n))})},St=/^(6|64|7|9|11|13)$/,wt=Object.freeze({names:yt,props:xt,intervals:_t,notes:E,exists:zt,supersets:qt,subsets:kt,tokenize:C}),Dt=l,Et=h,Ct=L,$t=H,Ft=K,Gt=at,It=Mt;n.Array=sn,n.Note=Pn,n.Interval=In,n.Distance=Xn,n.Scale=jt,n.Chord=wt,n.PcSet=ut,n.Dictionary=ct,n.transpose=Dt,n.interval=Et,n.note=Ct,n.midi=$t,n.freq=Ft,n.chord=Gt,n.scale=It,Object.defineProperty(n,"__esModule",{value:!0});})(tonal$1);
 
-//import {Nil} from './type_utils.js';
-class MelodicBeatLiteral {
-    constructor(opts) {
-        this.time = opts.time || { time: 'auto' };
-        this.pitch = opts.pitch;
-        this.octave = opts.octave || 'inherit';
-        this.scope = null;
-        this.parentMeasure = null;
-        this.indexInMeasure = null;
-        this.cachedAnchor = null; // used for STEP/ARPEGGIATE interpolation
-    }
-    init(scope, parentMeasure, indexInMeasure) {
-        this.scope = scope;
-        this.parentMeasure = parentMeasure;
-        this.indexInMeasure = indexInMeasure;
-    }
-    getTime() {
-        if (this.time.time === 'auto') {
-            return this.indexInMeasure + 1;
+function normalizeChordForTonal(chord = '') {
+    return chord
+        .replace(/-/g, '_') // tonal uses _ over - for minor7
+        .replace(/minor|min/g, 'm'); // tonal is surprisingly bad at identifying minor chords??
+}
+function getAnchorChord(anchor, songIterator, currentTime) {
+    let anchorChord;
+    switch (anchor) {
+        case 'KEY': {
+            anchorChord = songIterator.song.getTransposedKey();
         }
-        else {
-            return this.time.time;
-        }
-    }
-    /**
-     * Normalize a chord into a form tonal can handle
-     * @param {string} [chord='']
-     * @return {string}
-     */
-    static normalizeChord(chord = '') {
-        return chord
-            .replace(/-/g, '_') // tonal uses _ over - for minor7
-            .replace(/minor|min/g, 'm'); // tonal is surprisingly bad at identifying minor chords??
-    }
-    static chordToScaleName(chord) {
-        let chordType = tonal$1.Chord.tokenize(chord)[1];
-        // @TODO: make this more robust
-        let names = tonal$1.Chord.props(chordType).names;
-        if (names.includes('dim'))
-            return 'diminished';
-        if (names.includes('aug'))
-            return 'augmented';
-        if (names.includes('Major'))
-            return 'major';
-        if (names.includes('minor'))
-            return 'minor';
-        if (names.includes('minor7'))
-            return 'dorian';
-        if (names.includes('Dominant'))
-            return 'mixolydian';
-        // if none of the above match, do our best to find the closest fit
-        let closestScale = 'major';
-        names.forEach(name => {
-            if (name.startsWith('dim'))
-                closestScale = 'diminished';
-            if (name.startsWith('aug'))
-                closestScale = 'augmented';
-            if (name.startsWith('M'))
-                closestScale = 'major';
-            if (name.startsWith('m'))
-                closestScale = 'minor';
-        });
-        return closestScale;
-    }
-    handleInversion(songIterator, pitches) {
-        let tonicPC = songIterator.song.getTransposedKey();
-        let tonicNote = tonal$1.Note.from({ oct: this.getOctave() }, tonicPC);
-        let tonic = tonal$1.Note.midi(tonicNote);
-        let outPitches = [];
-        for (let pitchNote of pitches) {
-            let pitch = tonal$1.Note.midi(pitchNote);
-            if (pitch - tonic >= 6)
-                pitch -= 12;
-            outPitches.push(tonal$1.Note.fromMidi(pitch));
-        }
-        return outPitches;
-    }
-    static getAnchorChord(anchor, songIterator, currentTime) {
-        let anchorChord;
-        switch (anchor) {
-            case 'KEY': {
+        case 'NEXT': {
+            let nextMeasure = songIterator.getRelative(1);
+            if (nextMeasure) {
+                anchorChord = nextMeasure.beats[0].chord;
+            }
+            else {
                 anchorChord = songIterator.song.getTransposedKey();
             }
-            case 'NEXT': {
-                let nextMeasure = songIterator.getRelative(1);
-                if (nextMeasure) {
-                    anchorChord = nextMeasure.beats[0].chord;
-                }
-                else {
-                    anchorChord = songIterator.song.getTransposedKey();
-                }
-            }
-            case 'STEP':
-            case 'ARPEGGIATE':
-            default: {
-                // crawl backward through this measure to get the last set beat
-                let lastSetBeat = Math.floor(currentTime);
-                let iteratorMeasure = songIterator.getRelative(0);
-                if (!iteratorMeasure)
-                    break;
-                do {
-                    const beat = iteratorMeasure.beats[lastSetBeat];
-                    anchorChord = beat && beat.chord;
-                    lastSetBeat--;
-                } while (!anchorChord);
-            }
         }
-        return this.normalizeChord(anchorChord);
-    }
-    static anchorChordToRoot(anchorChord, degree, octave) {
-        let anchorTonic = tonal$1.Chord.tokenize(anchorChord)[0];
-        let anchorScaleName = this.chordToScaleName(anchorChord);
-        let scalePCs = tonal$1.Scale.notes(anchorTonic, anchorScaleName);
-        let rootPC = scalePCs[degree - 1];
-        return tonal$1.Note.from({ oct: octave }, rootPC);
-    }
-    getAnchorData(songIterator) {
-        let anchorChord = MelodicBeatLiteral.getAnchorChord(this.pitch.anchor, songIterator, this.getTime());
-        let root = MelodicBeatLiteral.anchorChordToRoot(anchorChord, this.pitch.degree, this.getOctave());
-        return [anchorChord, root];
-    }
-    getPitches(songIterator) {
-        let [anchorChord, root] = this.getAnchorData(songIterator);
-        let pitches;
-        if (this.pitch.chord) {
-            // this feels extremely incorrect
-            // why would anyone need it to work this way
-            let anchorChordType = tonal$1.Chord.tokenize(anchorChord)[1];
-            pitches = tonal$1.Chord.notes(root, anchorChordType);
-        }
-        else {
-            pitches = [root];
-        }
-        if (this.scope.vars.get('invertible')) {
-            pitches = this.handleInversion(songIterator, pitches);
-        }
-        return pitches;
-    }
-    /**
-     * Returns true if the beat is anchored via STEP or ARPEGGIATE
-     * @returns {boolean}
-     */
-    isDynamic() {
-        return ['STEP', 'ARPEGGIATE'].includes(this.pitch.anchor);
-    }
-    getOctave() {
-        if (this.octave === 'inherit') {
-            return this.scope.vars.get('octave');
-        }
-        else {
-            return this.octave;
+        case 'STEP':
+        case 'ARPEGGIATE':
+        default: {
+            // crawl backward through this measure to get the last set beat
+            let lastSetBeat = Math.floor(currentTime);
+            let iteratorMeasure = songIterator.getRelative(0);
+            if (!iteratorMeasure)
+                break;
+            do {
+                const beat = iteratorMeasure.beats[lastSetBeat];
+                anchorChord = beat && beat.chord;
+                lastSetBeat--;
+            } while (!anchorChord);
         }
     }
-    getDuration() {
-        let duration;
-        duration = this.parentMeasure.calculateDurationAfter(this.indexInMeasure);
-        if (this.time.flag === 'STACCATO') {
-            return Math.min(0.25, duration);
-        }
-        else {
-            return duration;
-        }
+    return normalizeChordForTonal(anchorChord);
+}
+function anchorChordToRoot(anchorChord, degree, octave) {
+    let anchorTonic = tonal$1.Chord.tokenize(anchorChord)[0];
+    let anchorScaleName = chordToScaleName(anchorChord);
+    let scalePCs = tonal$1.Scale.notes(anchorTonic, anchorScaleName);
+    let rootPC = scalePCs[degree - 1];
+    return tonal$1.Note.from({ oct: octave }, rootPC);
+}
+function chordToScaleName(chord) {
+    let chordType = tonal$1.Chord.tokenize(chord)[1];
+    // @TODO: make this more robust
+    let names = tonal$1.Chord.props(chordType).names;
+    if (names.includes('dim'))
+        return 'diminished';
+    if (names.includes('aug'))
+        return 'augmented';
+    if (names.includes('Major'))
+        return 'major';
+    if (names.includes('minor'))
+        return 'minor';
+    if (names.includes('minor7'))
+        return 'dorian';
+    if (names.includes('Dominant'))
+        return 'mixolydian';
+    // if none of the above match, do our best to find the closest fit
+    let closestScale = 'major';
+    names.forEach(name => {
+        if (name.startsWith('dim'))
+            closestScale = 'diminished';
+        if (name.startsWith('aug'))
+            closestScale = 'augmented';
+        if (name.startsWith('M'))
+            closestScale = 'major';
+        if (name.startsWith('m'))
+            closestScale = 'minor';
+    });
+    return closestScale;
+}
+
+const anchorReverseMap = { 'KEY': 'k', 'NEXT': 'n', 'STEP': 's', 'ARPEGGIATE': 'a' };
+class PlaybackAnchorValue {
+    constructor(value) {
+        this.type = 'anchor';
+        this.value = value;
     }
-    getVolume() {
-        let volume = this.scope.vars.get('volume');
-        if (this.time.flag === 'ACCENTED')
-            volume = Math.min(1, volume += .1);
-        return volume;
+    toBoolean() { return true; }
+    toOutputString() { return anchorReverseMap[this.value]; }
+}
+class PlaybackBeatValue {
+    constructor() {
+        this.type = null;
     }
-    execute(songIterator) {
-        let notes = new NoteSet();
-        let time = this.getTime(); // @TODO: this varies with rolling
-        let pitches = this.getPitches(songIterator);
-        let duration = this.getDuration(); // @TODO: this varies with rolling
-        let volume = this.getVolume();
-        for (let pitch of pitches) {
-            notes.push(new Note({
-                time: time,
-                pitch: pitch,
-                duration: duration,
-                volume: volume
-            }));
-        }
-        return notes;
+    toBoolean() { return true; }
+}
+class PlaybackMelodicBeatValue extends PlaybackBeatValue {
+    constructor(time = { time: 'auto' }, pitch, octave = 'inherit') {
+        super();
+        this.type = 'melodic_beat';
+        this.value = {
+            time: null,
+            pitch: null,
+            octave: null,
+        };
+        this.value.time = time;
+        this.value.pitch = pitch;
+        this.value.octave = octave;
+    }
+    toOutputString() {
+        const timeFlag = this.time.flag ? (this.time.flag === 'ACCENTED' ? 'a' : 's') : '';
+        const timePart = `${this.time.time === 'auto' ? '' : this.time.time}${timeFlag}`;
+        const pitchAnchor = this.pitch.anchor ? anchorReverseMap[this.pitch.anchor] : '';
+        const pitchRoll = this.pitch.roll ? (this.pitch.roll === 'ROLL_UP' ? 'r' : 'rd') : '';
+        const pitchPart = `:${pitchAnchor}${this.pitch.degree || ''}${this.pitch.chord ? 'c' : ''}${pitchRoll}`;
+        const octavePart = this.octave === 'inherit' ? '' : `:${this.octave}`;
+        return `${timePart}${pitchPart}${octavePart}`;
+    }
+    get time() { return this.value.time; }
+    get pitch() { return this.value.pitch; }
+    get octave() { return this.value.octave; }
+}
+class PlaybackDrumBeatValue extends PlaybackBeatValue {
+    constructor(time, accented = false) {
+        super();
+        this.type = 'drum_beat';
+        this.value = {
+            time: null,
+            accented: null,
+        };
+        this.value.time = time;
+        this.value.accented = accented;
+    }
+    toOutputString() {
+        return `${this.time}${this.accented ? 'a' : ''}`;
+    }
+    get time() { return this.value.time; }
+    get accented() { return this.value.accented; }
+}
+
+class PlaybackNilValue {
+    constructor() {
+        this.type = 'Nil';
+        this.value = null;
+    }
+    toBoolean() { return false; }
+    toOutputString() { return 'Nil'; }
+}
+class PlaybackStringValue {
+    constructor(value) {
+        this.type = 'string';
+        this.value = value;
+    }
+    toBoolean() { return this.value !== ''; }
+    toOutputString() {
+        // @TODO: store raw value from tokenizer? (which may not always exist for programmatically-generated strings)
+        // At least this is consistent...
+        return `"${this.value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
     }
 }
-class DrumBeatLiteral {
-    constructor(opts) {
-        this.time = opts.time;
-        this.accented = opts.accented || false;
-        this.scope = null;
-        this.parentMeasure = null;
-        this.indexInMeasure = null;
+class PlaybackNumberValue {
+    constructor(value) {
+        this.type = 'number';
+        this.value = value;
     }
-    init(scope, parentMeasure, indexInMeasure) {
-        this.scope = scope;
-        this.parentMeasure = parentMeasure;
-        this.indexInMeasure = indexInMeasure;
+    toInteger() { return Math.floor(this.value); }
+    toBoolean() { return this.value !== 0; }
+    toOutputString() { return this.value.toString(); }
+}
+class PlaybackBooleanValue {
+    constructor(value) {
+        this.type = 'boolean';
+        this.value = value;
     }
-    getTime() {
-        return this.time;
+    toBoolean() { return this.value; }
+    toOutputString() { return this.value ? 'true' : 'false'; }
+}
+class PlaybackTimeSignatureValue {
+    constructor(value) {
+        this.type = 'time_signature';
+        this.value = value;
     }
-    getDuration() {
-        let duration;
-        duration = this.parentMeasure.calculateDurationAfter(this.indexInMeasure);
-        return duration;
-    }
-    getVolume() {
-        let volume = this.scope.vars.get('volume');
-        if (this.accented)
-            volume = Math.min(1, volume += .1);
-        return volume;
-    }
-    execute(songIterator) {
-        let time = this.getTime();
-        let duration = this.getDuration();
-        let volume = this.getVolume();
-        return new NoteSet(new Note({
-            time: time,
-            pitch: AwaitingDrum,
-            duration: duration,
-            volume: volume
-        }));
-    }
+    toBoolean() { return true; }
+    toOutputString() { return `${this.value[0]} / ${this.value[1]}`; }
 }
 
 let definitions = new Map();
@@ -1506,38 +1450,25 @@ function assertArgTypes(identifier, args, types, scope) {
     if (types == '*')
         return;
     if (args.length != types.length) {
-        throw new FunctionArgumentsError(`"${identifier}" requires ${types.length} arguments.`, scope);
+        throw new FunctionArgumentsError(`"${identifier}" requires ${types.length} arguments.`, args, scope);
     }
     for (let i in args) {
         if (types[i] == '*')
             continue;
         let arg = args[i];
         if (arg instanceof FunctionCall) {
-            arg = arg.returns;
-            if (arg == '*') {
+            if (arg.returns == '*') {
                 continue; // what's the correct functionality here? cry?
             }
-            else if (typeof types[i] == 'string') {
-                if (arg != types[i]) {
-                    throw new FunctionArgumentsError(`Argument ${Number(i) + 1} of "${identifier}" must be a ${types[i]}.`, scope);
-                }
-            }
             else {
-                if (arg != types[i]) {
-                    throw new FunctionArgumentsError(`Argument ${Number(i) + 1} of "${identifier}" must be a ${types[i].name}.`, scope);
+                if (arg.returns !== types[i]) {
+                    throw new FunctionArgumentsError(`Argument ${Number(i) + 1} of "${identifier}" must be a ${types[i]}.`, args, scope);
                 }
             }
         }
         else {
-            if (typeof types[i] == 'string') {
-                if (typeof arg != types[i]) {
-                    throw new FunctionArgumentsError(`Argument ${Number(i) + 1} of "${identifier}" must be a ${types[i]}.`, scope);
-                }
-            }
-            else {
-                if (!(arg instanceof types[i])) {
-                    throw new FunctionArgumentsError(`Argument ${Number(i) + 1} of "${identifier}" must be a ${types[i].name}.`, scope);
-                }
+            if (arg.type !== types[i]) {
+                throw new FunctionArgumentsError(`Argument ${Number(i) + 1} of "${identifier}" must be a ${types[i]}.`, args, scope);
             }
         }
     }
@@ -1610,7 +1541,7 @@ let define$1 = function (identifier, opts, func) {
         scope: opts.scope || 'no-meta',
         execute: (args, songIterator, scope) => {
             let argErr = message => {
-                throw new FunctionArgumentsError(message, scope);
+                throw new FunctionArgumentsError(message, args, scope);
             };
             return func(args, songIterator, scope, argErr);
         }
@@ -1630,11 +1561,11 @@ let defineVar = function (identifier, type, goalscope = null) {
     let opts = {
         types: [type],
         scope: goalscope,
-        returns: Nil
+        returns: 'Nil'
     };
     define$1(identifier, opts, (args, songIterator, scope, argErr) => {
         scope.vars.set(identifier, args[0]);
-        return Nil;
+        return new PlaybackNilValue();
     });
 };
 /**
@@ -1648,8 +1579,8 @@ let defineVar = function (identifier, type, goalscope = null) {
 let defineBoolean = function (identifier, goalscope = null) {
     let opts = {
         types: '*',
-        scopes: goalscope,
-        returns: Nil
+        scope: goalscope,
+        returns: 'Nil'
     };
     define$1(identifier, opts, (args, songIterator, scope, argErr) => {
         if (args.length) {
@@ -1657,9 +1588,9 @@ let defineBoolean = function (identifier, goalscope = null) {
             scope.vars.set(identifier, args[0]);
         }
         else {
-            scope.vars.set(identifier, true);
+            scope.vars.set(identifier, new PlaybackBooleanValue(true));
         }
-        return Nil;
+        return new PlaybackNilValue;
     });
 };
 /*********** ACTUAL FUNCTION DEFINITIONS ***********/
@@ -1672,38 +1603,42 @@ defineVar('playback-version', 'number', 'meta');
 define$1('time-signature', {
     types: ['number', 'number'],
     scope: 'options',
-    returns: Nil
+    returns: 'Nil'
 }, (args, songIterator, scope, argErr) => {
-    if (!Number.isInteger(Math.log2(args[1]))) {
-        argErr(`Argument 2 of "time-signature" must be a power of 2 (got ${args}).`);
+    const value1 = args[0].value;
+    const value2 = args[1].value;
+    if (!Number.isInteger(Math.log2(value1))) {
+        argErr(`Argument 2 of "time-signature" must be a power of 2`);
     }
-    scope.vars.set('time-signature', [args[0], args[1]]);
-    return Nil;
+    scope.vars.set('time-signature', new PlaybackTimeSignatureValue([value1, value2]));
+    return new PlaybackNilValue();
 });
 defineBoolean('swing', 'options');
 /*** anywhere but @meta functions ***/
 define$1('volume', {
     types: ['number'],
     scope: 'no-meta',
-    returns: Nil
+    returns: 'Nil'
 }, (args, songIterator, scope, argErr) => {
-    if (args[0] < 0 || args[0] > 1) {
-        argErr(`Argument 1 of "volume" must be in range 0-1 (inclusive) (got ${args}).`);
+    const { value } = args[0];
+    if (value < 0 || value > 1) {
+        argErr(`Argument 1 of "volume" must be in range 0-1 (inclusive)`);
     }
     scope.vars.set('volume', args[0]);
-    return Nil;
+    return new PlaybackNilValue();
 });
 defineBoolean('invertible', 'no-meta');
 define$1('octave', {
     types: ['number'],
     scope: 'no-meta',
-    returns: Nil
+    returns: 'Nil'
 }, (args, songIterator, scope, argErr) => {
-    if (!Number.isInteger(args[0]) || args[0] < 0 || args[0] > 9) {
-        argErr(`Argument 1 of "octave" must be an integer 0-9 (got ${args}).`);
+    const { value } = args[0];
+    if (!Number.isInteger(value) || value < 0 || value > 9) {
+        argErr(`Argument 1 of "octave" must be an integer 0-9`);
     }
     scope.vars.set('octave', args[0]);
-    return Nil;
+    return new PlaybackNilValue();
 });
 /*** anywhere but config functions (strictly dynamic functions) ***/
 define$1('choose', {
@@ -1711,24 +1646,24 @@ define$1('choose', {
     scope: 'no-config',
     returns: '*'
 }, (args, songIterator, scope, argErr) => {
-    let nonNilArgs = args.filter(arg => arg !== Nil);
+    let nonNilArgs = args.filter(arg => arg.type !== 'Nil');
     if (nonNilArgs.length) {
         let index = Math.floor(Math.random() * nonNilArgs.length);
         return nonNilArgs[index];
     }
     else {
-        return Nil;
+        return new PlaybackNilValue();
     }
 });
 let anchorOrNumberToChordAndRoot = function (arg, songIterator) {
     let anchorChord, root;
-    if (typeof arg == 'number') {
-        anchorChord = MelodicBeatLiteral.getAnchorChord(null, songIterator, 1);
-        root = MelodicBeatLiteral.anchorChordToRoot(anchorChord, arg, 4);
+    if (arg.type === 'number') {
+        anchorChord = getAnchorChord(null, songIterator, 1);
+        root = anchorChordToRoot(anchorChord, arg.value, 4);
     }
-    else if (arg.anchor) {
-        anchorChord = MelodicBeatLiteral.getAnchorChord(arg.anchor, songIterator, 1);
-        root = MelodicBeatLiteral.anchorChordToRoot(anchorChord, 1, 4);
+    else {
+        anchorChord = getAnchorChord(arg.value, songIterator, 1);
+        root = anchorChordToRoot(anchorChord, 1, 4);
     }
     return [anchorChord, root];
 };
@@ -1738,34 +1673,34 @@ define$1('progression', {
     returns: 'boolean'
 }, (args, songIterator, scope, argErr) => {
     for (let i in args) {
-        let arg = args[i];
-        let [, goal] = anchorOrNumberToChordAndRoot(arg, songIterator);
-        if (!goal) {
-            argErr(`Arguments of "progression" must be numbers or anchors (got "${args}").`);
+        if (args[0].type !== 'number' && args[0].type !== 'anchor') {
+            argErr(`Arguments of "progression" must be numbers or anchors`);
         }
-        let actualMeasure = songIterator.getRelative(Number(i));
+        const [, goal] = anchorOrNumberToChordAndRoot(args[0], songIterator);
+        const actualMeasure = songIterator.getRelative(Number(i));
         if (!actualMeasure)
-            return false;
-        let actualChord = MelodicBeatLiteral.normalizeChord(actualMeasure.beats[0].chord);
-        let actual = MelodicBeatLiteral.anchorChordToRoot(actualChord, 1, 4);
+            return new PlaybackBooleanValue(false);
+        const actualChord = normalizeChordForTonal(actualMeasure.beats[0].chord);
+        const actual = anchorChordToRoot(actualChord, 1, 4);
         if (actual != goal)
-            return false;
+            return new PlaybackBooleanValue(false);
     }
-    return true;
+    return new PlaybackBooleanValue(true);
 });
 define$1('in-scale', {
     types: '*',
     scope: 'no-config',
     returns: 'boolean'
 }, (args, songIterator, scope, argErr) => {
+    if ((args[0].type !== 'number' && args[0].type !== 'anchor')
+        || args[1].type !== 'number' && args[1].type !== 'anchor') {
+        argErr(`Arguments of "in-scale" must be numbers or anchors`);
+    }
     let [, note] = anchorOrNumberToChordAndRoot(args[0], songIterator);
     let [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1], songIterator);
-    if (!note || !goalChord) {
-        argErr(`Arguments of "in-scale" must be numbers or anchors (got ${args}).`);
-    }
-    let goalScaleName = MelodicBeatLiteral.chordToScaleName(goalChord);
+    let goalScaleName = chordToScaleName(goalChord);
     let goalScale = tonal$1.Scale.notes(goalTonic, goalScaleName);
-    return goalScale.includes(note);
+    return new PlaybackBooleanValue(goalScale.includes(note));
 });
 define$1('beat-defined', {
     types: ['number'],
@@ -1774,8 +1709,9 @@ define$1('beat-defined', {
 }, (args, songIterator, scope, argErr) => {
     let measure = songIterator.getRelative(0);
     if (!measure)
-        return false;
-    return measure.beats[args[0]].chord !== null;
+        return new PlaybackBooleanValue(false);
+    const index = args[0].value;
+    return new PlaybackBooleanValue(measure.beats[index].chord !== null);
 });
 /*** pattern-only functions ***/
 defineBoolean('private', 'pattern');
@@ -1783,13 +1719,13 @@ defineVar('length', 'number', 'pattern');
 define$1('chance', {
     types: ['number'],
     scope: 'pattern',
-    returns: Nil
+    returns: 'Nil'
 }, (args, songIterator, scope, argErr) => {
-    if (args[0] < 0 || args[0] > 1) {
-        argErr(`Argument 1 of "chance" must be in range 0-1 (inclusive) (got ${args}).`);
+    if (args[0].value < 0 || args[0].value > 1) {
+        argErr(`Argument 1 of "chance" must be in range 0-1 (inclusive)`);
     }
     scope.vars.set('chance', args[0]);
-    return Nil;
+    return new PlaybackNilValue();
 });
 
 /**
@@ -1852,8 +1788,8 @@ class PatternExpressionGroup extends Scope {
         super();
         this.type = 'PatternExpressionGroup';
         this.name = '@pattern(<anonymous>)';
-        this.defaultVars.set('private', false);
-        this.defaultVars.set('chance', 1);
+        this.defaultVars.set('private', new PlaybackBooleanValue(false));
+        this.defaultVars.set('chance', new PlaybackNumberValue(1));
         this.expressions = expressions;
         this.functionCalls = [];
         this.nonFunctionCallExpressions = [];
@@ -1886,25 +1822,25 @@ class PatternExpressionGroup extends Scope {
     }
     execute(songIterator, callerIsTrack = false) {
         this.inherit();
-        let beats = Nil;
+        let beats = null;
         for (let function_call of this.functionCalls) {
             let return_value = function_call.execute(songIterator);
             if (return_value instanceof NoteSet) {
-                if (beats !== Nil) {
+                if (beats) {
                     throw new TooManyBeatsError(this);
                 }
                 beats = return_value;
             }
         }
-        if (callerIsTrack && this.vars.get('private') === true) {
-            return Nil; // if it's private we can give up now
+        if (callerIsTrack && this.vars.get('private').value === true) {
+            return null; // if it's private we can give up now
         }
         for (let expression of this.nonFunctionCallExpressions) {
             if (expression.execute) {
                 expression = expression.execute(songIterator);
             }
             if (expression instanceof NoteSet) {
-                if (beats !== Nil) {
+                if (beats) {
                     throw new TooManyBeatsError(this);
                 }
                 beats = expression;
@@ -1926,7 +1862,7 @@ class PatternStatement extends PatternExpressionGroup {
         this.condition = (opts.condition !== undefined) ? opts.condition : null;
     }
     getChance() {
-        return this.vars.get('chance');
+        return this.vars.get('chance').value;
     }
     link(ASTs, parentStyle, parentTrack) {
         super.link(ASTs, parentStyle, parentTrack);
@@ -1948,8 +1884,8 @@ class PatternStatement extends PatternExpressionGroup {
             else {
                 condition_value = this.condition;
             }
-            if (cast_bool(condition_value) === false)
-                return Nil;
+            if (condition_value.toBoolean() === false)
+                return null;
         }
         return super.execute(songIterator, callerIsTrack);
     }
@@ -1966,7 +1902,7 @@ class PatternCall {
             this.pattern;
     }
     getChance() {
-        return this.patternStatement.getChance()();
+        return this.patternStatement.getChance();
     }
     init(scope) {
         this.scope = scope;
@@ -2032,7 +1968,7 @@ class JoinedPatternExpression {
             return (new NoteSet()).concat(...noteSets);
         }
         else {
-            return Nil;
+            return null;
         }
     }
 }
@@ -2042,9 +1978,9 @@ class TrackStatement extends Scope {
         super();
         this.name = opts.identifier;
         this.type = '@track';
-        this.defaultVars.set('octave', 4);
-        this.defaultVars.set('volume', 1);
-        this.defaultVars.set('private', false);
+        this.defaultVars.set('octave', new PlaybackNumberValue(4));
+        this.defaultVars.set('volume', new PlaybackNumberValue(1));
+        this.defaultVars.set('private', new PlaybackBooleanValue(false));
         this.instrument = opts.instrument;
         this.identifier = opts.identifier;
         this.members = opts.members;
@@ -2094,7 +2030,7 @@ class TrackStatement extends Scope {
             let result = pattern.execute(songIterator, true);
             console.log('  - Result:', result);
             // @TODO: handle multi-measure patterns (via locks?)
-            if (result !== Nil) {
+            if (result) {
                 for (let note of result) {
                     if (note.pitch === AwaitingDrum) {
                         throw new DrumBeatInMelodicBeatGroupError(pattern);
@@ -2117,8 +2053,8 @@ class TrackStatement extends Scope {
                 return option.noteSet;
             }
         }
-        console.log('  - Final result:', Nil);
-        return Nil;
+        console.log('  - Final result:', null);
+        return null;
     }
 }
 class TrackCall {
@@ -2141,8 +2077,8 @@ class GlobalScope extends Scope {
     }
     init() {
         // set some default values
-        this.vars.set('time-signature', [4, 4]);
-        this.vars.set('tempo', 120);
+        this.vars.set('time-signature', new PlaybackTimeSignatureValue([4, 4]));
+        this.vars.set('tempo', new PlaybackNumberValue(120));
         this.tracks = new Map();
         this.metaStatements = [];
         // @TODO: stop circular dependencies? cache them and mark one as mom
@@ -2192,7 +2128,7 @@ class GlobalScope extends Scope {
         let trackNoteMap = new Map();
         for (let [, track] of this.tracks) {
             let trackNotes = track.execute(songIterator);
-            if (trackNotes !== Nil)
+            if (trackNotes)
                 trackNoteMap.set(track.instrument, trackNotes);
         }
         return trackNoteMap;
@@ -2206,11 +2142,6 @@ class GlobalScope extends Scope {
     }
 }
 
-class AnchorArgument {
-    constructor(anchor) {
-        this.anchor = anchor;
-    }
-}
 class BooleanOperator {
     constructor(...args) {
         this.args = args;
@@ -2245,7 +2176,7 @@ class BooleanNot extends BooleanOperator {
     }
     execute(songIterator) {
         let args = this.resolve_args(songIterator);
-        return !cast_bool(args[0]);
+        return new PlaybackBooleanValue(!args[0].toBoolean());
     }
 }
 class BooleanAnd extends BooleanOperator {
@@ -2256,7 +2187,7 @@ class BooleanAnd extends BooleanOperator {
         // sorry no short-circuiting because this code is prettier
         // @TODO: add short-circuiting if this actually makes it too slow
         let args = this.resolve_args(songIterator);
-        return cast_bool(args[0]) && cast_bool(args[1]);
+        return new PlaybackBooleanValue(args[0].toBoolean() && args[1].toBoolean());
     }
 }
 class BooleanOr extends BooleanOperator {
@@ -2265,7 +2196,150 @@ class BooleanOr extends BooleanOperator {
     }
     execute(songIterator) {
         let args = this.resolve_args(songIterator);
-        return cast_bool(args[0]) || cast_bool(args[1]);
+        return new PlaybackBooleanValue(args[0].toBoolean() || args[1].toBoolean());
+    }
+}
+
+class MelodicBeatLiteral {
+    constructor(opts) {
+        this.value = new PlaybackMelodicBeatValue(opts.time, opts.pitch, opts.octave);
+        this.scope = null;
+        this.parentMeasure = null;
+        this.indexInMeasure = null;
+        this.cachedAnchor = null; // used for STEP/ARPEGGIATE interpolation
+    }
+    init(scope, parentMeasure, indexInMeasure) {
+        this.scope = scope;
+        this.parentMeasure = parentMeasure;
+        this.indexInMeasure = indexInMeasure;
+    }
+    getTime() {
+        if (this.value.time.time === 'auto') {
+            return this.indexInMeasure + 1;
+        }
+        else {
+            return this.value.time.time;
+        }
+    }
+    handleInversion(songIterator, pitches) {
+        let tonicPC = songIterator.song.getTransposedKey();
+        let tonicNote = tonal$1.Note.from({ oct: this.getOctave() }, tonicPC);
+        let tonic = tonal$1.Note.midi(tonicNote);
+        let outPitches = [];
+        for (let pitchNote of pitches) {
+            let pitch = tonal$1.Note.midi(pitchNote);
+            if (pitch - tonic >= 6)
+                pitch -= 12;
+            outPitches.push(tonal$1.Note.fromMidi(pitch));
+        }
+        return outPitches;
+    }
+    getAnchorData(songIterator) {
+        let anchorChord = getAnchorChord(this.value.pitch.anchor, songIterator, this.getTime());
+        let root = anchorChordToRoot(anchorChord, this.value.pitch.degree, this.getOctave());
+        return [anchorChord, root];
+    }
+    getPitches(songIterator) {
+        let [anchorChord, root] = this.getAnchorData(songIterator);
+        let pitches;
+        if (this.value.pitch.chord) {
+            // this feels extremely incorrect
+            // why would anyone need it to work this way
+            let anchorChordType = tonal$1.Chord.tokenize(anchorChord)[1];
+            pitches = tonal$1.Chord.notes(root, anchorChordType);
+        }
+        else {
+            pitches = [root];
+        }
+        if (this.scope.vars.get('invertible')) {
+            pitches = this.handleInversion(songIterator, pitches);
+        }
+        return pitches;
+    }
+    /**
+     * Returns true if the beat is anchored via STEP or ARPEGGIATE
+     * @returns {boolean}
+     */
+    isDynamic() {
+        return ['STEP', 'ARPEGGIATE'].includes(this.value.pitch.anchor);
+    }
+    getOctave() {
+        if (this.value.octave === 'inherit') {
+            return this.scope.vars.get('octave').value;
+        }
+        else {
+            return this.value.octave;
+        }
+    }
+    getDuration() {
+        let duration;
+        duration = this.parentMeasure.calculateDurationAfter(this.indexInMeasure);
+        if (this.value.time.flag === 'STACCATO') {
+            return Math.min(0.25, duration);
+        }
+        else {
+            return duration;
+        }
+    }
+    getVolume() {
+        let volume = this.scope.vars.get('volume').value;
+        if (this.value.time.flag === 'ACCENTED')
+            volume = Math.min(1, volume += .1);
+        return volume;
+    }
+    execute(songIterator) {
+        let notes = new NoteSet();
+        let time = this.getTime(); // @TODO: this varies with rolling
+        let pitches = this.getPitches(songIterator);
+        let duration = this.getDuration(); // @TODO: this varies with rolling
+        let volume = this.getVolume();
+        for (let pitch of pitches) {
+            notes.push(new Note({
+                time: time,
+                pitch: pitch,
+                duration: duration,
+                volume: volume
+            }));
+        }
+        return notes;
+    }
+}
+class DrumBeatLiteral {
+    constructor(opts) {
+        this.value = new PlaybackDrumBeatValue(opts.time, opts.accented);
+        this.scope = null;
+        this.parentMeasure = null;
+        this.indexInMeasure = null;
+    }
+    init(scope, parentMeasure, indexInMeasure) {
+        this.scope = scope;
+        this.parentMeasure = parentMeasure;
+        this.indexInMeasure = indexInMeasure;
+    }
+    getTime() {
+        return this.value.time;
+    }
+    getDuration() {
+        let duration;
+        duration = this.parentMeasure.calculateDurationAfter(this.indexInMeasure);
+        return duration;
+    }
+    getVolume() {
+        let volume = this.scope.vars.get('volume').value;
+        if (this.value.accented)
+            volume = Math.min(1, volume += .1);
+        return volume;
+    }
+    execute(songIterator) {
+        let time = this.getTime();
+        let duration = this.getDuration();
+        let volume = this.getVolume();
+        return new NoteSet(new Note({
+            time: time,
+            pitch: AwaitingDrum,
+            duration: duration,
+            volume: volume
+        }));
     }
 }
 
@@ -2284,8 +2358,8 @@ class BeatGroupLiteral {
         for (let i = 0; i < this.measures.length; i++) {
             let offset = i * 4; // @TODO: pull in actual meter somehow
             let measureNotes = this.measures[i].execute(songIterator);
-            if (measureNotes === Nil)
-                return Nil; // lets a/s abort the beatgroup
+            if (measureNotes === null)
+                return null; // lets a/s abort the beatgroup
             for (let measureNote of measureNotes) {
                 measureNote.time += offset;
                 joinedMeasures.push(measureNote);
@@ -2310,7 +2384,7 @@ class BeatGroupLiteral {
         // later if it's a multi-measure beatgroup)
         // @TODO: wtf?
         const nextMeasure = songIterator.getRelative(1);
-        return MelodicBeatLiteral.normalizeChord(nextMeasure && nextMeasure.beats[0].chord);
+        return normalizeChordForTonal(nextMeasure && nextMeasure.beats[0].chord);
     }
 }
 class Measure {
@@ -2355,8 +2429,8 @@ class Measure {
         let joined = new NoteSet();
         for (let beat of this.beats) {
             let notes = beat.execute(songIterator);
-            if (notes === Nil)
-                return Nil; // lets a and s abort the beatgroup.
+            if (!notes)
+                return null; // lets a and s abort the beatgroup.
             joined.push(...notes);
         }
         return joined;
@@ -2456,11 +2530,11 @@ let ParserRules = [
     {"name": "FunctionCallExpression$macrocall$1", "symbols": ["FunctionCallExpression$macrocall$2", "FunctionCallExpression$macrocall$1$ebnf$1"], "postprocess": d => d[0].concat(d[1])},
     {"name": "FunctionCallExpression", "symbols": ["Identifier", "_?", {"literal":"("}, "_?", "FunctionCallExpression$macrocall$1", "_?", {"literal":")"}], "postprocess": d => new FunctionCall(d[0], d[4])},
     {"name": "FunctionCallExpression", "symbols": ["Identifier", "_?", {"literal":"("}, {"literal":")"}], "postprocess": d => new FunctionCall(d[0], [])},
-    {"name": "FunctionCallArgument", "symbols": ["NumericExpression"], "postprocess": id},
-    {"name": "FunctionCallArgument", "symbols": ["StringLiteral"], "postprocess": id},
-    {"name": "FunctionCallArgument", "symbols": ["BooleanLiteral"], "postprocess": id},
+    {"name": "FunctionCallArgument", "symbols": ["NumericExpression"], "postprocess": d => new PlaybackNumberValue(d[0])},
+    {"name": "FunctionCallArgument", "symbols": ["StringLiteral"], "postprocess": d => new PlaybackStringValue(d[0])},
+    {"name": "FunctionCallArgument", "symbols": ["BooleanLiteral"], "postprocess": d => new PlaybackBooleanValue(d[0])},
     {"name": "FunctionCallArgument", "symbols": ["PatternExpression"], "postprocess": id},
-    {"name": "FunctionCallArgument", "symbols": ["BL_PP_Anchor"], "postprocess": d => new AnchorArgument(d[0])},
+    {"name": "FunctionCallArgument", "symbols": ["BL_PP_Anchor"], "postprocess": d => new PlaybackAnchorValue(d[0])},
     {"name": "FunctionCallArgument", "symbols": [{"literal":"not"}, "_", "FunctionCallArgument"], "postprocess": d => new BooleanNot(d[2])},
     {"name": "FunctionCallArgument", "symbols": ["FunctionCallArgument", "_", {"literal":"and"}, "_", "FunctionCallArgument"], "postprocess": d => new BooleanAnd(d[0], d[4])},
     {"name": "FunctionCallArgument", "symbols": ["FunctionCallArgument", "_", {"literal":"or"}, "_", "FunctionCallArgument"], "postprocess": d => new BooleanOr(d[0], d[4])},

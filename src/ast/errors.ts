@@ -1,3 +1,5 @@
+import { PlaybackValue } from '../values/values';
+
 // does this have to be an Error? idc
 class PlaybackError extends Error {
   constructor(message, scope) {
@@ -43,8 +45,8 @@ export class FunctionScopeError extends PlaybackError {
   }
 }
 export class FunctionArgumentsError extends PlaybackError {
-  constructor(message, scope) {
-    super(message, scope);
+  constructor(message: string, args: PlaybackValue[], scope) {
+    super(`${message} (got ${args.map(a => a.toOutputString()).join(', ')})`, scope);
   }
 }
 

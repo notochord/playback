@@ -1,9 +1,9 @@
-import {Nil} from './type_utils';
 import {NoteSet} from '../MIDI/Note';
 import {NoSuchStyleError, NoSuchTrackError} from './errors';
 import Scope from './Scope';
 import {MetaStatement, OptionsStatement, ImportStatement} from './ConfigStatements';
 import {TrackStatement, TrackCall} from './Track';
+import * as values from '../values/values';
 import SongIterator from 'notochord-song/types/songiterator';
 
 type Statement = MetaStatement | OptionsStatement | ImportStatement | TrackStatement | TrackCall;
@@ -28,8 +28,8 @@ export default class GlobalScope extends Scope {
   
   init() {
     // set some default values
-    this.vars.set('time-signature', [4, 4]);
-    this.vars.set('tempo', 120);
+    this.vars.set('time-signature', new values.PlaybackTimeSignatureValue([4, 4]));
+    this.vars.set('tempo', new values.PlaybackNumberValue(120));
     
     this.tracks = new Map();
     this.metaStatements = [];
@@ -83,7 +83,7 @@ export default class GlobalScope extends Scope {
     let trackNoteMap = new Map<string, NoteSet>();
     for(let [, track] of this.tracks) {
       let trackNotes = track.execute(songIterator);
-      if(trackNotes !== Nil) trackNoteMap.set(track.instrument, trackNotes);
+      if(trackNotes) trackNoteMap.set(track.instrument, trackNotes);
     }
     return trackNoteMap;
   }

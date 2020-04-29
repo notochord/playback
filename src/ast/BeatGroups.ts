@@ -1,12 +1,12 @@
 import {
   MelodicBeatInDrumBeatGroupError
 } from './errors';
-import {Nil} from './type_utils';
 import {AwaitingDrum, Note, NoteSet} from '../MIDI/Note';
 import {MelodicBeatLiteral} from './BeatLiterals';
 import FunctionCall from './FunctionCall';
 import Scope from './Scope';
 import SongIterator from 'notochord-song/types/songiterator';
+import { normalizeChordForTonal } from './music_utils';
 
 export class BeatGroupLiteral {
   public measures: Measure[];
@@ -22,12 +22,12 @@ export class BeatGroupLiteral {
     this.measures.forEach((measure, i) => measure.init(scope, this, i));
   }
   link() {return;}
-  execute(songIterator) {
+  execute(songIterator: SongIterator): NoteSet | null {
     let joinedMeasures = new NoteSet();
     for(let i = 0; i < this.measures.length; i++) {
       let offset = i * 4; // @TODO: pull in actual meter somehow
       let measureNotes = this.measures[i].execute(songIterator);
-      if(measureNotes === Nil) return Nil; // lets a/s abort the beatgroup
+      if(measureNotes === null) return null; // lets a/s abort the beatgroup
       for(let measureNote of measureNotes as NoteSet) {
         measureNote.time += offset;
         joinedMeasures.push(measureNote);
@@ -52,7 +52,7 @@ export class BeatGroupLiteral {
     // later if it's a multi-measure beatgroup)
     // @TODO: wtf?
     const nextMeasure = songIterator.getRelative(1);
-    return MelodicBeatLiteral.normalizeChord(nextMeasure && nextMeasure.beats[0].chord);
+    return normalizeChordForTonal(nextMeasure && nextMeasure.beats[0].chord);
   }
 }
 
@@ -107,7 +107,7 @@ export class Measure {
     let joined = new NoteSet();
     for(let beat of this.beats) {
       let notes = beat.execute(songIterator);
-      if(notes === Nil) return Nil; // lets a and s abort the beatgroup.
+      if(!notes) return null; // lets a and s abort the beatgroup.
       joined.push(...notes);
     }
     return joined;

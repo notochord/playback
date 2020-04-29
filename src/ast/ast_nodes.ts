@@ -11,7 +11,7 @@ import {MetaStatement, OptionsStatement, ImportStatement} from './ConfigStatemen
 import {TrackStatement, TrackCall} from './Track.js';
 import {PatternStatement, PatternExpressionGroup, PatternCall, JoinedPatternExpression} from './Pattern.js';
 import FunctionCall from './FunctionCall.js';
-import {AnchorArgument, BooleanNot, BooleanAnd, BooleanOr} from './ArgumentOperators.js';
+import {BooleanNot, BooleanAnd, BooleanOr} from './ArgumentOperators.js';
 import {BeatGroupLiteral, Measure, DrumBeatGroupLiteral} from './BeatGroups.js';
 import {MelodicBeatLiteral, DrumBeatLiteral} from './BeatLiterals.js';
 
@@ -28,7 +28,7 @@ export {
   
   /* functions */
   FunctionCall,
-  AnchorArgument, BooleanNot, BooleanAnd, BooleanOr,
+  BooleanNot, BooleanAnd, BooleanOr,
   
   /* beat groups */
   BeatGroupLiteral, Measure, DrumBeatGroupLiteral,

@@ -1,14 +1,28 @@
 import tonal from '../lib/tonal.min.js';
+import { normalizeChordForTonal, getAnchorChord, anchorChordToRoot, chordToScaleName } from './music_utils';
 import {MelodicBeatLiteral} from './BeatLiterals'; 
+import * as values from '../values/values';
 import {FunctionArgumentsError, FunctionScopeError} from './errors';
 import FunctionCall from './FunctionCall';
-import {Nil} from './type_utils';
 import SongIterator from 'notochord-song/types/songiterator';
 import Scope from './Scope';
 
-let definitions = new Map();
+interface IDefineOpts {
+  types?: ArgType[] | '*';
+  scope?: GoalScope;
+  returns: ArgType;
+}
 
-type ArgType = '*' | 'string' | 'number' | 'boolean' | ((...args: any[]) => void) | Nil;
+export interface IFunctionDefinition {
+  types?: ArgType[] | '*';
+  scope?: GoalScope;
+  returns: ArgType;
+  execute: (args: values.PlaybackValue[], songIterator: SongIterator, scope: Scope) => values.PlaybackValue;
+}
+
+let definitions = new Map<string, IFunctionDefinition>();
+
+type ArgType = values.PlaybackValue['type'] | '*';
 
 /**
  * Make an assertion about argument count and types.
@@ -18,36 +32,25 @@ type ArgType = '*' | 'string' | 'number' | 'boolean' | ((...args: any[]) => void
  * (instanceof) to expect.
  * @param {Scope} scope The scope, for error logging.
  */
-export function assertArgTypes(identifier: string, args, types: ArgType[] | '*', scope: Scope) {
+export function assertArgTypes(identifier: string, args: values.PlaybackValue[], types: ArgType[] | '*', scope: Scope) {
   if(types == '*') return;
   if(args.length != types.length) {
-    throw new FunctionArgumentsError(`"${identifier}" requires ${types.length} arguments.`, scope);
+    throw new FunctionArgumentsError(`"${identifier}" requires ${types.length} arguments.`, args, scope);
   }
   for(let i in args) {
     if(types[i] == '*') continue;
     let arg = args[i];
     if(arg instanceof FunctionCall) {
-      arg = arg.returns;
-      if(arg == '*') {
+      if(arg.returns == '*') {
         continue; // what's the correct functionality here? cry?
-      } else if(typeof types[i] == 'string') {
-        if(arg != types[i]) {
-          throw new FunctionArgumentsError(`Argument ${Number(i)+1} of "${identifier}" must be a ${types[i]}.`, scope);
-        }
       } else {
-        if(arg != types[i]) {
-          throw new FunctionArgumentsError(`Argument ${Number(i)+1} of "${identifier}" must be a ${types[i].name}.`, scope);
+        if(arg.returns !== types[i]) {
+          throw new FunctionArgumentsError(`Argument ${Number(i)+1} of "${identifier}" must be a ${types[i]}.`, args, scope);
         }
       }
     } else {
-      if(typeof types[i] == 'string') {
-        if(typeof arg != types[i]) {
-          throw new FunctionArgumentsError(`Argument ${Number(i)+1} of "${identifier}" must be a ${types[i]}.`, scope);
-        }
-      } else {
-        if(!(arg instanceof types[i])) {
-          throw new FunctionArgumentsError(`Argument ${Number(i)+1} of "${identifier}" must be a ${types[i].name}.`, scope);
-        }
+      if(arg.type !== types[i]) {
+        throw new FunctionArgumentsError(`Argument ${Number(i)+1} of "${identifier}" must be a ${types[i]}.`, args, scope);
       }
     }
   }
@@ -94,12 +97,6 @@ export function assertScope(identifier: string, goalscope: GoalScope = 'no-meta'
   }
 }
 
-interface IDefineOpts {
-  types?: ArgType | ArgType[];
-  scope?: GoalScope;
-  returns: ArgType;
-}
-
 /**
  * Define a function.
  * @param {string} identifier The name of the function.
@@ -119,14 +116,14 @@ interface IDefineOpts {
  * - argErr: a function. If the function does further testing on its
  *   arguments and there's an issue, pass this the error message and it throws.
  */
-let define = function(identifier: string, opts: IDefineOpts, func: (args: any[], songIterator: SongIterator, scope: Scope, argErr: (message: string) => void) => any) {
+let define = function(identifier: string, opts: IDefineOpts, func: (args: values.PlaybackValue[], songIterator: SongIterator, scope: Scope, argErr: (message: string) => void) => values.PlaybackValue) {
   let definition = {
     types: opts.types || '*',
     returns: opts.returns || '*',
     scope: opts.scope || 'no-meta',
-    execute: (args: any[], songIterator: SongIterator, scope: Scope) => {
+    execute: (args: values.PlaybackValue[], songIterator: SongIterator, scope: Scope) => {
       let argErr = message => {
-        throw new FunctionArgumentsError(message, scope);
+        throw new FunctionArgumentsError(message, args, scope);
       };
       return func(args, songIterator, scope, argErr);
     }
@@ -148,11 +145,11 @@ let defineVar = function(identifier, type, goalscope = null) {
   let opts: IDefineOpts = {
     types: [type],
     scope: goalscope,
-    returns: Nil
+    returns: 'Nil'
   };
   define(identifier, opts, (args, songIterator, scope, argErr) => {
     scope.vars.set(identifier, args[0]);
-    return Nil;
+    return new values.PlaybackNilValue();
   })
 }
 
@@ -168,16 +165,16 @@ let defineBoolean = function(identifier: string, goalscope = null) {
   let opts: IDefineOpts = {
     types: '*',
     scope: goalscope,
-    returns: Nil
+    returns: 'Nil'
   }
   define(identifier, opts, (args, songIterator, scope, argErr) => {
     if(args.length) {
       assertArgTypes(identifier, args, ['boolean'], scope);
       scope.vars.set(identifier, args[0]);
     } else {
-      scope.vars.set(identifier, true);
+      scope.vars.set(identifier, new values.PlaybackBooleanValue(true));
     }
-    return Nil;
+    return new values.PlaybackNilValue;
   })
 }
 
@@ -194,14 +191,16 @@ define('time-signature',
   {
     types: ['number', 'number'],
     scope: 'options',
-    returns: Nil
+    returns: 'Nil'
   },
   (args, songIterator, scope, argErr) => {
-    if(!Number.isInteger(Math.log2(args[1]))) {
-      argErr(`Argument 2 of "time-signature" must be a power of 2 (got ${args}).`);
+    const value1 = (args[0] as values.PlaybackNumberValue).value;
+    const value2 = (args[1] as values.PlaybackNumberValue).value;
+    if(!Number.isInteger(Math.log2(value1))) {
+      argErr(`Argument 2 of "time-signature" must be a power of 2`);
     }
-    scope.vars.set('time-signature', [args[0], args[1]]);
-    return Nil;
+    scope.vars.set('time-signature', new values.PlaybackTimeSignatureValue([value1, value2]));
+    return new values.PlaybackNilValue();
   });
 defineBoolean('swing', 'options');
 
@@ -210,28 +209,30 @@ define('volume',
   {
     types: ['number'],
     scope: 'no-meta',
-    returns: Nil
+    returns: 'Nil'
   },
   (args, songIterator, scope, argErr) => {
-    if(args[0] < 0 || args[0] > 1) {
-      argErr(`Argument 1 of "volume" must be in range 0-1 (inclusive) (got ${args}).`);
+    const { value } = (args[0] as values.PlaybackNumberValue);
+    if(value < 0 || value > 1) {
+      argErr(`Argument 1 of "volume" must be in range 0-1 (inclusive)`);
     }
     scope.vars.set('volume', args[0]);
-    return Nil;
+    return new values.PlaybackNilValue();
   });
 defineBoolean('invertible', 'no-meta');
 define('octave',
   {
     types: ['number'],
     scope: 'no-meta',
-    returns: Nil
+    returns: 'Nil'
   },
   (args, songIterator, scope, argErr) => {
-    if(!Number.isInteger(args[0]) || args[0] < 0 || args[0] > 9) {
-      argErr(`Argument 1 of "octave" must be an integer 0-9 (got ${args}).`);
+    const { value } = (args[0] as values.PlaybackNumberValue);
+    if(!Number.isInteger(value) || value < 0 || value > 9) {
+      argErr(`Argument 1 of "octave" must be an integer 0-9`);
     }
     scope.vars.set('octave', args[0]);
-    return Nil;
+    return new values.PlaybackNilValue();
   });
 
 /*** anywhere but config functions (strictly dynamic functions) ***/
@@ -242,25 +243,25 @@ define('choose',
     returns: '*'
   },
   (args, songIterator, scope, argErr) => {
-    let nonNilArgs = args.filter(arg => arg !== Nil);
+    let nonNilArgs = args.filter(arg => arg.type !== 'Nil');
     if(nonNilArgs.length) {
       let index = Math.floor(Math.random() * nonNilArgs.length);
       return nonNilArgs[index];
     } else {
-      return Nil;
+      return new values.PlaybackNilValue();
     }
   });
 
-let anchorOrNumberToChordAndRoot = function(arg, songIterator) {
+let anchorOrNumberToChordAndRoot = function(arg: values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator: SongIterator) {
   let anchorChord, root;
-  if(typeof arg == 'number') {
-    anchorChord = MelodicBeatLiteral.getAnchorChord(
+  if(arg.type === 'number') {
+    anchorChord = getAnchorChord(
       null, songIterator, 1);
-    root = MelodicBeatLiteral.anchorChordToRoot(anchorChord, arg, 4);
-  } else if(arg.anchor) {
-    anchorChord = MelodicBeatLiteral.getAnchorChord(
-      arg.anchor, songIterator, 1);
-    root =  MelodicBeatLiteral.anchorChordToRoot(anchorChord, 1, 4);
+    root = anchorChordToRoot(anchorChord, arg.value, 4);
+  } else {
+    anchorChord = getAnchorChord(
+      arg.value, songIterator, 1);
+    root = anchorChordToRoot(anchorChord, 1, 4);
   }
   return [anchorChord, root];
 };
@@ -273,19 +274,18 @@ define('progression',
   },
   (args, songIterator, scope, argErr) => {
     for(let i in args) {
-      let arg = args[i];
-      let [,goal] = anchorOrNumberToChordAndRoot(arg, songIterator);
-      if(!goal) {
-        argErr(`Arguments of "progression" must be numbers or anchors (got ${args}).`);
+      if(args[0].type !== 'number' && args[0].type !== 'anchor') {
+        argErr(`Arguments of "progression" must be numbers or anchors`);
       }
-      let actualMeasure = songIterator.getRelative(Number(i));
-      if(!actualMeasure) return false;
-      let actualChord = MelodicBeatLiteral.normalizeChord(actualMeasure.beats[0].chord);
-      let actual = MelodicBeatLiteral.anchorChordToRoot(
+      const [,goal] = anchorOrNumberToChordAndRoot(args[0] as values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator);
+      const actualMeasure = songIterator.getRelative(Number(i));
+      if(!actualMeasure) return new values.PlaybackBooleanValue(false);
+      const actualChord = normalizeChordForTonal(actualMeasure.beats[0].chord);
+      const actual = anchorChordToRoot(
         actualChord, 1, 4);
-      if(actual != goal) return false;
+      if(actual != goal) return new values.PlaybackBooleanValue(false);
     }
-    return true;
+    return new values.PlaybackBooleanValue(true);
   });
 define('in-scale',
   {
@@ -294,14 +294,15 @@ define('in-scale',
     returns: 'boolean'
   },
   (args, songIterator, scope, argErr) => {
-    let [,note] = anchorOrNumberToChordAndRoot(args[0], songIterator);
-    let [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1], songIterator);
-    if(!note || !goalChord) {
-      argErr(`Arguments of "in-scale" must be numbers or anchors (got ${args}).`);
+    if((args[0].type !== 'number' && args[0].type !== 'anchor')
+      || args[1].type !== 'number' && args[1].type !== 'anchor') {
+      argErr(`Arguments of "in-scale" must be numbers or anchors`);
     }
-    let goalScaleName = MelodicBeatLiteral.chordToScaleName(goalChord);
+    let [,note] = anchorOrNumberToChordAndRoot(args[0] as values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator);
+    let [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1] as values.PlaybackNumberValue | values.PlaybackAnchorValue, songIterator);
+    let goalScaleName = chordToScaleName(goalChord);
     let goalScale = tonal.Scale.notes(goalTonic, goalScaleName);
-    return goalScale.includes(note);
+    return new values.PlaybackBooleanValue(goalScale.includes(note));
   });
 define('beat-defined',
   {
@@ -311,8 +312,9 @@ define('beat-defined',
   },
   (args, songIterator, scope, argErr) => {
     let measure = songIterator.getRelative(0);
-    if(!measure) return false;
-    return measure.beats[args[0]].chord !== null;
+    if(!measure) return new values.PlaybackBooleanValue(false);
+    const index = (args[0] as values.PlaybackNumberValue).value;
+    return new values.PlaybackBooleanValue(measure.beats[index].chord !== null);
   });
 
 /*** pattern-only functions ***/
@@ -322,14 +324,14 @@ define('chance',
   {
     types: ['number'],
     scope: 'pattern',
-    returns: Nil
+    returns: 'Nil'
   },
   (args, songIterator, scope, argErr) => {
-    if(args[0] < 0 || args[0] > 1) {
-      argErr(`Argument 1 of "chance" must be in range 0-1 (inclusive) (got ${args}).`);
+    if((args[0] as values.PlaybackNumberValue).value < 0 || (args[0] as values.PlaybackNumberValue).value > 1) {
+      argErr(`Argument 1 of "chance" must be in range 0-1 (inclusive)`);
     }
     scope.vars.set('chance', args[0]);
-    return Nil;
+    return new values.PlaybackNilValue();
   });
 
 export {definitions};
