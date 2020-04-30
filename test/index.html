@@ -34,6 +34,11 @@
     <body>
         <div class="col">
             <h2>Style</h2>
+            <select id="styleSelect">
+                <option selected>swing.play</option>
+                <option>basic.play</option>
+                <option>samba.play</option>
+            </select>
             <textarea id="style"></textarea>
         </div>
         <div class="col">
@@ -49,13 +54,17 @@
             import Song from '../node_modules/notochord-song/dist/notochord-song.web.mjs';
             import { PlaybackStyle, Player } from '../dist/playback.web.mjs';
 
+            const styleSelect = document.querySelector('#styleSelect')
             const styleTextarea = document.querySelector('#style');
             const songTextarea = document.querySelector('#song');
-            let compileButton = document.querySelector('#compile');
-            let playButton = document.querySelector('#play');
-            let pre = document.querySelector('#output');
+            const compileButton = document.querySelector('#compile');
+            const playButton = document.querySelector('#play');
+            const pre = document.querySelector('#output');
 
-            const log = (message) => pre.textContent += message + '\n';
+            const log = (message) => {
+                console.log(message);
+                pre.textContent += message + '\n';
+            }
 
             styleTextarea.addEventListener('input', () => {
                 playButton.disabled = true;
@@ -64,20 +73,33 @@
             fetch('../styles/swing.play')
                 .then(r => r.text())
                 .then((styleValue) => {
+                    styleSelect.options[0].value = styleValue;
                     styleTextarea.value = styleValue;
                 });
-
-            // this is soooo hacky
-            fetch('../node_modules/notochord-song/blueSkies.mjs')
+            
+            fetch('../styles/basic.play')
                 .then(r => r.text())
+                .then((styleValue) => {
+                    styleSelect.options[1].value = styleValue;
+                });
+
+            fetch('../styles/samba.play')
+                .then(r => r.text())
+                .then((styleValue) => {
+                    styleSelect.options[2].value = styleValue;
+                });
+
+            import('../node_modules/notochord-song/blueSkies.mjs')
                 .then((songSerialized) => {
-                    const [, songObject] = songSerialized.split('export default ');
-                    const strinppedSemicolon = songObject.substring(0, songObject.length - 1);
-                    songTextarea.value = strinppedSemicolon;
+                    songTextarea.value = JSON.stringify(songSerialized.default, null, 4);
                 });
             
+            styleSelect.addEventListener('change', () => {
+                styleTextarea.value = styleSelect.value;
+                playButton.disabled = true;
+            });
+            
             let style = null;
-
             let player = new Player();
             compileButton.addEventListener('click', () => {
                 playButton.disabled = true;
@@ -91,11 +113,14 @@
                 } catch (e) {
                     log(e);
                 }
-            })
+            });
 
             playButton.addEventListener('click', () => {
-                const song = new Song(eval('(' + songTextarea.value + ')'));
                 try {
+                    const parsed = JSON.parse(songTextarea.value);
+                    console.log(parsed);
+                    const song = new Song(JSON.parse(songTextarea.value));
+                    console.log(song);
                     player.play(song);
                 } catch (e) {
                     log(e);

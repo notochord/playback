@@ -54,7 +54,19 @@ export class FunctionArgumentsError extends PlaybackError {
   }
 }
 
+/* Track-related errors */
+export class TrackDuplicateNameError extends PlaybackError {
+  public constructor(identifier: string, scope: ErrorScope) {
+    super(`There are 2 or more tracks with the name "${identifier}"`, scope);
+  }
+}
+
 /* Pattern-related errors */
+export class PatternDuplicateNameError extends PlaybackError {
+  public constructor(identifier: string, scope: ErrorScope) {
+    super(`There are 2 or more patterns with the name "${identifier}"`, scope);
+  }
+}
 export class TooManyBeatsError extends PlaybackError {
   public constructor(scope: ErrorScope) {
     super(

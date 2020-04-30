@@ -3,6 +3,7 @@ import { Scope } from './ASTNodeBase';
 import { MetaStatement, OptionsStatement, ImportStatement } from './ConfigStatements';
 import { TrackStatement, TrackCall } from './Track';
 import * as values from '../values/values';
+import * as errors from './errors';
 import SongIterator from 'notochord-song/types/songiterator';
 
 type Statement = MetaStatement | OptionsStatement | ImportStatement | TrackStatement | TrackCall;
@@ -29,6 +30,7 @@ export default class GlobalScope extends Scope {
     // set some default values
     this.vars.set('time-signature', new values.TimeSignatureValue([4, 4]));
     this.vars.set('tempo', new values.NumberValue(120));
+    this.vars.set('swing', new values.BooleanValue(false));
     
     this.tracks = new Map();
     this.metaStatements = [];
@@ -46,6 +48,9 @@ export default class GlobalScope extends Scope {
         this.importedStyles.set(statement.identifier, statement.path);
         this.dependencies.push(statement.path);
       } else if(statement instanceof TrackStatement) {
+        if (this.tracks.has(statement.name)) {
+          throw new errors.TrackDuplicateNameError(statement.name, this);
+        }
         this.tracks.set(statement.name, statement);
       } else if(statement instanceof TrackCall) {
         this.trackCalls.push(statement);

@@ -98,6 +98,16 @@ the octave below.
 A private pattern is not taken into consideration when the track picks a pattern
 to play. Private patterns are ignored unless they're called somewhere else.
 
+### `override-track(boolean)`
+
+* **Default value:** false
+* **Allowed in:** `@pattern`
+* **Version introduced:** 0
+
+If true, the pattern is guaranteed to play and all other patterns will be
+ignored. Use this in conditional patterns to avoid having a "not" condition on
+all other patterns. The first pattern with this set to true will be used.
+
 ### `length(number)`
 
 * **Default value:** (based on the time signature)
@@ -141,9 +151,16 @@ Returns whether the first argument is in the scale of the second argument
 
 * **Version introduced:** 0
 
-Returns whether a certain beat of the current measure is set in the song (TODO:
-does this mean *different* from the previous beat? That's probably something the
-Song class should worry about)
+Returns whether a certain beat of the current measure is set in the song. Note
+that beats are 1-indexed.
+
+### `measure-divisible-by(number)`
+
+* **Version introduced:** 0
+
+Returns whether the current measure index is divisible by the given number. This
+basically allows you to orient yourself in the phrase. Note that measures are
+0-indexed.
 
 ## Other
 

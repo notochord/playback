@@ -1,0 +1,46 @@
+@meta {
+	name("Basic")
+	author("Jacob Bloom")
+	description("A basic style that just plays a metronome and each chord")
+}
+
+@options {
+	time-signature(4 4)
+}
+
+@track "percussion" as drums {
+	@pattern metronome {
+		"Bass Drum" <1> & "Hi Wood Block" <2 3 4>
+	}
+}
+
+@track "acoustic_grand_piano" as piano {
+	invertible()
+	octave(4)
+	
+	@pattern all if(beat-defined(2) or beat-defined(4)) {
+		override-track()
+		<:1c :1c :1c :1c>
+	}
+	@pattern third if(beat-defined(3)) {
+		override-track()
+		<:1c 3:1c>
+	}
+	@pattern noThird <:1c>
+}
+
+@track "acoustic_bass" as bass {
+	volume(1)
+	octave(2)
+	invertible()
+
+	@pattern all if(beat-defined(2) or beat-defined(4)) {
+		override-track()
+		<:1 :1 :1 :1>
+	}
+	@pattern third if(beat-defined(3)) {
+		override-track()
+		<:1 3:1>
+	}
+	@pattern noThird <:1>
+}

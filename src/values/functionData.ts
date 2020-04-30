@@ -280,7 +280,7 @@ define('progression',
       const [,goal] = anchorOrNumberToChordAndRoot(args[0] as values.NumberValue | values.AnchorValue, songIterator);
       const actualMeasure = songIterator.getRelative(Number(i));
       if(!actualMeasure) return new values.BooleanValue(false);
-      const actualChord = normalizeChordForTonal(actualMeasure.beats[0].chord);
+      const actualChord = normalizeChordForTonal(actualMeasure.beats[0].chord || undefined);
       const actual = anchorChordToRoot(
         actualChord, 1, 4);
       if(actual !== goal) return new values.BooleanValue(false);
@@ -313,12 +313,24 @@ define('beat-defined',
   (args, songIterator, scope, argErr) => {
     const measure = songIterator.getRelative(0);
     if(!measure) return new values.BooleanValue(false);
-    const index = (args[0] as values.NumberValue).value;
-    return new values.BooleanValue(measure.beats[index].chord !== null);
+    const index = (args[0] as values.NumberValue).value - 1;
+    console.log('     - beat-defined: item', index, 'of', measure, '=', measure.beats[index]);
+    return new values.BooleanValue(!!(measure.beats[index] && measure.beats[index].chord));
+  });
+
+define('measure-divisible-by',
+  {
+    types: ['number'],
+    scope: 'no-config',
+    returns: 'boolean'
+  },
+  (args, songIterator, scope, argErr) => {
+    return new values.BooleanValue(songIterator.index % (args[0] as values.NumberValue).value === 0);
   });
 
 /*** pattern-only functions ***/
 defineBoolean('private', 'pattern');
+defineBoolean('override-track', 'pattern');
 defineVar('length', 'number', 'pattern');
 define('chance',
   {

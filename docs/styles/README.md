@@ -137,8 +137,7 @@ separate tracks for the left and right hands on piano).
 
 The track plays samples from a soundfont, which you can choose in one of 3 ways:
 
-* The name of a General MIDI instrument, as per MIDI.js's pre-built soundfonts.
-  (TODO: link)
+* The name of a General MIDI instrument, as per [MIDI.js's pre-built soundfonts](https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/names.json).
 * `"percussion"` which imports our [percussion soundfont](https://github.com/notochord/percussion-soundfont.js).
   Drum tracks have some special properties we'll get to later.
 * A soundfont URL, followed by a space, and then a number representing the

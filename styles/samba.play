@@ -1,0 +1,64 @@
+@meta {
+	name("Samba")
+	author("Jacob Bloom")
+	description("A simple Samba style")
+}
+
+@options {
+	time-signature(4 4)
+}
+
+@track "percussion" as drums {
+  volume(0.2)
+  @pattern hiHatEven if (measure-divisible-by(2)) {
+    private()
+    "Open Hi-Hat" choose(
+      <2 3 3.5 4.5>
+      <1 2 3 3.5 4 4.5>
+    )
+  }
+  @pattern hiHatOdd if (not measure-divisible-by(2)) {
+    private()
+    "Open Hi-Hat" choose(
+      <1.5 2 3 4 4.5>
+      <1.5 2 3 3.5 4.5>
+    )
+  }
+  @pattern drums {
+    @pattern(hiHatEven) & @pattern(hiHatOdd) &
+    { volume(0.4) "Bass Drum" <1 2.5> } &
+    "Closed Hi Hat" <2 4>
+  }
+}
+
+@track "acoustic_grand_piano" as piano {
+	invertible()
+	octave(4)
+	
+	@pattern maybeThird1 <1.5:1c 2:1cr 3.5:1c>
+  @pattern maybeThird2 <1:1cr 2.5:1c 3.5:1c>
+  @pattern maybeThird3 <1:1cr 2.5:1cr 4:1c 4.5:1c>
+  @pattern third if (beat-defined(3)) <1:1cr 2.5:1cr>
+}
+
+@track "acoustic_bass" as bass {
+	volume(1)
+	octave(2)
+	invertible()
+
+  @pattern allBeats if(beat-defined(2) or beat-defined(4)) {
+    override-track()
+    <:1 :1 :1 :1>
+  }
+  @pattern thirdSet if(beat-defined(3)) {
+    override-track()
+    <1:1 2.5 3:1 4.5:1>
+  }
+
+  @pattern else {
+    choose(
+      <1:1 2.5:5>
+      <1:1 2.5:5 4:1>
+    )
+  }
+}

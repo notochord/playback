@@ -1,7 +1,7 @@
 @meta {
 	name("Swing")
 	author("Jacob Bloom")
-	description("You know the drill")
+	description("A simple swing style")
 }
 
 @options {
@@ -23,14 +23,6 @@
 		chance(3/10) // evaluates to 0.3
 		volume(0.2)
 	}
-	// if not it returns nil, if we end up with nil just don't play lol
-	
-	@pattern hi-hat {
-		private()
-		"Open Hi-Hat" <1 2 2.5 3 4 4.5> &
-		"Closed Hi Hat" <2 4> // automatic overlay is stupid, simply throw when we get <> <> outside of args list
-		volume(0.2)
-	}
 	@pattern drums-mixed {
 		@pattern(snare-hits) &
 		@pattern(stdlib.drums.hi-hat) &
@@ -39,7 +31,7 @@
 }
 
 // ***** PIANO  *****
-@track "acoustic_grand_piano" as piano { // "as" required.
+@track "acoustic_grand_piano" as piano {
 	invertible()
 	octave(4)
 	

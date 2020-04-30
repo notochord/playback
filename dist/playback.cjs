@@ -1047,7 +1047,18 @@ class FunctionArgumentsError extends PlaybackError {
         super(`${message} (got ${args.map(a => a.toOutputString()).join(', ')})`, scope);
     }
 }
+/* Track-related errors */
+class TrackDuplicateNameError extends PlaybackError {
+    constructor(identifier, scope) {
+        super(`There are 2 or more tracks with the name "${identifier}"`, scope);
+    }
+}
 /* Pattern-related errors */
+class PatternDuplicateNameError extends PlaybackError {
+    constructor(identifier, scope) {
+        super(`There are 2 or more patterns with the name "${identifier}"`, scope);
+    }
+}
 class TooManyBeatsError extends PlaybackError {
     constructor(scope) {
         super('Pattern may only contain 1 BeatGroup. Try the join operator "&"', scope);
@@ -1617,7 +1628,7 @@ define$1('progression', {
         const actualMeasure = songIterator.getRelative(Number(i));
         if (!actualMeasure)
             return new BooleanValue(false);
-        const actualChord = normalizeChordForTonal(actualMeasure.beats[0].chord);
+        const actualChord = normalizeChordForTonal(actualMeasure.beats[0].chord || undefined);
         const actual = anchorChordToRoot(actualChord, 1, 4);
         if (actual !== goal)
             return new BooleanValue(false);
@@ -1647,11 +1658,20 @@ define$1('beat-defined', {
     const measure = songIterator.getRelative(0);
     if (!measure)
         return new BooleanValue(false);
-    const index = args[0].value;
-    return new BooleanValue(measure.beats[index].chord !== null);
+    const index = args[0].value - 1;
+    console.log('     - beat-defined: item', index, 'of', measure, '=', measure.beats[index]);
+    return new BooleanValue(!!(measure.beats[index] && measure.beats[index].chord));
+});
+define$1('measure-divisible-by', {
+    types: ['number'],
+    scope: 'no-config',
+    returns: 'boolean'
+}, (args, songIterator, scope, argErr) => {
+    return new BooleanValue(songIterator.index % args[0].value === 0);
 });
 /*** pattern-only functions ***/
 defineBoolean('private', 'pattern');
+defineBoolean('override-track', 'pattern');
 defineVar('length', 'number', 'pattern');
 define$1('chance', {
     types: ['number'],
@@ -1727,6 +1747,7 @@ class PatternExpressionGroup extends Scope {
         this.type = 'PatternExpressionGroup';
         this.name = '@pattern(<anonymous>)';
         this.defaultVars.set('private', new BooleanValue(false));
+        this.defaultVars.set('override-track', new BooleanValue(false));
         this.defaultVars.set('chance', new NumberValue(1));
         this.expressions = expressions;
         this.functionCalls = [];
@@ -1931,6 +1952,9 @@ class TrackStatement extends Scope {
                 this.functionCalls.push(member);
             }
             else if (member instanceof PatternStatement) {
+                if (this.patterns.has(member.identifier)) {
+                    throw new PatternDuplicateNameError(member.identifier, this);
+                }
                 this.patterns.set(member.identifier, member);
             }
             else if (member instanceof PatternCall) {
@@ -1960,6 +1984,14 @@ class TrackStatement extends Scope {
         const weightedOptions = [];
         for (const [patternname, pattern] of this.patterns) {
             console.log(`- pattern "${patternname}":`);
+            if (pattern instanceof PatternStatement && pattern.vars.get('override-track').value) {
+                const overrideReturnVal = pattern.execute(songIterator, true);
+                if (overrideReturnVal.type === 'note_set') {
+                    console.log(`  - OVERRIDE TRACK`);
+                    console.log('  - Final result:', overrideReturnVal);
+                    return overrideReturnVal;
+                }
+            }
             // true = I'm the instrument so if you're private return Nil
             const result = pattern.execute(songIterator, true);
             console.log('  - Result:', result);
@@ -2014,6 +2046,7 @@ class GlobalScope extends Scope {
         // set some default values
         this.vars.set('time-signature', new TimeSignatureValue([4, 4]));
         this.vars.set('tempo', new NumberValue(120));
+        this.vars.set('swing', new BooleanValue(false));
         this.tracks = new Map();
         this.metaStatements = [];
         // @TODO: stop circular dependencies? cache them and mark one as mom
@@ -2031,6 +2064,9 @@ class GlobalScope extends Scope {
                 this.dependencies.push(statement.path);
             }
             else if (statement instanceof TrackStatement) {
+                if (this.tracks.has(statement.name)) {
+                    throw new TrackDuplicateNameError(statement.name, this);
+                }
                 this.tracks.set(statement.name, statement);
             }
             else if (statement instanceof TrackCall) {

@@ -23,6 +23,7 @@ export class PatternExpressionGroup extends Scope {
     this.name = '@pattern(<anonymous>)';
     
     this.defaultVars.set('private', new values.BooleanValue(false));
+    this.defaultVars.set('override-track', new values.BooleanValue(false));
     this.defaultVars.set('chance', new values.NumberValue(1));
     
     this.expressions = expressions;

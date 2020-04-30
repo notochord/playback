@@ -6,6 +6,7 @@ import FunctionCall from './FunctionCall';
 import { PatternStatement, PatternCall } from './Pattern';
 import SongIterator from 'notochord-song/types/songiterator';
 import * as values from '../values/values';
+import * as errors from './errors';
 import GlobalScope from './GlobalScope';
 
 export class TrackStatement extends Scope {
@@ -41,6 +42,9 @@ export class TrackStatement extends Scope {
       if(member instanceof FunctionCall) {
         this.functionCalls.push(member);
       } else if(member instanceof PatternStatement) {
+        if (this.patterns.has(member.identifier)) {
+          throw new errors.PatternDuplicateNameError(member.identifier, this);
+        }
         this.patterns.set(member.identifier, member);
       } else if(member instanceof PatternCall) {
         this.patternCalls.push(member);
@@ -72,6 +76,14 @@ export class TrackStatement extends Scope {
     const weightedOptions = [];
     for(const [patternname, pattern] of this.patterns) {
       console.log(`- pattern "${patternname}":`);
+      if (pattern instanceof PatternStatement && pattern.vars.get('override-track')!.value) {
+        const overrideReturnVal = pattern.execute(songIterator, true);
+        if (overrideReturnVal.type === 'note_set') {
+          console.log(`  - OVERRIDE TRACK`);
+          console.log('  - Final result:', overrideReturnVal);
+          return overrideReturnVal;
+        }
+      }
       // true = I'm the instrument so if you're private return Nil
       const result = pattern.execute(songIterator, true);
       console.log('  - Result:', result);
