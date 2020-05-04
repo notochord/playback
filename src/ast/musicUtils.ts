@@ -1,6 +1,5 @@
 import SongIterator from 'notochord-song/types/songiterator';
-// @ts-ignore
-import tonal from '../lib/tonal.min.js';
+import tonal from '@tonaljs/tonal';
 
 export function normalizeChordForTonal(chord = ''): string {
   return chord
@@ -19,7 +18,7 @@ export function getAnchorChord(anchor: Anchor | null | undefined, songIterator: 
     case 'NEXT': {
       const nextMeasure = songIterator.getRelative(1);
       if(nextMeasure) {
-        anchorChord = nextMeasure.beats[0].chord;
+        anchorChord = nextMeasure.beats[0].chord || '';
       } else {
         anchorChord = songIterator.song.getTransposedKey();
       }
@@ -41,7 +40,7 @@ export function getAnchorChord(anchor: Anchor | null | undefined, songIterator: 
       if(!iteratorMeasure) break;
       do {
         const beat = iteratorMeasure.beats[lastSetBeat]
-        anchorChord = beat && beat.chord;
+        anchorChord = (beat && beat.chord) ? beat.chord : '';
         lastSetBeat--;
       } while(!anchorChord);
       break;

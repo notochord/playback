@@ -1,8 +1,6 @@
 // @ts-ignore
 import drumJson from './drums.json.js';
-// @ts-ignore
-import * as _Tonal from 'tonal';
-const tonal = (_Tonal as any).default || _Tonal;
+import * as Tonal from '@tonaljs/tonal';
 
 /**
  * There are some inconsistencies with the official MIDI drum names, this
@@ -54,7 +52,7 @@ export class Note {
       if(drumValue) {
         return drumValue;
       } else {
-        return tonal.Note.midi(this.pitch);
+        return Tonal.Note.midi(this.pitch);
       }
     }
   }

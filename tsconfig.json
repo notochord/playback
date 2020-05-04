@@ -6,8 +6,7 @@
     "noImplicitAny": true,
     "strictNullChecks": true
   },
-  "files": [
-    "src/playback.ts",
-    // "src/interfaces.d.ts"
+  "include": [
+    "src/"
   ],
 }

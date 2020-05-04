@@ -1,5 +1,4 @@
-// @ts-ignore
-import tonal from '../lib/tonal.min.js';
+import Tonal from '@tonaljs/tonal';
 import { ASTNodeBase, Scope } from './ASTNodeBase';
 import { Measure } from './BeatGroups';
 import { getAnchorChord, anchorChordToRoot } from './musicUtils';
@@ -30,13 +29,13 @@ export class MelodicBeatLiteral extends ASTNodeBase {
   }
   public handleInversion(songIterator: SongIterator, pitches: string[]): string[] {
     const tonicPC = songIterator.song.getTransposedKey();
-    const tonicNote = tonal.Note.from({ oct: this.getOctave() }, tonicPC);
-    const tonic = tonal.Note.midi(tonicNote);
+    const tonicNote = Tonal.Note.from({ oct: this.getOctave() }, tonicPC);
+    const tonic = Tonal.Note.midi(tonicNote);
     const outPitches = [];
     for(const pitchNote of pitches) {
-      let pitch = tonal.Note.midi(pitchNote);
+      let pitch = Tonal.Note.midi(pitchNote);
       if(pitch - tonic >= 6) pitch -= 12;
-      outPitches.push(tonal.Note.fromMidi(pitch));
+      outPitches.push(Tonal.Note.fromMidi(pitch));
     }
     return outPitches;
   }
@@ -57,8 +56,8 @@ export class MelodicBeatLiteral extends ASTNodeBase {
     if(this.value.pitch.chord) {
       // this feels extremely incorrect
       // why would anyone need it to work this way
-      const anchorChordType = tonal.Chord.tokenize(anchorChord)[1];
-      pitches = tonal.Chord.notes(root, anchorChordType);
+      const anchorChordType = Tonal.Chord.tokenize(anchorChord)[1];
+      pitches = Tonal.Chord.notes(root, anchorChordType);
     } else {
       pitches = [root];
     }

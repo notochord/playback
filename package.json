@@ -2,12 +2,18 @@
   "name": "playback",
   "version": "0.0.2",
   "description": "Chord player that can load different styles",
-  "main": "dist/playback.js",
+  "main": "dist/playback.cjs",
   "type": "module",
+  "exports": {
+    "import": "dist/playback.node.mjs",
+    "require": "dist/playback.cjs"
+  },
+  "browser": "dist/playback.web.mjs",
   "types": "types/playback.d.ts",
   "scripts": {
     "playground": "npx http-server -o test/index.html",
     "lint": "npx eslint src/**/*.ts --fix",
+    "link": "npm link ~/git/notochord-song",
     "test": "TS_NODE_IGNORE=\"/node_modules|(ts$)/\" npx ts-mocha -p test/tsconfig.json test/*.ts",
     "build-grammar": "npx nearleyc src/parser/grammar.ne -o src/parser/grammar.js",
     "build": "npx rollup -c; # npm run build-declarations",
@@ -35,10 +41,8 @@
     "mocha": "^6.1.4",
     "nearley": "2.13.0",
     "rollup": "^1.17.0",
-    "rollup-plugin-alias": "^1.5.2",
     "rollup-plugin-banner": "^0.2.0",
     "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-terser": "^5.1.1",
     "rollup-plugin-typescript": "^1.0.1",
     "ts-mocha": "^7.0.0",
     "ts-node": "^8.3.0",
@@ -46,6 +50,9 @@
     "typescript": "^3.5.3"
   },
   "peerDependencies": {
-    "notochord-song": "git+https://github.com/notochord/notochord-song.git#2.0.0"
+    "notochord-song": "git+https://github.com/notochord/notochord-song.git#3.0.0"
+  },
+  "dependencies": {
+    "@tonaljs/tonal": "^3.7.2"
   }
 }

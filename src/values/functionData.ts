@@ -1,5 +1,4 @@
-// @ts-ignore
-import tonal from '../lib/tonal.min.js';
+import * as Tonal from '@tonaljs/tonal';
 import { normalizeChordForTonal, getAnchorChord, anchorChordToRoot, chordToScaleName } from '../ast/musicUtils';
 import * as values from './values';
 import { FunctionArgumentsError, FunctionScopeError } from '../ast/errors';
@@ -301,7 +300,7 @@ define('in-scale',
     const [,note] = anchorOrNumberToChordAndRoot(args[0] as values.NumberValue | values.AnchorValue, songIterator);
     const [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1] as values.NumberValue | values.AnchorValue, songIterator);
     const goalScaleName = chordToScaleName(goalChord);
-    const goalScale = tonal.Scale.notes(goalTonic, goalScaleName);
+    const goalScale = Tonal.Scale.notes(goalTonic, goalScaleName);
     return new values.BooleanValue(goalScale.includes(note));
   });
 define('beat-defined',
