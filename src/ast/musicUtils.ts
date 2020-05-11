@@ -1,4 +1,4 @@
-import SongIterator from 'notochord-song/types/songiterator';
+import { SongIterator } from 'notochord-song';
 import tonal from '@tonaljs/tonal';
 
 export function normalizeChordForTonal(chord = ''): string {

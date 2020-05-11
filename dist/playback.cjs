@@ -28,8 +28,8 @@ function _interopNamespace(e) {
     }
 }
 
-var tonal$1 = require('tonal');
-var tonal$1__default = _interopDefault(tonal$1);
+var Tonal = require('@tonaljs/tonal');
+var Tonal__default = _interopDefault(Tonal);
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -47,10 +47,11 @@ and limitations under the License.
 ***************************************************************************** */
 
 function __awaiter(thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 }
@@ -1295,7 +1296,6 @@ class ImportStatement extends ASTNodeBase {
     execute() { return new NilValue(); }
 }
 
-// @ts-ignore
 function normalizeChordForTonal(chord = '') {
     return chord
         .replace(/-/g, '_') // tonal uses _ over - for minor7
@@ -1344,16 +1344,16 @@ function getAnchorChord(anchor, songIterator, currentTime) {
     return normalizeChordForTonal(anchorChord);
 }
 function anchorChordToRoot(anchorChord, degree, octave) {
-    const anchorTonic = tonal$1__default.Chord.tokenize(anchorChord)[0];
+    const anchorTonic = Tonal__default.Chord.tokenize(anchorChord)[0];
     const anchorScaleName = chordToScaleName(anchorChord);
-    const scalePCs = tonal$1__default.Scale.notes(anchorTonic, anchorScaleName);
+    const scalePCs = Tonal__default.Scale.notes(anchorTonic, anchorScaleName);
     const rootPC = scalePCs[degree - 1];
-    return tonal$1__default.Note.from({ oct: octave }, rootPC);
+    return Tonal__default.Note.from({ oct: octave }, rootPC);
 }
 function chordToScaleName(chord) {
-    const chordType = tonal$1__default.Chord.tokenize(chord)[1];
+    const chordType = Tonal__default.Chord.tokenize(chord)[1];
     // @TODO: make this more robust
-    const names = tonal$1__default.Chord.props(chordType).names;
+    const names = Tonal__default.Chord.props(chordType).names;
     if (names.includes('dim'))
         return 'diminished';
     if (names.includes('aug'))
@@ -1381,7 +1381,6 @@ function chordToScaleName(chord) {
     return closestScale;
 }
 
-// @ts-ignore
 const definitions = new Map();
 /**
  * Make an assertion about argument count and types.
@@ -1644,7 +1643,7 @@ define$1('in-scale', {
     const [, note] = anchorOrNumberToChordAndRoot(args[0], songIterator);
     const [goalChord, goalTonic] = anchorOrNumberToChordAndRoot(args[1], songIterator);
     const goalScaleName = chordToScaleName(goalChord);
-    const goalScale = tonal$1__default.Scale.notes(goalTonic, goalScaleName);
+    const goalScale = Tonal.Scale.notes(goalTonic, goalScaleName);
     return new BooleanValue(goalScale.includes(note));
 });
 define$1('beat-defined', {
@@ -2155,7 +2154,6 @@ class BooleanOr extends BooleanOperator {
     }
 }
 
-// @ts-ignore
 class MelodicBeatLiteral extends ASTNodeBase {
     constructor(opts) {
         super();
@@ -2177,14 +2175,14 @@ class MelodicBeatLiteral extends ASTNodeBase {
     }
     handleInversion(songIterator, pitches) {
         const tonicPC = songIterator.song.getTransposedKey();
-        const tonicNote = tonal$1__default.Note.from({ oct: this.getOctave() }, tonicPC);
-        const tonic = tonal$1__default.Note.midi(tonicNote);
+        const tonicNote = Tonal__default.Note.from({ oct: this.getOctave() }, tonicPC);
+        const tonic = Tonal__default.Note.midi(tonicNote);
         const outPitches = [];
         for (const pitchNote of pitches) {
-            let pitch = tonal$1__default.Note.midi(pitchNote);
+            let pitch = Tonal__default.Note.midi(pitchNote);
             if (pitch - tonic >= 6)
                 pitch -= 12;
-            outPitches.push(tonal$1__default.Note.fromMidi(pitch));
+            outPitches.push(Tonal__default.Note.fromMidi(pitch));
         }
         return outPitches;
     }
@@ -2199,8 +2197,8 @@ class MelodicBeatLiteral extends ASTNodeBase {
         if (this.value.pitch.chord) {
             // this feels extremely incorrect
             // why would anyone need it to work this way
-            const anchorChordType = tonal$1__default.Chord.tokenize(anchorChord)[1];
-            pitches = tonal$1__default.Chord.notes(root, anchorChordType);
+            const anchorChordType = Tonal__default.Chord.tokenize(anchorChord)[1];
+            pitches = Tonal__default.Chord.notes(root, anchorChordType);
         }
         else {
             pitches = [root];
@@ -2699,7 +2697,6 @@ var drumJson = {
 };
 
 // @ts-ignore
-const tonal = tonal$1__default || tonal$1;
 /**
  * There are some inconsistencies with the official MIDI drum names, this
  * transformation will hopefully ease the pain there.
@@ -2745,7 +2742,7 @@ class Note {
                 return drumValue;
             }
             else {
-                return tonal.Note.midi(this.pitch);
+                return Tonal.Note.midi(this.pitch);
             }
         }
     }
@@ -3457,7 +3454,7 @@ let moduleDefs = {1:[function(require,module,exports){
   
   },{"./base64":4,"./fetch":5}],7:[function(require,module,exports){
   (function (global){
-  (function(e){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=e();}else if(typeof define==="function"&&define.amd){define([],e);}else{var t;if(typeof window!=="undefined"){t=window;}else if(typeof global!=="undefined"){t=global;}else if(typeof self!=="undefined"){t=self;}else{t=this;}t.midimessage=e();}})(function(){return function o(e,t,s){function a(n,i){if(!t[n]){if(!e[n]){var l=typeof require=="function"&&require;if(!i&&l)return l(n,!0);if(r)return r(n,!0);var h=new Error("Cannot find module '"+n+"'");throw h.code="MODULE_NOT_FOUND",h}var c=t[n]={exports:{}};e[n][0].call(c.exports,function(t){var s=e[n][1][t];return a(s?s:t)},c,c.exports,o,e,t,s);}return t[n].exports}var r=typeof require=="function"&&require;for(var n=0;n<s.length;n++)a(s[n]);return a}({1:[function(e,t,s){Object.defineProperty(s,"__esModule",{value:true});s["default"]=function(e){function t(e){this._event=e;this._data=e.data;this.receivedTime=e.receivedTime;if(this._data&&this._data.length<2){console.warn("Illegal MIDI message of length",this._data.length);return}this._messageCode=e.data[0]&240;this.channel=e.data[0]&15;switch(this._messageCode){case 128:this.messageType="noteoff";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 144:this.messageType="noteon";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 160:this.messageType="keypressure";this.key=e.data[1]&127;this.pressure=e.data[2]&127;break;case 176:this.messageType="controlchange";this.controllerNumber=e.data[1]&127;this.controllerValue=e.data[2]&127;if(this.controllerNumber===120&&this.controllerValue===0){this.channelModeMessage="allsoundoff";}else if(this.controllerNumber===121){this.channelModeMessage="resetallcontrollers";}else if(this.controllerNumber===122){if(this.controllerValue===0){this.channelModeMessage="localcontroloff";}else{this.channelModeMessage="localcontrolon";}}else if(this.controllerNumber===123&&this.controllerValue===0){this.channelModeMessage="allnotesoff";}else if(this.controllerNumber===124&&this.controllerValue===0){this.channelModeMessage="omnimodeoff";}else if(this.controllerNumber===125&&this.controllerValue===0){this.channelModeMessage="omnimodeon";}else if(this.controllerNumber===126){this.channelModeMessage="monomodeon";}else if(this.controllerNumber===127){this.channelModeMessage="polymodeon";}break;case 192:this.messageType="programchange";this.program=e.data[1];break;case 208:this.messageType="channelpressure";this.pressure=e.data[1]&127;break;case 224:this.messageType="pitchbendchange";var t=e.data[2]&127;var s=e.data[1]&127;this.pitchBend=(t<<8)+s;break}}return new t(e)};t.exports=s["default"];},{}]},{},[1])(1)});
+  (function(e){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=e();}else if(typeof define==="function"&&define.amd){define([],e);}else {var t;if(typeof window!=="undefined"){t=window;}else if(typeof global!=="undefined"){t=global;}else if(typeof self!=="undefined"){t=self;}else {t=this;}t.midimessage=e();}})(function(){return function o(e,t,s){function a(n,i){if(!t[n]){if(!e[n]){var l=typeof require=="function"&&require;if(!i&&l)return l(n,!0);if(r)return r(n,!0);var h=new Error("Cannot find module '"+n+"'");throw h.code="MODULE_NOT_FOUND",h}var c=t[n]={exports:{}};e[n][0].call(c.exports,function(t){var s=e[n][1][t];return a(s?s:t)},c,c.exports,o,e,t,s);}return t[n].exports}var r=typeof require=="function"&&require;for(var n=0;n<s.length;n++)a(s[n]);return a}({1:[function(e,t,s){Object.defineProperty(s,"__esModule",{value:true});s["default"]=function(e){function t(e){this._event=e;this._data=e.data;this.receivedTime=e.receivedTime;if(this._data&&this._data.length<2){console.warn("Illegal MIDI message of length",this._data.length);return}this._messageCode=e.data[0]&240;this.channel=e.data[0]&15;switch(this._messageCode){case 128:this.messageType="noteoff";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 144:this.messageType="noteon";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 160:this.messageType="keypressure";this.key=e.data[1]&127;this.pressure=e.data[2]&127;break;case 176:this.messageType="controlchange";this.controllerNumber=e.data[1]&127;this.controllerValue=e.data[2]&127;if(this.controllerNumber===120&&this.controllerValue===0){this.channelModeMessage="allsoundoff";}else if(this.controllerNumber===121){this.channelModeMessage="resetallcontrollers";}else if(this.controllerNumber===122){if(this.controllerValue===0){this.channelModeMessage="localcontroloff";}else {this.channelModeMessage="localcontrolon";}}else if(this.controllerNumber===123&&this.controllerValue===0){this.channelModeMessage="allnotesoff";}else if(this.controllerNumber===124&&this.controllerValue===0){this.channelModeMessage="omnimodeoff";}else if(this.controllerNumber===125&&this.controllerValue===0){this.channelModeMessage="omnimodeon";}else if(this.controllerNumber===126){this.channelModeMessage="monomodeon";}else if(this.controllerNumber===127){this.channelModeMessage="polymodeon";}break;case 192:this.messageType="programchange";this.program=e.data[1];break;case 208:this.messageType="channelpressure";this.pressure=e.data[1]&127;break;case 224:this.messageType="pitchbendchange";var t=e.data[2]&127;var s=e.data[1]&127;this.pitchBend=(t<<8)+s;break}}return new t(e)};t.exports=s["default"];},{}]},{},[1])(1)});
   
   }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {});
   },{}],8:[function(require,module,exports){

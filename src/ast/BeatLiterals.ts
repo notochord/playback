@@ -3,7 +3,7 @@ import { ASTNodeBase, Scope } from './ASTNodeBase';
 import { Measure } from './BeatGroups';
 import { getAnchorChord, anchorChordToRoot } from './musicUtils';
 import * as values from '../values/values';
-import SongIterator from 'notochord-song/types/songiterator';
+import { SongIterator } from 'notochord-song';
 
 export class MelodicBeatLiteral extends ASTNodeBase {
   public value: values.MelodicBeatValue;

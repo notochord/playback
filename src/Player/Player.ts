@@ -1,6 +1,6 @@
 import Soundfont from '../lib/soundfont-player.js';
 import PlaybackStyle from '../PlaybackStyle/PlaybackStyle';
-import Song from 'notochord-song/types/notochord-song';
+import { Song } from 'notochord-song';
 
 export default class Player {
   private style: PlaybackStyle

@@ -1,5 +1,5 @@
 import { PlaybackValue } from '../values/values';
-import SongIterator from '../../../notochord-song/types/songiterator';
+import { SongIterator } from 'notochord-song';
 
 export abstract class ASTNodeBase {
   public scope: Scope;

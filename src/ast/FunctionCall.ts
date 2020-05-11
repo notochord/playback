@@ -1,6 +1,6 @@
 import * as FunctionData from '../values/functionData';
 import { FunctionNameError } from './errors';
-import SongIterator from 'notochord-song/types/songiterator';
+import { SongIterator } from 'notochord-song';
 import * as values from '../values/values';
 import { ASTNodeBase, Scope } from './ASTNodeBase';
 import GlobalScope from './GlobalScope';

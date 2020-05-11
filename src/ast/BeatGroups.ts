@@ -3,7 +3,7 @@ import {
 } from './errors';
 import { MelodicBeatLiteral, DrumBeatLiteral } from './BeatLiterals';
 import { Scope, ASTNodeBase } from './ASTNodeBase';
-import SongIterator from 'notochord-song/types/songiterator';
+import { SongIterator } from 'notochord-song';
 import { normalizeChordForTonal } from './musicUtils';
 import * as values from '../values/values';
 

@@ -3,7 +3,7 @@ import { normalizeChordForTonal, getAnchorChord, anchorChordToRoot, chordToScale
 import * as values from './values';
 import { FunctionArgumentsError, FunctionScopeError } from '../ast/errors';
 import FunctionCall from '../ast/FunctionCall';
-import SongIterator from 'notochord-song/types/songiterator';
+import { SongIterator } from 'notochord-song';
 import { Scope } from '../ast/ASTNodeBase';
 
 interface DefineOpts {

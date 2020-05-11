@@ -1,6 +1,6 @@
 import { ASTNodeBase, Scope } from './ASTNodeBase';
 import * as values from '../values/values';
-import SongIterator from 'notochord-song/types/songiterator';
+import { SongIterator } from 'notochord-song';
 import GlobalScope from './GlobalScope';
 import { TrackStatement } from './Track';
 

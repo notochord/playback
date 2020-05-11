@@ -29,7 +29,7 @@ export default [
   {
     input: './src/playback.ts',
     output: {
-      file: './dist/playback.web.mjs',
+      file: './dist/playback.web.js',
       format: 'esm'
     },
     plugins: [

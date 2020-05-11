@@ -4,7 +4,7 @@ import { MetaStatement, OptionsStatement, ImportStatement } from './ConfigStatem
 import { TrackStatement, TrackCall } from './Track';
 import * as values from '../values/values';
 import * as errors from './errors';
-import SongIterator from 'notochord-song/types/songiterator';
+import { SongIterator } from 'notochord-song';
 
 type Statement = MetaStatement | OptionsStatement | ImportStatement | TrackStatement | TrackCall;
 

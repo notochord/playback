@@ -4,7 +4,7 @@ import {
 import { Scope, ASTNodeBase } from './ASTNodeBase';
 import FunctionCall from './FunctionCall';
 import { PatternStatement, PatternCall } from './Pattern';
-import SongIterator from 'notochord-song/types/songiterator';
+import { SongIterator } from 'notochord-song';
 import * as values from '../values/values';
 import * as errors from './errors';
 import GlobalScope from './GlobalScope';

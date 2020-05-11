@@ -1,7 +1,7 @@
 import { load } from '../loader/loader';
 import { parse } from '../parser/parser';
 import GlobalScope from '../ast/GlobalScope';
-import Song from 'notochord-song/types/notochord-song';
+import { Song } from 'notochord-song';
 import * as values from '../values/values';
 import { Note } from '../MIDI/Note';
 
